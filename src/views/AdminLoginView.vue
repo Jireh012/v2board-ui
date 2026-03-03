@@ -41,6 +41,7 @@ async function onSubmit() {
     localStorage.setItem('auth_data', res.auth_data)
     localStorage.setItem('token', res.token)
     localStorage.setItem('admin_email', email.value)
+    localStorage.setItem('is_admin', res.is_admin ? '1' : '0')
     await router.push('/admin')
   } catch (e) {
     const msg = e instanceof Error ? e.message : '登录失败'

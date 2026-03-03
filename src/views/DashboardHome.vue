@@ -21,57 +21,92 @@
             正在加载订阅信息...
           </div>
           <div class="card-body" v-else>
-            <div class="sub-row">
-              <div class="sub-label">邮箱</div>
-              <div class="sub-value">{{ subscribe.email }}</div>
-            </div>
-            <div class="sub-row">
-              <div class="sub-label">订阅状态</div>
-              <div class="sub-value">
-                {{ subscribe.expired_at ? '正常' : '未激活' }}
-              </div>
-            </div>
-            <div class="sub-row">
-              <div class="sub-label">到期时间</div>
-              <div class="sub-value">{{ formatTime(subscribe.expired_at) }}</div>
-            </div>
-            <div class="sub-row">
-              <div class="sub-label">已用流量</div>
-              <div class="sub-value">{{ formatTraffic(subscribe.u + subscribe.d) }}</div>
-            </div>
-            <div class="sub-row">
-              <div class="sub-label">总流量</div>
-              <div class="sub-value">{{ formatTraffic(subscribe.transfer_enable) }}</div>
-            </div>
-            <div class="sub-row">
-              <div class="sub-label">订阅链接</div>
-              <div class="sub-value sub-url">{{ subscribe.subscribe_url }}</div>
-            </div>
+            <template v-if="subscribe.email">
+              <template v-if="subscribe.plan_id">
+                <div class="sub-main">
+                  <h3 class="sub-plan-name">
+                    {{ subscribe.plan?.name || '未命名套餐' }}
+                  </h3>
+                  <p class="sub-meta" v-if="subscribe.expired_at === null">
+                    该订阅长期有效
+                  </p>
+                  <p class="sub-meta" v-else>
+                    <template v-if="isExpired(subscribe.expired_at)">
+                      <span class="sub-expired">已过期</span>
+                    </template>
+                    <template v-else>
+                      于 {{ formatDate(subscribe.expired_at) }} 到期，距离到期还有
+                      {{ daysLeft(subscribe.expired_at) }} 天。
+                      <template v-if="subscribe.reset_day !== null">
+                        <template v-if="subscribe.reset_day !== 0">
+                          已用流量将在 {{ subscribe.reset_day }} 日后重置
+                        </template>
+                        <template v-else>
+                          已用流量已在今日重置
+                        </template>
+                      </template>
+                    </template>
+                  </p>
+
+                  <div class="sub-progress">
+                    <div class="progress">
+                      <div
+                        class="progress-bar"
+                        :class="progressBarClass"
+                        :style="{ width: usagePercent + '%' }"
+                      ></div>
+                    </div>
+                    <p class="progress-text">
+                      <span class="progress-main">
+                        已用 {{ formatTraffic(subscribe.u + subscribe.d) }} /
+                        总计 {{ formatTraffic(subscribe.transfer_enable) }}
+                      </span>
+                      <span class="progress-devices">
+                        在线设备 {{ subscribe.alive_ip }}/{{
+                          deviceLimitDisplay
+                        }}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div class="sub-actions">
+                    <button
+                      v-if="showResetButton"
+                      type="button"
+                      class="btn-sub"
+                      @click="goPlan"
+                    >
+                      购买流量重置包
+                    </button>
+                    <button
+                      v-if="showNewPeriodButton"
+                      type="button"
+                      class="btn-sub"
+                      @click="goPlan"
+                    >
+                      提前开启流量周期
+                    </button>
+                    <button
+                      v-if="isExpired(subscribe.expired_at)"
+                      type="button"
+                      class="btn-sub"
+                      @click="goPlan"
+                    >
+                      {{ subscribe.plan_id ? '续费订阅' : '购买订阅' }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="sub-empty" @click="goPlan">
+                  <div class="sub-empty-icon">＋</div>
+                  <div class="sub-empty-text">购买订阅</div>
+                </div>
+              </template>
+            </template>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h3>账户信息</h3>
-          </div>
-          <div class="card-body" v-if="!info">
-            正在加载账户信息...
-          </div>
-          <div class="card-body" v-else>
-            <div class="sub-row">
-              <div class="sub-label">余额</div>
-              <div class="sub-value">￥{{ (info.balance || 0) / 100 }}</div>
-            </div>
-            <div class="sub-row">
-              <div class="sub-label">佣金余额</div>
-              <div class="sub-value">￥{{ (info.commission_balance || 0) / 100 }}</div>
-            </div>
-            <div class="sub-row">
-              <div class="sub-label">创建时间</div>
-              <div class="sub-value">{{ formatTime(info.created_at) }}</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <aside class="column column-side">
@@ -80,26 +115,86 @@
             <h3>捷径</h3>
           </div>
           <div class="card-body shortcuts">
-            <button class="shortcut-item" @click="goPlan">
-              <span class="shortcut-title">查看套餐</span>
-              <span class="shortcut-desc">快速跳转到订阅套餐页面</span>
+            <button class="shortcut-item" @click="goKnowledge">
+              <span class="shortcut-title">查看教程</span>
+              <span class="shortcut-desc">
+                学习如何使用当前站点
+              </span>
             </button>
-            <button class="shortcut-item" @click="goOrder">
-              <span class="shortcut-title">我的订单</span>
-              <span class="shortcut-desc">查看历史订单记录和支付状态</span>
+            <button class="shortcut-item" @click="oneClickSubscribe">
+              <span class="shortcut-title">一键订阅</span>
+              <span class="shortcut-desc">
+                快速将节点导入对应客户端进行使用
+              </span>
+            </button>
+            <button class="shortcut-item" @click="goPlan">
+              <span class="shortcut-title">{{ renewOrBuyText }}</span>
+              <span class="shortcut-desc">{{ renewOrBuyDesc }}</span>
             </button>
             <button class="shortcut-item" @click="goTicket">
-              <span class="shortcut-title">提交工单</span>
-              <span class="shortcut-desc">遇到问题？联系管理员获取帮助</span>
-            </button>
-            <button class="shortcut-item" @click="goTraffic">
-              <span class="shortcut-title">流量明细</span>
-              <span class="shortcut-desc">查看最近的流量使用情况</span>
+              <span class="shortcut-title">遇到问题</span>
+              <span class="shortcut-desc">
+                遇到问题可以通过工单与我们沟通
+              </span>
             </button>
           </div>
         </div>
       </aside>
     </section>
+
+    <div
+      v-if="showSubscribeModal && subscribeUrl"
+      class="subscribe-mask"
+      @click.self="closeSubscribeModal"
+    >
+      <div class="subscribe-dialog">
+        <button class="subscribe-item" @click="copySubscribeUrl">
+          <span class="subscribe-icon">📋</span>
+          <span class="subscribe-text">复制订阅地址</span>
+        </button>
+        <button class="subscribe-item" @click="openSubscribeQr">
+          <span class="subscribe-icon">🔳</span>
+          <span class="subscribe-text">扫描二维码订阅</span>
+        </button>
+        <button class="subscribe-item" @click="openClient(hiddifyLink)">
+          <span class="subscribe-icon">H</span>
+          <span class="subscribe-text">导入到 Hiddify</span>
+        </button>
+        <button class="subscribe-item" @click="openClient(singboxLink)">
+          <span class="subscribe-icon">S</span>
+          <span class="subscribe-text">导入到 Sing-box</span>
+        </button>
+        <button class="subscribe-item" @click="openClient(clashMetaLink)">
+          <span class="subscribe-icon">M</span>
+          <span class="subscribe-text">导入到 ClashMeta</span>
+        </button>
+        <div class="subscribe-footer">
+          <button class="subscribe-help" @click="goKnowledge">
+            不会使用，查看使用教程
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="showSubscribeQr && subscribeUrl"
+      class="subscribe-mask"
+      @click.self="closeSubscribeQr"
+    >
+      <div class="subscribe-dialog qr-dialog">
+        <img
+          class="subscribe-qr"
+          :src="`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(subscribeUrl)}`"
+          alt="订阅二维码"
+        />
+        <div class="subscribe-qr-tip">
+          使用支持链接导入的客户端扫描即可订阅
+        </div>
+        <div class="subscribe-footer">
+          <button class="subscribe-help" @click="closeSubscribeQr">关闭</button>
+        </div>
+      </div>
+    </div>
 
     <div
       v-if="showNoticeDialog && (currentNotice || noticeDetail)"
@@ -130,20 +225,20 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getUserInfo, getSubscribe, type UserInfo, type SubscribeInfo } from '../api/user'
+import { getSubscribe, type SubscribeInfo } from '../api/user'
 import { fetchNotices, getNoticeDetail, type Notice } from '../api/notice'
 
 const router = useRouter()
-const info = ref<UserInfo | null>(null)
 const subscribe = ref<SubscribeInfo | null>(null)
 const currentNotice = ref<Notice | null>(null)
 const noticeDetail = ref<Notice | null>(null)
 const showNoticeDialog = ref(false)
 const loadingNoticeDetail = ref(false)
+const showSubscribeModal = ref(false)
+const showSubscribeQr = ref(false)
 
 onMounted(async () => {
   try {
-    info.value = await getUserInfo()
     subscribe.value = await getSubscribe()
   } catch {
     // 忽略订阅信息失败，UI 中会显示加载中文案
@@ -165,6 +260,65 @@ function formatTime(ts: number | null): string {
   return d.toLocaleString()
 }
 
+function formatDate(ts: number | null): string {
+  if (!ts) return '-'
+  const d = new Date(ts * 1000)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}/${m}/${day}`
+}
+
+function isExpired(ts: number | null): boolean {
+  if (!ts) return false
+  const nowSec = Date.now() / 1000
+  return ts <= nowSec
+}
+
+const usagePercent = computed(() => {
+  if (!subscribe.value) return 0
+  const used = (subscribe.value.u || 0) + (subscribe.value.d || 0)
+  const total = subscribe.value.transfer_enable || 0
+  if (!total || total <= 0) return 0
+  const percent = (used / total) * 100
+  return Math.max(0, Math.min(100, Math.round(percent * 100) / 100))
+})
+
+const progressBarClass = computed(() => {
+  const y = usagePercent.value
+  if (y >= 100) return 'progress-bar-danger'
+  if (y >= 80) return 'progress-bar-warning'
+  return 'progress-bar-success'
+})
+
+const deviceLimitDisplay = computed(() => {
+  if (!subscribe.value) return '-'
+  const limit = subscribe.value.device_limit
+  return limit == null ? '∞' : String(limit)
+})
+
+const showResetButton = computed(() => {
+  if (!subscribe.value) return false
+  const y = usagePercent.value
+  const expired = isExpired(subscribe.value.expired_at)
+  const hasResetPrice = !!subscribe.value.plan && !!subscribe.value.plan.reset_price
+  return y >= 80 && !expired && hasResetPrice
+})
+
+const showNewPeriodButton = computed(() => {
+  if (!subscribe.value) return false
+  const y = usagePercent.value
+  const expired = isExpired(subscribe.value.expired_at)
+  return !!subscribe.value.allow_new_period && y >= 100 && !expired
+})
+
+function daysLeft(ts: number | null): number {
+  if (!ts) return 0
+  const nowSec = Math.floor(Date.now() / 1000)
+  const diff = ts - nowSec
+  return diff > 0 ? Math.floor(diff / 86400) : 0
+}
+
 function formatTraffic(bytes: number | null | undefined): string {
   if (!bytes) return '0 B'
   const gb = 1024 * 1024 * 1024
@@ -178,16 +332,98 @@ function goPlan() {
   router.push('/dashboard/plan')
 }
 
-function goOrder() {
-  router.push('/dashboard/order')
-}
-
 function goTicket() {
   router.push('/dashboard/ticket')
 }
 
-function goTraffic() {
-  router.push('/dashboard/traffic')
+function goKnowledge() {
+  router.push('/dashboard/knowledge')
+}
+
+function oneClickSubscribe() {
+  if (!subscribe.value || !subscribe.value.subscribe_url) {
+    goPlan()
+    return
+  }
+  showSubscribeModal.value = true
+}
+
+const renewOrBuyText = computed(() => {
+  if (!subscribe.value || !subscribe.value.plan_id) {
+    return '购买订阅'
+  }
+  return '续费订阅'
+})
+
+const renewOrBuyDesc = computed(() => {
+  if (!subscribe.value || !subscribe.value.plan_id) {
+    return '对您当前的订阅进行购买'
+  }
+  return '对您当前的订阅进行续费'
+})
+
+const subscribeUrl = computed(() => subscribe.value?.subscribe_url || '')
+
+function copySubscribeUrl() {
+  const url = subscribeUrl.value
+  if (!url) return
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).catch(() => {})
+  } else {
+    const textarea = document.createElement('textarea')
+    textarea.value = url
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+    } catch {
+      // ignore
+    }
+    document.body.removeChild(textarea)
+  }
+}
+
+function openSubscribeQr() {
+  if (!subscribeUrl.value) return
+  showSubscribeQr.value = true
+}
+
+function closeSubscribeModal() {
+  showSubscribeModal.value = false
+}
+
+function closeSubscribeQr() {
+  showSubscribeQr.value = false
+}
+
+const hiddifyLink = computed(() => {
+  const url = subscribeUrl.value
+  if (!url) return ''
+  const title = document.title || '订阅'
+  return `hiddify://import/${url}&flag=sing#${title}`
+})
+
+const singboxLink = computed(() => {
+  const url = subscribeUrl.value
+  if (!url) return ''
+  const title = document.title || '订阅'
+  return `sing-box://import-remote-profile?url=${encodeURIComponent(url)}#${title}`
+})
+
+const clashMetaLink = computed(() => {
+  const url = subscribeUrl.value
+  if (!url) return ''
+  const title = document.title || '订阅'
+  return `clash://install-config?url=${encodeURIComponent(url + '&flag=meta')}&name=${encodeURIComponent(title)}`
+})
+
+function openClient(href: string) {
+  if (!href) return
+  if (typeof window !== 'undefined') {
+    window.location.href = href
+  }
 }
 
 async function openNoticeDetail() {
@@ -232,6 +468,8 @@ const noticeDialogContent = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: 960px;
+  margin: 0 auto;
 }
 
 .announce {
@@ -296,8 +534,8 @@ const noticeDialogContent = computed(() => {
 }
 
 .main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
@@ -326,6 +564,110 @@ const noticeDialogContent = computed(() => {
 
 .card-body {
   padding: 10px 16px;
+  font-size: 13px;
+}
+
+.sub-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sub-plan-name {
+  margin: 0 0 2px;
+  font-size: 16px;
+}
+
+.sub-meta {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.sub-expired {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.sub-progress {
+  margin: 6px 0 4px;
+}
+
+.progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  transition: width 0.2s ease-out;
+}
+
+.progress-bar-success {
+  background: #16a34a;
+}
+
+.progress-bar-warning {
+  background: #f59e0b;
+}
+
+.progress-bar-danger {
+  background: #dc2626;
+}
+
+.progress-text {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.progress-main {
+  font-weight: 600;
+}
+
+.progress-devices {
+  margin-left: 12px;
+}
+
+.sub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 6px;
+}
+
+.btn-sub {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-sub:hover {
+  background: #1d4ed8;
+}
+
+.sub-empty {
+  padding: 20px 0;
+  text-align: center;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.sub-empty-icon {
+  font-size: 24px;
+}
+
+.sub-empty-text {
+  margin-top: 4px;
   font-size: 13px;
 }
 
@@ -448,6 +790,87 @@ const noticeDialogContent = computed(() => {
   color: #ffffff;
   font-size: 13px;
   cursor: pointer;
+}
+
+.subscribe-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.subscribe-dialog {
+  width: 100%;
+  max-width: 320px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.3);
+  padding: 10px 0 12px;
+}
+
+.subscribe-item {
+  width: 100%;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.subscribe-item:hover {
+  background: #f3f4f6;
+}
+
+.subscribe-icon {
+  width: 24px;
+  text-align: center;
+}
+
+.subscribe-text {
+  font-size: 14px;
+  color: #111827;
+}
+
+.subscribe-footer {
+  padding: 8px 12px 0;
+}
+
+.subscribe-help {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.subscribe-help:hover {
+  background: #1d4ed8;
+}
+
+.qr-dialog {
+  text-align: center;
+  padding-bottom: 14px;
+}
+
+.subscribe-qr {
+  display: block;
+  margin: 4px auto 8px;
+  width: 220px;
+  height: 220px;
+}
+
+.subscribe-qr-tip {
+  font-size: 13px;
+  color: #4b5563;
+  padding: 0 16px 4px;
 }
 </style>
 

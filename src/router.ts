@@ -6,6 +6,10 @@ import PlanView from './views/PlanView.vue'
 import OrderView from './views/OrderView.vue'
 import TicketView from './views/TicketView.vue'
 import TrafficView from './views/TrafficView.vue'
+import KnowledgeView from './views/KnowledgeView.vue'
+import InviteView from './views/InviteView.vue'
+import ProfileView from './views/ProfileView.vue'
+import ServerStatusView from './views/ServerStatusView.vue'
 import AdminLoginView from './views/AdminLoginView.vue'
 import AdminLayout from './layouts/AdminLayout.vue'
 import AdminDashboardView from './views/admin/AdminDashboardView.vue'
@@ -34,8 +38,16 @@ const routes: RouteRecordRaw[] = [
     component: PlanView
   },
   {
+    path: '/dashboard/server',
+    component: ServerStatusView
+  },
+  {
     path: '/dashboard/order',
     component: OrderView
+  },
+  {
+    path: '/dashboard/invite',
+    component: InviteView
   },
   {
     path: '/dashboard/ticket',
@@ -44,6 +56,14 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dashboard/traffic',
     component: TrafficView
+  },
+  {
+    path: '/dashboard/knowledge',
+    component: KnowledgeView
+  },
+  {
+    path: '/dashboard/profile',
+    component: ProfileView
   },
   {
     path: '/admin/login',

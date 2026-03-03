@@ -1,4 +1,5 @@
 import { request } from './http'
+import type { Plan } from './plan'
 
 export interface UserInfo {
   email: string
@@ -27,12 +28,14 @@ export interface SubscribeInfo {
   u: number
   d: number
   transfer_enable: number
-  device_limit: number
+  device_limit: number | null
   email: string
   uuid: string
   subscribe_url: string
   reset_day: number | null
   allow_new_period: number
+  alive_ip: number
+  plan?: Plan
 }
 
 export async function getUserInfo(): Promise<UserInfo> {
