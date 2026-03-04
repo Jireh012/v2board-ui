@@ -36,17 +36,17 @@
 
         <div class="menu-group">
           <div class="menu-group-title">订阅</div>
-          <RouterLink to="/dashboard/plan" class="menu-item">
+          <RouterLink to="/plan" class="menu-item">
             <span class="menu-text">购买订阅</span>
           </RouterLink>
-          <RouterLink to="/dashboard/server" class="menu-item">
+          <RouterLink to="/server" class="menu-item">
             <span class="menu-text">节点状态</span>
           </RouterLink>
         </div>
 
         <div class="menu-group">
           <div class="menu-group-title">财务</div>
-          <RouterLink to="/dashboard/order" class="menu-item">
+          <RouterLink to="/order" class="menu-item">
             <span class="menu-text">我的订单</span>
           </RouterLink>
           <RouterLink to="/dashboard/invite" class="menu-item">

@@ -329,7 +329,14 @@ function formatTraffic(bytes: number | null | undefined): string {
 }
 
 function goPlan() {
-  router.push('/dashboard/plan')
+  const planId = subscribe.value?.plan_id
+  if (planId) {
+    // 已有订阅套餐时，直接跳转到当前套餐详情页 /plan/:id
+    router.push(`/plan/${planId}`)
+  } else {
+    // 未订阅时仍跳转到订阅列表
+    router.push('/plan')
+  }
 }
 
 function goTicket() {

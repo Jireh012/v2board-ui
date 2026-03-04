@@ -174,11 +174,11 @@ onUnmounted(() => {
 
 <style scoped>
 .knowledge-page {
-  max-width: 720px;
-  margin: 0 auto;
+  width: 100%;
   padding: 24px 16px;
   background: #f8fafd;
   min-height: 100%;
+  box-sizing: border-box;
 }
 
 /* 顶部搜索栏：输入框+蓝色搜索按钮 */

@@ -4,6 +4,7 @@ import LoginView from './views/LoginView.vue'
 import DashboardHome from './views/DashboardHome.vue'
 import PlanView from './views/PlanView.vue'
 import OrderView from './views/OrderView.vue'
+import OrderDetailView from './views/OrderDetailView.vue'
 import TicketView from './views/TicketView.vue'
 import TrafficView from './views/TrafficView.vue'
 import KnowledgeView from './views/KnowledgeView.vue'
@@ -19,6 +20,7 @@ import AdminOrdersView from './views/admin/AdminOrdersView.vue'
 import AdminTicketsView from './views/admin/AdminTicketsView.vue'
 import AdminPaymentsView from './views/admin/AdminPaymentsView.vue'
 import AdminVmessServersView from './views/admin/AdminVmessServersView.vue'
+import AdminSystemConfigView from './views/admin/AdminSystemConfigView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -34,16 +36,24 @@ const routes: RouteRecordRaw[] = [
     component: DashboardHome
   },
   {
-    path: '/dashboard/plan',
+    path: '/plan',
     component: PlanView
   },
   {
-    path: '/dashboard/server',
+    path: '/plan/:id',
+    component: PlanView
+  },
+  {
+    path: '/server',
     component: ServerStatusView
   },
   {
-    path: '/dashboard/order',
+    path: '/order',
     component: OrderView
+  },
+  {
+    path: '/order/:tradeNo',
+    component: OrderDetailView
   },
   {
     path: '/dashboard/invite',
@@ -92,6 +102,10 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'tickets',
         component: AdminTicketsView
+      },
+      {
+        path: 'config/system',
+        component: AdminSystemConfigView
       },
       {
         path: 'payments',
