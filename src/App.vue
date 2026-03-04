@@ -29,7 +29,7 @@
           <RouterLink to="/dashboard" class="menu-item">
             <span class="menu-text">仪表盘</span>
           </RouterLink>
-          <RouterLink to="/dashboard/knowledge" class="menu-item">
+          <RouterLink to="/knowledge" class="menu-item">
             <span class="menu-text">使用文档</span>
           </RouterLink>
         </div>

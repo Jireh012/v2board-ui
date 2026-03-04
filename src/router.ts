@@ -58,7 +58,7 @@ const routes: RouteRecordRaw[] = [
     component: TrafficView
   },
   {
-    path: '/dashboard/knowledge',
+    path: '/knowledge',
     component: KnowledgeView
   },
   {

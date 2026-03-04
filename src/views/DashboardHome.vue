@@ -337,7 +337,7 @@ function goTicket() {
 }
 
 function goKnowledge() {
-  router.push('/dashboard/knowledge')
+  router.push('/knowledge')
 }
 
 function oneClickSubscribe() {
