@@ -56,15 +56,15 @@ const routes: RouteRecordRaw[] = [
     component: OrderDetailView
   },
   {
-    path: '/dashboard/invite',
+    path: '/invite',
     component: InviteView
   },
   {
-    path: '/dashboard/ticket',
+    path: '/ticket',
     component: TicketView
   },
   {
-    path: '/dashboard/traffic',
+    path: '/traffic',
     component: TrafficView
   },
   {
@@ -72,7 +72,7 @@ const routes: RouteRecordRaw[] = [
     component: KnowledgeView
   },
   {
-    path: '/dashboard/profile',
+    path: '/profile',
     component: ProfileView
   },
   {

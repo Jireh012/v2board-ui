@@ -4,15 +4,15 @@ import { request } from './http'
 export interface Plan {
   id: number
   name: string
-  transferEnable: number
-  monthPrice?: number
-  quarterPrice?: number
-  halfYearPrice?: number
-  yearPrice?: number
-  twoYearPrice?: number
-  threeYearPrice?: number
-  onetimePrice?: number
-  resetPrice?: number
+  transfer_enable: number
+  month_price?: number
+  quarter_price?: number
+  half_year_price?: number
+  year_price?: number
+  two_year_price?: number
+  three_year_price?: number
+  onetime_price?: number
+  reset_price?: number
 }
 
 export interface FetchPlansParams {
