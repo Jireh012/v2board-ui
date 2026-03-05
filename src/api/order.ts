@@ -33,7 +33,7 @@ export interface OrderDetail {
   plan?: {
     id: number
     name: string
-    transferEnable?: number
+    transfer_enable?: number
   } | null
 }
 
