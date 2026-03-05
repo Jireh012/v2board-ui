@@ -286,8 +286,9 @@ const goProfile = () => {
 
 .user-email {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-main);
+  white-space: nowrap;
 }
 
 .caret {
@@ -301,7 +302,8 @@ const goProfile = () => {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  width: 260px;
+  min-width: 260px;
+  width: max-content;
   background: #ffffff;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
@@ -310,11 +312,26 @@ const goProfile = () => {
   z-index: 1000;
 }
 
+/* 增加一个不可见的桥接层，防止鼠标移向下拉框时因为 12px 的间距导致触发 mouseleave */
+.user-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
+  height: 14px;
+}
+
 .dropdown-header {
   padding: 16px;
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.dropdown-user-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .big-avatar {
@@ -328,13 +345,14 @@ const goProfile = () => {
   justify-content: center;
   font-size: 20px;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .dropdown-email {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-main);
-  word-break: break-all;
+  white-space: nowrap;
 }
 
 .dropdown-status {
