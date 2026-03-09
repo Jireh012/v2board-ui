@@ -59,10 +59,22 @@
         <div class="menu-group">
           <div class="menu-group-title">服务器</div>
           <ul>
-            <li :class="{ active: route.path.startsWith('/admin/servers') }">
-              <RouterLink to="/admin/servers/vmess">
+            <li :class="{ active: route.path === '/admin/servers' }">
+              <RouterLink to="/admin/servers">
                 <span class="menu-icon">📦</span>
                 <span>节点管理</span>
+              </RouterLink>
+            </li>
+            <li :class="{ active: route.path === '/admin/servers/groups' }">
+              <RouterLink to="/admin/servers/groups">
+                <span class="menu-icon">📂</span>
+                <span>权限组管理</span>
+              </RouterLink>
+            </li>
+            <li :class="{ active: route.path === '/admin/servers/routes' }">
+              <RouterLink to="/admin/servers/routes">
+                <span class="menu-icon">🔀</span>
+                <span>路由管理</span>
               </RouterLink>
             </li>
           </ul>
@@ -82,6 +94,18 @@
                 <span>订单管理</span>
               </RouterLink>
             </li>
+            <li :class="{ active: route.path.startsWith('/admin/coupons') }">
+              <RouterLink to="/admin/coupons">
+                <span class="menu-icon">🏷️</span>
+                <span>优惠券管理</span>
+              </RouterLink>
+            </li>
+            <li :class="{ active: route.path.startsWith('/admin/giftcards') }">
+              <RouterLink to="/admin/giftcards">
+                <span class="menu-icon">🎁</span>
+                <span>礼品卡管理</span>
+              </RouterLink>
+            </li>
           </ul>
         </div>
         <div class="menu-group">
@@ -97,6 +121,23 @@
               <RouterLink to="/admin/tickets">
                 <span class="menu-icon">🛟</span>
                 <span>工单管理</span>
+              </RouterLink>
+            </li>
+          </ul>
+        </div>
+        <div class="menu-group">
+          <div class="menu-group-title">内容</div>
+          <ul>
+            <li :class="{ active: route.path.startsWith('/admin/notices') }">
+              <RouterLink to="/admin/notices">
+                <span class="menu-icon">📢</span>
+                <span>公告管理</span>
+              </RouterLink>
+            </li>
+            <li :class="{ active: route.path.startsWith('/admin/knowledge') }">
+              <RouterLink to="/admin/knowledge">
+                <span class="menu-icon">📚</span>
+                <span>知识库管理</span>
               </RouterLink>
             </li>
           </ul>
@@ -128,7 +169,13 @@ const pageTitleMap: Record<string, string> = {
   '/admin/orders': '订单管理',
   '/admin/tickets': '工单管理',
   '/admin/payments': '支付配置',
-  '/admin/servers/vmess': '节点管理'
+  '/admin/servers': '节点管理',
+  '/admin/servers/groups': '权限组管理',
+  '/admin/servers/routes': '路由管理',
+  '/admin/notices': '公告管理',
+  '/admin/coupons': '优惠券管理',
+  '/admin/giftcards': '礼品卡管理',
+  '/admin/knowledge': '知识库管理'
 }
 
 const pageTitle = computed(() => {
@@ -141,6 +188,10 @@ const pageTitle = computed(() => {
   if (path.startsWith('/admin/tickets')) return '工单管理'
   if (path.startsWith('/admin/payments')) return '支付配置'
   if (path.startsWith('/admin/servers')) return '节点管理'
+  if (path.startsWith('/admin/notices')) return '公告管理'
+  if (path.startsWith('/admin/coupons')) return '优惠券管理'
+  if (path.startsWith('/admin/giftcards')) return '礼品卡管理'
+  if (path.startsWith('/admin/knowledge')) return '知识库管理'
   return '仪表盘'
 })
 

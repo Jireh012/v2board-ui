@@ -19,8 +19,14 @@ import AdminPlansView from './views/admin/AdminPlansView.vue'
 import AdminOrdersView from './views/admin/AdminOrdersView.vue'
 import AdminTicketsView from './views/admin/AdminTicketsView.vue'
 import AdminPaymentsView from './views/admin/AdminPaymentsView.vue'
-import AdminVmessServersView from './views/admin/AdminVmessServersView.vue'
+import AdminServersView from './views/admin/AdminServersView.vue'
+import AdminGroupsView from './views/admin/AdminGroupsView.vue'
+import AdminRoutesView from './views/admin/AdminRoutesView.vue'
 import AdminSystemConfigView from './views/admin/AdminSystemConfigView.vue'
+import AdminNoticesView from './views/admin/AdminNoticesView.vue'
+import AdminCouponsView from './views/admin/AdminCouponsView.vue'
+import AdminGiftcardsView from './views/admin/AdminGiftcardsView.vue'
+import AdminKnowledgeView from './views/admin/AdminKnowledgeView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -112,8 +118,32 @@ const routes: RouteRecordRaw[] = [
         component: AdminPaymentsView
       },
       {
-        path: 'servers/vmess',
-        component: AdminVmessServersView
+        path: 'servers',
+        component: AdminServersView
+      },
+      {
+        path: 'servers/groups',
+        component: AdminGroupsView
+      },
+      {
+        path: 'servers/routes',
+        component: AdminRoutesView
+      },
+      {
+        path: 'notices',
+        component: AdminNoticesView
+      },
+      {
+        path: 'coupons',
+        component: AdminCouponsView
+      },
+      {
+        path: 'giftcards',
+        component: AdminGiftcardsView
+      },
+      {
+        path: 'knowledge',
+        component: AdminKnowledgeView
       }
     ]
   }

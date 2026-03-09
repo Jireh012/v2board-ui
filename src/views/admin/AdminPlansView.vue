@@ -60,7 +60,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="p in plans" :key="p.id">
+        <tr v-for="(p, index) in plans" :key="p.id">
           <td>{{ p.id }}</td>
           <td>{{ p.name }}</td>
           <td>{{ formatGb(p.transferEnable) }}</td>

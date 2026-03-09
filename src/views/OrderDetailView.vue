@@ -152,13 +152,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import {
   cancelOrder, checkout, checkOrderStatus, fetchOrderDetail, getPaymentMethods,
   type OrderDetail, type PaymentMethod
 } from '../api/order'
 
-const route = useRoute(), router = useRouter()
+const route = useRoute()
 const order = ref<OrderDetail | null>(null), methods = ref<PaymentMethod[]>([])
 const selectedMethodId = ref<number | null>(null), loading = ref(false), cancelling = ref(false)
 const paying = ref(false), message = ref(''), qrcodeVisible = ref(false), qrcodeUrl = ref<string | null>(null)
