@@ -141,6 +141,22 @@
                     <option :value="2">Reality</option>
                   </select>
                 </div>
+                <div class="form-row">
+                  <label>监听 IP</label>
+                  <input v-model="form.listen_ip" class="input" placeholder="可选，节点绑定地址" />
+                </div>
+                <div class="form-row full-width">
+                  <label>TLS 设置 (JSON)</label>
+                  <textarea v-model="tlsSettingsText" class="input textarea" rows="8"
+                    placeholder='{"server_name":"","ech":"","ech_server_name":"","allow_insecure":0}' />
+                  <p class="hint">ECH 伪装 SNI：ech 设为 custom，填写 ech_server_name；留空 ech_key/ech_config 将由服务端自动生成。</p>
+                </div>
+                <div class="form-row full-width">
+                  <label>传输层设置 (JSON)</label>
+                  <textarea v-model="networkSettingsText" class="input textarea" rows="8"
+                    :placeholder="networkSettingsPlaceholder" />
+                  <p class="hint">xhttp 可在 extra 中配置 xPaddingObfsMode 等字段，例如 {"path":"/","host":"","mode":"auto","extra":{}}</p>
+                </div>
               </div>
             </template>
 
@@ -349,6 +365,18 @@ const form = ref<Record<string, any>>({})
 const groupIdText = ref('')
 const routeIdText = ref('')
 const tagsText = ref('')
+const tlsSettingsText = ref('')
+const networkSettingsText = ref('')
+
+const networkSettingsPlaceholder = computed(() => {
+  const n = form.value.network || 'tcp'
+  if (n === 'xhttp') {
+    return '{"path":"/","host":"xtls.github.io","mode":"auto","extra":{}}'
+  }
+  if (n === 'ws') return '{"path":"/","headers":{"Host":""}}'
+  if (n === 'grpc') return '{"serviceName":""}'
+  return '{}'
+})
 
 const filterTabs = computed(() => {
   const counts: Record<string, number> = { all: rows.value.length }
@@ -376,13 +404,34 @@ async function load() {
   try { rows.value = await fetchNodes() } finally { loading.value = false }
 }
 
+function jsonToText(v: unknown): string {
+  if (v == null) return ''
+  if (typeof v === 'string') {
+    try { return JSON.stringify(JSON.parse(v), null, 2) } catch { return v }
+  }
+  try { return JSON.stringify(v, null, 2) } catch { return '' }
+}
+
+function textToJson(text: string): unknown | undefined {
+  const t = text.trim()
+  if (!t) return undefined
+  return JSON.parse(t)
+}
+
 function openAdd() {
   editId.value = null
   currentType.value = addType.value
   form.value = { name: '', host: '', port: '', rate: '1', show: 0, sort: 0 }
+  if (currentType.value === 'v2node') {
+    form.value.protocol = 'vless'
+    form.value.network = 'tcp'
+    form.value.tls = 0
+  }
   groupIdText.value = ''
   routeIdText.value = ''
   tagsText.value = ''
+  tlsSettingsText.value = ''
+  networkSettingsText.value = ''
   showModal.value = true
 }
 
@@ -393,6 +442,8 @@ function openEdit(s: ServerNode) {
   groupIdText.value = Array.isArray(s.group_id) ? s.group_id.join(',') : ''
   routeIdText.value = Array.isArray(s.route_id) ? s.route_id.join(',') : ''
   tagsText.value = Array.isArray(s.tags) ? s.tags.join(',') : ''
+  tlsSettingsText.value = jsonToText(s.tls_settings)
+  networkSettingsText.value = jsonToText(s.network_settings)
   showModal.value = true
 }
 
@@ -403,6 +454,17 @@ async function doSave() {
     body.group_id = groupIdText.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))
     body.route_id = routeIdText.value ? routeIdText.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) : []
     body.tags = tagsText.value ? tagsText.value.split(',').map(s => s.trim()).filter(Boolean) : []
+    if (currentType.value === 'v2node') {
+      try {
+        if (tlsSettingsText.value.trim()) body.tls_settings = textToJson(tlsSettingsText.value)
+        else body.tls_settings = null
+        if (networkSettingsText.value.trim()) body.network_settings = textToJson(networkSettingsText.value)
+        else body.network_settings = null
+      } catch {
+        alert('TLS 或传输层 JSON 格式无效')
+        return
+      }
+    }
     delete body.type
     if (editId.value) body.id = editId.value
     await saveNode(currentType.value, body)
@@ -494,6 +556,9 @@ onMounted(load)
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
 .form-row { margin-bottom: 4px; }
 .form-row label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 3px; }
+.form-row.full-width { grid-column: 1 / -1; }
+.textarea { min-height: 120px; font-family: ui-monospace, monospace; font-size: 12px; resize: vertical; }
+.hint { font-size: 11px; color: #64748b; margin: 4px 0 0; }
 .req { color: #ef4444; }
 .input { width: 100%; padding: 7px 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #e5e7eb; font-size: 13px; box-sizing: border-box; }
 .input:focus { outline: none; border-color: #2563eb; }

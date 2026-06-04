@@ -234,7 +234,8 @@ function getStaticForm(payment: string): Record<string, FormField> {
     EPay: {
       url: { label: 'URL', description: '', type: 'input' },
       pid: { label: 'PID', description: '', type: 'input' },
-      key: { label: 'KEY', description: '', type: 'input' }
+      key: { label: 'KEY', description: '', type: 'input' },
+      type: { label: 'TYPE', description: '支付类型，如: alipay, wxpay, qqpay', type: 'input' }
     },
     MGate: {
       mgate_url: { label: 'API地址', description: '', type: 'input' },
