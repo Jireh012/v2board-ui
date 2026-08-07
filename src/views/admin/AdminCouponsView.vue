@@ -16,6 +16,6 @@
 }
 .hint {
   font-size: 13px;
-  color: #9ca3af;
+  color: #64748b;
 }
 </style>

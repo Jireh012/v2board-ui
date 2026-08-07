@@ -1,0 +1,284 @@
+/* 管理端内容区通用浅色组件，与用户端视觉语言对齐 */
+
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-page .page-header,
+.admin-page .page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.admin-page h1,
+.admin-page .page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.admin-page .hint,
+.admin-page .page-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.admin-page .panel,
+.admin-page .card {
+  background: var(--card-bg);
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-main);
+}
+
+.admin-page .table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-page .table th,
+.admin-page .table td {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.admin-page .table th {
+  background: #f8fafc;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.admin-page .table td {
+  color: var(--text-main);
+}
+
+.admin-page .table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.admin-page .btn,
+.admin-page button.btn {
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-page .btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.admin-page .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-page .btn.primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.admin-page .btn.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.admin-page .btn.secondary {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: var(--text-main);
+}
+
+.admin-page .btn-sm {
+  padding: 4px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #ffffff;
+  color: var(--text-main);
+}
+
+.admin-page .btn-sm.edit,
+.admin-page .btn-sm.ok {
+  color: var(--primary-color);
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.admin-page .btn-sm.warn {
+  color: #b45309;
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.admin-page .btn-sm.danger {
+  color: #dc2626;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.admin-page .loading,
+.admin-page .empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.admin-page .input,
+.admin-page input.input,
+.admin-page select.input,
+.admin-page textarea.input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.admin-page .input:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.admin-page .modal-mask,
+body.admin-theme .modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.admin-page .modal,
+body.admin-theme .modal {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  width: 480px;
+  max-width: 94vw;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+  color: var(--text-main);
+}
+
+/* 宽弹窗（节点列表等），避免被默认 480px 限制 */
+.admin-page .modal.nodes-modal,
+.admin-page .modal.modal-wide,
+body.admin-theme .modal.nodes-modal,
+body.admin-theme .modal.modal-wide {
+  width: min(1320px, 96vw);
+  max-width: 96vw;
+}
+
+.admin-page .modal-header,
+body.admin-theme .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-page .modal-header h2,
+body.admin-theme .modal-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.admin-page .modal-close,
+body.admin-theme .modal-close {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.admin-page .modal-body,
+body.admin-theme .modal-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-page .modal-footer,
+body.admin-theme .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+body.admin-theme .input,
+body.admin-theme input.input,
+body.admin-theme select.input,
+body.admin-theme textarea.input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+body.admin-theme .btn {
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body.admin-theme .btn.primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.admin-page .form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.admin-page .form-row label {
+  color: var(--text-muted);
+  font-weight: 600;
+}

@@ -49,7 +49,7 @@ onMounted(load)
 
 .hint {
   font-size: 13px;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .table {
@@ -60,12 +60,12 @@ onMounted(load)
 
 .table th,
 .table td {
-  border: 1px solid #1f2937;
+  border: 1px solid #e2e8f0;
   padding: 6px 8px;
 }
 
 .table th {
-  background: #020617;
+  background: #f8fafc;
   text-align: left;
 }
 </style>

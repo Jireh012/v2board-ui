@@ -1,0 +1,16 @@
+.git
+.github
+.idea
+.vscode
+.cursor
+.trellis
+node_modules
+dist
+dist-ssr
+*.log
+*.md
+.env
+.env.*
+.DS_Store
+**/.DS_Store
+*.local

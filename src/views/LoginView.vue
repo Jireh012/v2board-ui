@@ -25,6 +25,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '../api/auth'
+import { setSession } from '../auth'
 
 const router = useRouter()
 const email = ref('')
@@ -37,9 +38,12 @@ async function onSubmit() {
   loading.value = true
   try {
     const res = await login(email.value, password.value)
-    localStorage.setItem('auth_data', res.auth_data)
-    localStorage.setItem('token', res.token)
-    localStorage.setItem('is_admin', res.is_admin ? '1' : '0')
+    setSession({
+      auth_data: res.auth_data,
+      token: res.token,
+      is_admin: res.is_admin,
+      email: email.value.trim()
+    })
     await router.push('/dashboard')
   } catch (e) {
     const msg = e instanceof Error ? e.message : '登录失败'

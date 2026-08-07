@@ -3,7 +3,7 @@
   <div v-else class="app-root">
     <header class="app-header">
       <div class="header-content">
-        <div class="logo">
+        <RouterLink to="/dashboard" class="logo" title="用户中心">
           <div class="logo-icon">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -11,33 +11,40 @@
               <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <span>谜之站点</span>
+          <div class="brand-meta">
+            <span class="brand-name">谜之站点</span>
+            <span class="user-badge">用户中心</span>
+          </div>
+        </RouterLink>
+
+        <div class="header-center">
+          <span class="page-chip">{{ pageTitle }}</span>
         </div>
-        
+
         <nav class="nav-right">
           <button v-if="!isLogin" class="btn-login" @click="goLogin">登录</button>
           <div
             v-else
             class="user-profile-trigger"
+            :class="{ open: showUserMenu }"
             @click="toggleUserMenu"
             @mouseleave="closeUserMenu"
           >
-            <div class="avatar">
-              {{ userEmail.charAt(0).toUpperCase() }}
-            </div>
+            <div class="avatar">{{ userEmail.charAt(0).toUpperCase() || 'U' }}</div>
             <div class="user-info-text">
-              <span class="user-email">{{ userEmail }}</span>
+              <span class="user-email">{{ userEmail || '用户' }}</span>
+              <span class="user-role">Member</span>
             </div>
             <span class="caret" :class="{ open: showUserMenu }">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </span>
-            
+
             <transition name="fade-slide">
               <div v-if="showUserMenu" class="user-dropdown">
                 <div class="dropdown-header">
-                  <div class="big-avatar">{{ userEmail.charAt(0).toUpperCase() }}</div>
+                  <div class="big-avatar">{{ userEmail.charAt(0).toUpperCase() || 'U' }}</div>
                   <div class="dropdown-user-info">
-                    <div class="dropdown-email">{{ userEmail }}</div>
+                    <div class="dropdown-email">{{ userEmail || '用户' }}</div>
                     <div class="dropdown-status">在线</div>
                   </div>
                 </div>
@@ -135,13 +142,14 @@
           </div>
         </div>
 
-        <div v-if="isAdminUser" class="menu-group admin-group">
-          <RouterLink to="/admin" class="menu-item admin-link">
+        <div class="sidebar-footer">
+          <RouterLink v-if="isAdminUser" to="/admin" class="menu-item admin-link">
             <div class="menu-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </div>
             <span class="menu-text">后台管理</span>
           </RouterLink>
+          <div class="sidebar-brand">谜之站点 · 用户中心</div>
         </div>
       </aside>
       
@@ -159,36 +167,72 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter, RouterView, RouterLink } from 'vue-router'
-import { getUserInfo, type UserInfo } from './api/user'
+import { getUserInfo } from './api/user'
+import {
+  clearSession,
+  currentUserEmail,
+  isAdminUser,
+  isLoggedIn,
+  setUserEmail
+} from './auth'
 
 const route = useRoute()
 const router = useRouter()
 
-const isLogin = computed(() => !!localStorage.getItem('auth_data'))
+const isLogin = isLoggedIn
 const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 const isLoginRoute = computed(() => route.path === '/login')
-const isAdminUser = computed(() => localStorage.getItem('is_admin') === '1')
 
-const userInfo = ref<UserInfo | null>(null)
-const userEmail = computed(
-  () => userInfo.value?.email || localStorage.getItem('admin_email') || '账户'
-)
+const userEmail = currentUserEmail
 const showUserMenu = ref(false)
 
-onMounted(async () => {
-  if (!isLogin.value) return
+const pageTitleMap: Record<string, string> = {
+  '/dashboard': '仪表盘',
+  '/knowledge': '使用文档',
+  '/plan': '购买订阅',
+  '/server': '节点状态',
+  '/order': '我的订单',
+  '/invite': '我的邀请',
+  '/profile': '基本设置',
+  '/ticket': '我的工单',
+  '/traffic': '流量明细'
+}
+
+const pageTitle = computed(() => {
+  const path = route.path
+  if (pageTitleMap[path]) return pageTitleMap[path]
+  if (path.startsWith('/plan')) return '购买订阅'
+  if (path.startsWith('/order')) return '我的订单'
+  if (path.startsWith('/knowledge')) return '使用文档'
+  if (path.startsWith('/ticket')) return '我的工单'
+  return '用户中心'
+})
+
+async function refreshUserProfile() {
+  if (!isLogin.value || isLoginRoute.value || isAdminRoute.value) return
   try {
-    userInfo.value = await getUserInfo()
+    const info = await getUserInfo()
+    if (info?.email) {
+      setUserEmail(info.email)
+    }
   } catch {
     // ignore
   }
-})
+}
+
+watch(
+  () => [isLogin.value, route.path] as const,
+  () => {
+    void refreshUserProfile()
+  },
+  { immediate: true }
+)
 
 const goLogin = () => router.push('/login')
 const logout = () => {
-  localStorage.clear()
+  clearSession()
   router.push('/login')
 }
 const toggleUserMenu = () => { showUserMenu.value = !showUserMenu.value }
@@ -209,110 +253,220 @@ const goProfile = () => {
 }
 
 .app-header {
-  height: 72px;
-  background-color: #ffffff;
-  border-bottom: 1px solid var(--border-color);
-  padding: 0 24px;
+  position: relative;
+  height: 68px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #eef2f7;
+  padding: 0 28px;
   display: flex;
   align-items: center;
   z-index: 100;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
 }
 
 .header-content {
   width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .logo {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 12px;
-  font-size: 20px;
-  font-weight: 800;
   color: var(--text-main);
-  letter-spacing: -0.02em;
+  text-decoration: none;
+  flex-shrink: 0;
+  min-width: 0;
+  margin-right: auto;
+  transition: opacity 0.15s ease;
 }
 
+.logo:hover { opacity: 0.92; }
+
 .logo-icon {
-  width: 38px;
-  height: 38px;
-  background: linear-gradient(135deg, var(--primary-color), #4f46e5);
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(145deg, #3b82f6, #2563eb);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.45);
+  flex-shrink: 0;
 }
 
 .logo-icon svg { width: 22px; height: 22px; }
+
+.brand-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.user-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #eff6ff, #dbeafe);
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.header-center .page-chip {
+  pointer-events: auto;
+}
+
+.page-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.btn-login {
+  height: 38px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 18px -8px rgba(37, 99, 235, 0.45);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-login:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px -10px rgba(37, 99, 235, 0.5);
+}
 
 .user-profile-trigger {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 14px;
-  background: #f8fafc;
-  border: 1px solid var(--border-color);
+  gap: 10px;
+  padding: 5px 12px 5px 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
 }
 
-.user-profile-trigger:hover {
-  background: #ffffff;
-  border-color: #e2e8f0;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+.user-profile-trigger:hover,
+.user-profile-trigger.open {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+  box-shadow: 0 8px 18px -8px rgba(37, 99, 235, 0.28);
 }
 
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  background: linear-gradient(145deg, #60a5fa, #2563eb);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
-  color: #475569;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+}
+
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
 .user-email {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
 }
 
 .caret {
   color: #94a3b8;
-  transition: transform 0.3s;
+  transition: transform 0.2s ease, color 0.15s ease;
+  display: flex;
+  margin-left: 2px;
 }
+
+.user-profile-trigger:hover .caret,
+.caret.open { color: #64748b; }
 
 .caret.open { transform: rotate(180deg); }
 
 .user-dropdown {
   position: absolute;
-  top: calc(100% + 12px);
+  top: calc(100% + 10px);
   right: 0;
-  min-width: 260px;
-  width: max-content;
+  min-width: 268px;
   background: #ffffff;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 22px 40px -16px rgba(15, 23, 42, 0.22);
   padding: 8px;
   z-index: 1000;
 }
 
-/* 增加一个不可见的桥接层，防止鼠标移向下拉框时因为 12px 的间距导致触发 mouseleave */
 .user-dropdown::before {
   content: '';
   position: absolute;
@@ -353,12 +507,14 @@ const goProfile = () => {
   font-weight: 800;
   color: var(--text-main);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dropdown-status {
   font-size: 12px;
   color: #10b981;
-  font-weight: 500;
+  font-weight: 600;
   margin-top: 2px;
 }
 
@@ -381,6 +537,7 @@ const goProfile = () => {
   font-weight: 600;
   color: var(--text-muted);
   text-align: left;
+  cursor: pointer;
   transition: all 0.2s;
 }
 
@@ -462,10 +619,37 @@ const goProfile = () => {
   color: var(--primary-color);
 }
 
-.admin-group {
+.sidebar-footer {
   margin-top: auto;
-  border-top: 1px solid var(--border-color);
-  padding-top: 24px;
+  border-top: 1px solid #eef2f7;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-link {
+  background: linear-gradient(180deg, #eff6ff, #f8fbff);
+  border: 1px solid #dbeafe;
+  color: #1d4ed8;
+}
+
+.admin-link:hover {
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.admin-link .menu-icon {
+  opacity: 1;
+  color: #2563eb;
+}
+
+.sidebar-brand {
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
 }
 
 .content {
@@ -496,9 +680,11 @@ const goProfile = () => {
 .page-leave-to { opacity: 0; transform: translateY(-10px); }
 
 @media (max-width: 1024px) {
+  .app-header { padding: 0 16px; }
   .sidebar { width: 80px; padding: 24px 8px; }
-  .menu-text, .menu-group-title { display: none; }
+  .menu-text, .menu-group-title, .user-badge, .header-center, .user-info-text, .sidebar-brand { display: none; }
   .menu-item { justify-content: center; }
   .menu-icon { width: 24px; height: 24px; }
+  .user-profile-trigger { padding: 4px; }
 }
 </style>

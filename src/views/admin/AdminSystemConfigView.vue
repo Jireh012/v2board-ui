@@ -1,13 +1,20 @@
 <template>
   <div class="config-page">
-    <h1 class="page-title">系统配置</h1>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">系统配置</h1>
+        <p class="page-subtitle">按分组管理站点、安全、订阅与第三方集成参数</p>
+      </div>
+    </div>
 
-    <div class="tabs">
+    <div class="tabs" role="tablist">
       <button
         v-for="tab in tabs"
         :key="tab.key"
         type="button"
         class="tab"
+        role="tab"
+        :aria-selected="currentTab === tab.key"
         :class="{ active: currentTab === tab.key }"
         @click="currentTab = tab.key"
       >
@@ -397,22 +404,29 @@ const Row = defineComponent({
 
 const Toggle = defineComponent({
   name: 'ToggleSwitch',
-  props: { modelValue: { type: Number as PropType<number | undefined>, default: 0 } },
+  props: {
+    modelValue: {
+      type: [Number, Boolean] as PropType<number | boolean | undefined>,
+      default: 0
+    }
+  },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
+    const isOn = () => props.modelValue === 1 || props.modelValue === true
     return () =>
       h('div', { class: 'toggle-col' }, [
         h(
           'button',
           {
             type: 'button',
-            class: ['toggle', { on: props.modelValue === 1 }],
+            class: ['toggle', { on: isOn() }],
             role: 'switch',
-            'aria-checked': props.modelValue === 1,
-            onClick: () => emit('update:modelValue', props.modelValue === 1 ? 0 : 1)
+            'aria-checked': isOn(),
+            onClick: () => emit('update:modelValue', isOn() ? 0 : 1)
           },
           [h('span', { class: 'toggle-thumb' })]
-        )
+        ),
+        h('span', { class: 'toggle-state' }, isOn() ? '已开启' : '已关闭')
       ])
   }
 })
@@ -528,152 +542,298 @@ load()
 
 <style scoped>
 .config-page {
-  max-width: 900px;
+  max-width: 960px;
+}
+
+.page-header {
+  margin-bottom: 4px;
 }
 
 .page-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 16px;
-  color: #e5e7eb;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main, #0f172a);
+}
+
+.page-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-muted, #64748b);
 }
 
 /* ---- Tabs ---- */
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #1e293b;
-  padding-bottom: 0;
+  gap: 6px;
+  margin: 16px 0 18px;
+  padding: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
 }
 
 .tab {
-  padding: 10px 14px;
-  border: none;
+  padding: 8px 12px;
+  border: 1px solid transparent;
   background: transparent;
-  color: #94a3b8;
+  color: #64748b;
   font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 10px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.tab:hover { color: #e5e7eb; }
-.tab.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+.tab:hover {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.tab.active {
+  color: #1d4ed8;
+  background: #ffffff;
+  border-color: #bfdbfe;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
 
 /* ---- Panel ---- */
 .panel {
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  border-radius: 8px;
-  padding: 20px 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 8px 20px 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-/* ---- Form Row ---- */
-.form-row {
+/*
+ * Row / Toggle / Actions 均为同文件子组件，scoped 默认不穿透。
+ * 用 :deep 保证样式生效，并压过全局 .admin-page .form-row。
+ */
+.config-page :deep(.form-row) {
   display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 20px;
-  align-items: start;
+  grid-template-columns: minmax(200px, 1fr) minmax(240px, 1.15fr);
+  gap: 16px 28px;
+  align-items: center;
+  padding: 16px 4px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.label-col label {
+.config-page :deep(.form-row:has(+ .form-actions)) {
+  border-bottom: none;
+}
+
+.config-page :deep(.label-col label) {
   display: block;
   font-size: 13px;
-  font-weight: 500;
-  color: #e5e7eb;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
   margin-bottom: 4px;
 }
 
-.label-col .desc {
+.config-page :deep(.label-col .desc) {
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-muted, #64748b);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
-.input-col { min-width: 0; }
+.config-page :deep(.input-col) {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
 
-.input {
+.config-page :deep(.input) {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   font-size: 13px;
-  color: #e5e7eb;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 6px;
+  color: var(--text-main, #0f172a);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   box-sizing: border-box;
   font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.input:focus { outline: none; border-color: #38bdf8; }
+.config-page :deep(.input:focus) {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
 
-select.input { cursor: pointer; }
+.config-page :deep(select.input) {
+  cursor: pointer;
+}
 
-.textarea { resize: vertical; line-height: 1.5; }
+.config-page :deep(.textarea) {
+  resize: vertical;
+  line-height: 1.5;
+  min-height: 96px;
+}
 
-/* ---- Toggle ---- */
-.toggle-col { display: flex; align-items: center; }
+/* ---- Toggle：关闭态必须有可见轨道色，不能白底白钮 ---- */
+.config-page :deep(.toggle-col) {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
 
-.toggle {
+.config-page :deep(.toggle) {
   width: 44px;
-  height: 24px;
+  height: 26px;
   padding: 0;
-  border: none;
-  border-radius: 12px;
-  background: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #e2e8f0;
   cursor: pointer;
   position: relative;
-  transition: background 0.2s;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
-.toggle.on { background: #38bdf8; }
+.config-page :deep(.toggle:hover) {
+  background: #cbd5e1;
+}
 
-.toggle-thumb {
+.config-page :deep(.toggle.on) {
+  background: var(--primary-color, #2563eb);
+  border-color: var(--primary-color, #2563eb);
+  box-shadow: none;
+}
+
+.config-page :deep(.toggle.on:hover) {
+  background: var(--primary-hover, #1d4ed8);
+  border-color: var(--primary-hover, #1d4ed8);
+}
+
+.config-page :deep(.toggle:focus-visible) {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.config-page :deep(.toggle-thumb) {
   position: absolute;
   top: 2px;
   left: 2px;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #fff;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
   transition: transform 0.2s;
 }
 
-.toggle.on .toggle-thumb { transform: translateX(20px); }
+.config-page :deep(.toggle.on .toggle-thumb) {
+  transform: translateX(18px);
+}
+
+.config-page :deep(.toggle-state) {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  user-select: none;
+}
+
+.config-page :deep(.toggle.on + .toggle-state) {
+  color: #1d4ed8;
+}
 
 /* ---- Buttons ---- */
+.config-page :deep(.form-actions),
 .form-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
 }
 
+.config-page :deep(.btn),
 .btn {
-  padding: 8px 16px;
+  padding: 9px 16px;
   font-size: 13px;
-  border-radius: 6px;
+  font-weight: 600;
+  border-radius: 10px;
   cursor: pointer;
-  border: none;
+  border: 1px solid transparent;
 }
 
-.btn.primary { background: #38bdf8; color: #0f172a; }
-.btn.primary:hover:not(:disabled) { background: #7dd3fc; }
-.btn.primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.config-page :deep(.btn.primary),
+.btn.primary {
+  background: var(--primary-color, #2563eb);
+  border-color: var(--primary-color, #2563eb);
+  color: #ffffff;
+}
 
-.btn.secondary { background: #334155; color: #e5e7eb; }
-.btn.secondary:hover:not(:disabled) { background: #475569; }
-.btn.secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+.config-page :deep(.btn.primary:hover:not(:disabled)),
+.btn.primary:hover:not(:disabled) {
+  background: var(--primary-hover, #1d4ed8);
+  border-color: var(--primary-hover, #1d4ed8);
+}
 
-.msg { font-size: 13px; }
-.msg.ok { color: #4ade80; }
-.msg.err { color: #f87171; }
+.config-page :deep(.btn.primary:disabled),
+.btn.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
-.loading { color: #64748b; font-size: 14px; margin: 0; }
+.config-page :deep(.btn.secondary),
+.btn.secondary {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.config-page :deep(.btn.secondary:hover:not(:disabled)),
+.btn.secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.config-page :deep(.btn.secondary:disabled),
+.btn.secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.config-page :deep(.msg),
+.msg {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.config-page :deep(.msg.ok),
+.msg.ok {
+  color: #15803d;
+}
+
+.config-page :deep(.msg.err),
+.msg.err {
+  color: #dc2626;
+}
+
+.loading {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+  padding: 24px 0;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .config-page :deep(.form-row) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
 </style>

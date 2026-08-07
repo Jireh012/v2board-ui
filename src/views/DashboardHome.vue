@@ -173,7 +173,7 @@
             <h3>快捷同步订阅</h3>
             <button class="close-btn" @click="closeSubscribeModal">×</button>
           </div>
-          <div class="modal-body sub-options">
+          <div v-if="!showSubscribeQr" class="modal-body sub-options">
             <div class="sub-method" @click="copySubscribeUrl">
               <div class="m-icon">📋</div>
               <span>复制订阅地址</span>
@@ -194,6 +194,17 @@
                 <span class="c-icon">M</span><span>ClashMeta</span>
               </div>
             </div>
+          </div>
+          <div v-else class="modal-body qr-panel">
+            <img
+              v-if="subscribeQrUrl"
+              class="qr-image"
+              :src="subscribeQrUrl"
+              alt="订阅二维码"
+            />
+            <p v-else class="qr-empty">暂无订阅地址，无法生成二维码</p>
+            <p class="qr-tip">使用客户端扫描上方二维码以导入订阅</p>
+            <button type="button" class="btn-back" @click="showSubscribeQr = false">返回</button>
           </div>
         </div>
       </div>
@@ -235,6 +246,8 @@
         </div>
       </div>
     </transition>
+
+    <p v-if="toastMessage" class="toast" :class="{ error: toastError }">{{ toastMessage }}</p>
   </div>
 </template>
 
@@ -252,6 +265,30 @@ const showNoticeDialog = ref(false)
 const loadingNoticeDetail = ref(false)
 const showSubscribeModal = ref(false)
 const showSubscribeQr = ref(false)
+const toastMessage = ref('')
+const toastError = ref(false)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showToast(msg: string, error = false) {
+  toastMessage.value = msg
+  toastError.value = error
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    if (toastMessage.value === msg) toastMessage.value = ''
+  }, 2400)
+}
+
+/** 后端若只返回相对路径，用当前访问 origin 拼成完整可导入地址 */
+function toAbsoluteSubscribeUrl(raw: string | null | undefined): string {
+  const url = (raw || '').trim()
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('//')) {
+    return `${window.location.protocol}${url}`
+  }
+  const path = url.startsWith('/') ? url : `/${url}`
+  return `${window.location.origin}${path}`
+}
 
 onMounted(async () => {
   try {
@@ -316,16 +353,51 @@ const oneClickSubscribe = () => {
 
 const renewOrBuyText = computed(() => subscribe.value?.plan_id ? '续费套餐' : '购买套餐')
 const renewOrBuyDesc = computed(() => subscribe.value?.plan_id ? '延长订阅有效期' : '开启极速连接体验')
-const subscribeUrl = computed(() => subscribe.value?.subscribe_url || '')
+const subscribeUrl = computed(() => toAbsoluteSubscribeUrl(subscribe.value?.subscribe_url))
 
-const copySubscribeUrl = () => {
-  navigator.clipboard.writeText(subscribeUrl.value).then(() => {
-    alert('复制成功') // In a real app we would use a toast
-  })
+const copySubscribeUrl = async () => {
+  const url = subscribeUrl.value
+  if (!url) {
+    showToast('暂无订阅地址', true)
+    return
+  }
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+    } else {
+      const input = document.createElement('textarea')
+      input.value = url
+      input.setAttribute('readonly', '')
+      input.style.position = 'fixed'
+      input.style.left = '-9999px'
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+    }
+    showToast('复制成功')
+  } catch {
+    showToast('复制失败，请手动复制', true)
+  }
 }
 
-const openSubscribeQr = () => { showSubscribeQr.value = true }
-const closeSubscribeModal = () => { showSubscribeModal.value = false }
+const subscribeQrUrl = computed(() => {
+  const url = subscribeUrl.value
+  if (!url) return ''
+  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`
+})
+
+const openSubscribeQr = () => {
+  if (!subscribeUrl.value) {
+    showToast('暂无订阅地址', true)
+    return
+  }
+  showSubscribeQr.value = true
+}
+const closeSubscribeModal = () => {
+  showSubscribeModal.value = false
+  showSubscribeQr.value = false
+}
 
 const hiddifyLink = computed(() => `hiddify://import/${subscribeUrl.value}&flag=sing#${document.title}`)
 const singboxLink = computed(() => `sing-box://import-remote-profile?url=${encodeURIComponent(subscribeUrl.value)}#${document.title}`)
@@ -723,6 +795,55 @@ const noticeDialogContent = computed(() => (noticeDetail.value ?? currentNotice.
 
 .sub-options { padding: 24px; }
 
+.qr-panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.qr-image {
+  width: 220px;
+  height: 220px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.qr-empty {
+  margin: 24px 0;
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.qr-tip {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.btn-back {
+  margin-top: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.btn-back:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: var(--primary-color);
+}
+
 .sub-method {
   display: flex;
   align-items: center;
@@ -856,6 +977,26 @@ const noticeDialogContent = computed(() => (noticeDetail.value ?? currentNotice.
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 3000;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.toast.error {
+  background: #ef4444;
 }
 
 /* Modal Animation */

@@ -223,7 +223,7 @@ async function onSaveSort() {
 
 .hint {
   font-size: 13px;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .table {
@@ -234,12 +234,12 @@ async function onSaveSort() {
 
 .table th,
 .table td {
-  border: 1px solid #1f2937;
+  border: 1px solid #e2e8f0;
   padding: 6px 8px;
 }
 
 .table th {
-  background: #020617;
+  background: #f8fafc;
   text-align: left;
 }
 
@@ -279,10 +279,10 @@ async function onSaveSort() {
 }
 
 .card {
-  background: rgba(15, 23, 42, 0.95);
+  background: #ffffff;
   border-radius: 12px;
   padding: 14px 16px;
-  border: 1px solid #1f2937;
+  border: 1px solid #e2e8f0;
 }
 
 .field {
@@ -300,8 +300,8 @@ async function onSaveSort() {
   padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid #374151;
-  background: #020617;
-  color: #e5e7eb;
+  background: #ffffff;
+  color: #1e293b;
 }
 
 .field.checkbox {
@@ -319,7 +319,7 @@ async function onSaveSort() {
 .sort-index {
   margin-left: 4px;
   font-size: 12px;
-  color: #9ca3af;
+  color: #64748b;
 }
 </style>
 

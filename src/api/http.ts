@@ -1,3 +1,5 @@
+import { clearSession } from '../auth'
+
 export interface ApiResponse<T> {
   code: number
   message: string
@@ -26,9 +28,7 @@ export async function request<T>(
   const resp = await fetch(url, { ...init, headers })
 
   if (resp.status === 401) {
-    localStorage.removeItem('auth_data')
-    localStorage.removeItem('token')
-    localStorage.removeItem('admin_email')
+    clearSession()
 
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname

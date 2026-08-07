@@ -25,6 +25,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminLogin } from '../api/admin'
+import { setSession } from '../auth'
 
 const router = useRouter()
 const email = ref('')
@@ -37,11 +38,13 @@ async function onSubmit() {
   loading.value = true
   try {
     const res = await adminLogin(email.value, password.value)
-    // 管理端现在也返回 auth_data，与用户登录相同格式
-    localStorage.setItem('auth_data', res.auth_data)
-    localStorage.setItem('token', res.token)
-    localStorage.setItem('admin_email', email.value)
-    localStorage.setItem('is_admin', res.is_admin ? '1' : '0')
+    setSession({
+      auth_data: res.auth_data,
+      token: res.token,
+      is_admin: res.is_admin,
+      email: email.value.trim()
+    })
+    localStorage.setItem('admin_email', email.value.trim())
     await router.push('/admin')
   } catch (e) {
     const msg = e instanceof Error ? e.message : '登录失败'

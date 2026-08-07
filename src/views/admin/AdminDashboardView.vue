@@ -1,11 +1,19 @@
 <template>
   <div class="admin-dashboard">
-    <h1>概览</h1>
-    <p class="hint">这里可以扩展成类似原版 PHP 后台的统计面板。</p>
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">仪表盘</h1>
+        <p class="page-subtitle">管理节点、用户、订单与系统配置的控制台入口。</p>
+      </div>
+    </div>
     <div class="cards">
       <div class="card">
-        <h2>提示</h2>
-        <p>导航左侧已经提供用户、套餐、订单、工单、知识库、支付方式等管理入口。</p>
+        <h2>快速开始</h2>
+        <p>左侧导航可进入用户、套餐、订单、工单、节点、支付与内容管理。</p>
+      </div>
+      <div class="card">
+        <h2>界面说明</h2>
+        <p>管理后台已与用户端统一为浅色布局与交互样式，便于日常运维。</p>
       </div>
     </div>
   </div>
@@ -15,38 +23,23 @@
 </script>
 
 <style scoped>
-.admin-dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.hint {
-  font-size: 13px;
-  color: #9ca3af;
-}
-
 .cards {
   display: grid;
-  grid-template-columns: minmax(260px, 420px);
-}
-
-.card {
-  background: rgba(15, 23, 42, 0.9);
-  border-radius: 12px;
-  padding: 16px 18px;
-  border: 1px solid #1f2937;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
 
 .card h2 {
-  margin-top: 0;
-  margin-bottom: 8px;
+  margin: 0 0 8px;
   font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
 }
 
 .card p {
   margin: 0;
   font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
 }
 </style>
-
