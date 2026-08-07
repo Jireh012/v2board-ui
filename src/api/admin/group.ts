@@ -5,6 +5,7 @@ export interface ServerGroup {
   name: string
   user_count?: number
   server_count?: number
+  plan_count?: number
   created_at: number
   updated_at: number
 }

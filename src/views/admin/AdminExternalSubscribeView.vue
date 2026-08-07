@@ -92,11 +92,14 @@
               </td>
               <td>
                 <div class="sync-cell">
-                  <span class="sync-badge" :class="s.last_sync_status || 'none'">
-                    {{ syncLabel(s.last_sync_status) }}
-                  </span>
-                  <span class="sync-msg" :title="s.last_sync_message || ''">
-                    {{ s.last_sync_message || fmtTime(s.last_sync_at) }}
+                  <div class="sync-top">
+                    <span class="sync-badge" :class="s.last_sync_status || 'none'">
+                      {{ syncLabel(s.last_sync_status) }}
+                    </span>
+                    <span class="sync-time">{{ fmtTime(s.last_sync_at) }}</span>
+                  </div>
+                  <span v-if="s.last_sync_message" class="sync-msg" :title="s.last_sync_message">
+                    {{ s.last_sync_message }}
                   </span>
                 </div>
               </td>
@@ -644,7 +647,10 @@ load()
 .node-metric {
   display: inline-flex;
   align-items: baseline;
+  flex-wrap: nowrap;
   gap: 4px;
+  white-space: nowrap;
+  min-width: max-content;
   font-variant-numeric: tabular-nums;
 }
 
@@ -665,12 +671,21 @@ load()
   font-size: 11px;
   color: #94a3b8;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .sync-cell {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 168px;
+}
+
+.sync-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .sync-badge {
@@ -688,8 +703,16 @@ load()
 .sync-badge.running { background: #fffbeb; color: #d97706; }
 .sync-badge.none { background: #f1f5f9; color: #94a3b8; }
 
+.sync-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .sync-msg {
-  max-width: 220px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

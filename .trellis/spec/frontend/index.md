@@ -29,6 +29,15 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 - [ ] If changing subscribe copy/import: absolute-ize relative `subscribe_url`
 - [ ] If changing node editor: permission groups / routes / parent must select by **name**, not raw IDs
 - [ ] Same-file `defineComponent` + `h()` children need `:deep()` for scoped styles
+- [ ] Admin toolbars: do not use full-width `.input` on horizontal search rows
+- [ ] Order search: default `模糊` for text; no `>` / `<` UI
+- [ ] Money = cents ↔ yuan; plan `transfer_enable` = GB (see API `admin-commerce.md`)
+- [ ] Wide admin modals: register in `admin.css` (`modal-wide` / `modal-edit` / `modal-detail`) — default is **480px**
+- [ ] User edit: `remarks` in list; user traffic fields are **bytes** in API (see API `admin-user.md`)
+- [ ] User ops「TA 的登录」→ `GET /admin/user/getLoginLog` (paginated IP/UA history)
+- [ ] Order detail: show `email` + `remarks` from detail API; hero user chip **one line** (`email · #id · remarks`)
+- [ ] Ticket reply: `application/x-www-form-urlencoded`, not JSON
+- [ ] External sync cell: always show `last_sync_at`, not only message
 
 ---
 

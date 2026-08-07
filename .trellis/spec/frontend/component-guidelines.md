@@ -86,6 +86,165 @@ function toAbsoluteSubscribeUrl(raw: string | null | undefined): string {
 
 ---
 
+## Common Mistake: Admin modal stuck at 480px
+
+**Symptom**: Setting `width: 1080px` on `.modal.modal-edit` in a page SFC has **no effect**.
+
+**Cause**: Global `src/styles/admin.css` sets:
+
+```css
+body.admin-theme .modal { width: 480px; max-width: 94vw; }
+```
+
+Specificity (`body.admin-theme .modal` = 0,2,1) beats `.modal.modal-edit` (0,2,0). Teleported modals still match `body.admin-theme`.
+
+**Fix**: Register wide variants in `admin.css`:
+
+```css
+body.admin-theme .modal.modal-wide,
+body.admin-theme .modal.nodes-modal { width: min(1320px, 96vw); }
+body.admin-theme .modal.modal-edit { width: min(1080px, 96vw); max-width: 96vw; }
+body.admin-theme .modal.modal-detail { width: min(960px, 96vw); max-width: 96vw; }
+```
+
+Or raise local specificity: `body.admin-theme .modal.modal-edit { width: … !important; }`.
+
+**Prevention**: New admin modals that need >480px must use `modal-wide` / `modal-edit` / `modal-detail` / `nodes-modal` (or extend the global allowlist).
+
+---
+
+## Convention: Order detail user chip (one line)
+
+**What**: In `AdminOrdersView` detail hero, show buyer as a single line:
+
+`email · #user_id · remarks` (remarks omitted if empty). Also mirror email/remarks in 订单信息 rows.
+
+**Why**: Stacking email / id / remarks vertically makes the hero chip taller than sibling chips (套餐 / 周期).
+
+**Don't**: Multi-line `hero-chip` content for user identity.
+
+**API**: `POST /api/v1/admin/order/detail` returns `email` / `remarks` / `plan_name` (see API `admin-commerce.md`). List rows do not include email.
+
+**Modal**: Use class `modal modal-detail` (global ~960px).
+
+---
+
+## Pattern: Admin DateTimePicker
+
+**Problem**: Native `datetime-local` looks inconsistent; empty expiry should mean「长期有效」.
+
+**Solution**: Reuse `src/components/admin/DateTimePicker.vue`.
+
+- `v-model` string: `YYYY-MM-DDTHH:mm` (same as prior `expired_local`)
+- Empty model → placeholder「长期有效」; clear emits `''`
+- Popover `Teleport` to `body`; trigger `@click.stop` so document click does not immediately close
+
+**Related**: User `expired_at` unix seconds conversion stays in the parent view.
+
+---
+
+## Convention: External subscribe「上次同步」cell
+
+**What**: Show badge + **time** + message on separate lines/rows.
+
+```html
+<div class="sync-top">
+  <span class="sync-badge">…</span>
+  <span class="sync-time">{{ fmtTime(s.last_sync_at) }}</span>
+</div>
+<span v-if="s.last_sync_message" class="sync-msg">…</span>
+```
+
+**Don't**: `{{ s.last_sync_message || fmtTime(s.last_sync_at) }}`.
+
+**Related**: API fields in `backend/external-subscribe.md`.
+
+---
+
+## Convention: Compact metric cells (nowrap)
+
+**What**: Inline metrics like `216 / 459 可达` use `white-space: nowrap` + `flex-wrap: nowrap` on `.node-metric`.
+
+**Why**: Longer digit counts wrap「可达」onto a second line.
+
+---
+
+## Convention: Admin list toolbar (horizontal search)
+
+**What**: Search field + input + actions stay on **one horizontal row** inside a `.toolbar-card`. Status pills and secondary toggles sit on a second row.
+
+**Why**: Global/modal `.input { width: 100%; }` makes every `<select>`/`<input>` full-width and stacks the toolbar vertically (seen on 订单管理).
+
+**Do**:
+
+```css
+.search-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.search-select { width: auto; min-width: 120px; height: 38px; /* not width:100% */ }
+.search-field { flex: 1 1 260px; display: flex; align-items: center; }
+.search-text { border: 0; width: auto; flex: 1; min-width: 0; }
+```
+
+**Don't**: Reuse the modal `.input { width: 100%; }` class as the only class on toolbar controls.
+
+**Related**: Order fuzzy search below; money units in API `backend/admin-commerce.md`.
+
+---
+
+## Convention: Admin order search — fuzzy by default
+
+**What**: Order list search does **not** expose `>`, `<`, `=`, `!=`. Text filters use condition `模糊`; exact keys use `=`.
+
+| Key | Condition |
+|-----|-----------|
+| `trade_no`, `email`, `callback_no` | `模糊` |
+| `user_id`, `invite_user_id`, `status`, `commission_status` | `=` |
+
+Status quick pills append a separate `status=` filter; do not require the operator dropdown.
+
+**Example** (`AdminOrdersView.vue`):
+
+```ts
+const EXACT_KEYS = new Set(['user_id', 'invite_user_id', 'status', 'commission_status'])
+filters.push({
+  key,
+  condition: EXACT_KEYS.has(key) ? '=' : '模糊',
+  value: value.trim()
+})
+```
+
+---
+
+## Convention: Admin money / traffic display
+
+**What**:
+
+| API field | UI |
+|-----------|-----|
+| `*_amount`, coupon type 1 `value`, giftcard type 1 `value` | Yuan: `(v/100).toFixed(2)` on show; `Math.round(yuan*100)` on save |
+| Coupon type 2 `value` | Percent integer — **no** `/100` |
+| Plan `transfer_enable` | GB as stored — **no** byte conversion in the form |
+| Giftcard type 3 | GB; type 2/5 | days |
+
+**Why**: Wrong unit on plan traffic previously broke 订阅管理 forms.
+
+---
+
+## Pattern: Admin detail modal (orders)
+
+**Problem**: Flat two-column key/value grids bury amount and status.
+
+**Solution**: Header badges (status/type) + copyable `trade_no` → hero amount strip → section cards (金额明细 / 订单信息 / 佣金) → footer actions for pending orders. Zero money fields show `—`.
+
+---
+
+## Pattern: Sticky ops menu via Teleport
+
+**Problem**: Table「操作」dropdown clipped by `overflow` on table wrappers.
+
+**Solution**: Menu `Teleport` to `body` with `position: fixed` from the trigger `getBoundingClientRect()`; sticky right ops column.
+
+---
+
 ## Common Mistake: Clash shows unmarked third-party names
 
 **Symptom**: Panel nodes show `🔒`, external nodes show original names only.

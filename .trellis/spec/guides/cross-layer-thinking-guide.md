@@ -49,6 +49,16 @@ For each boundary:
 - What is the exact output format?
 - What errors can occur?
 
+### Project-specific boundary checks (v2board-ui)
+
+- [ ] Money fields: API cents ↔ UI yuan (`/100` / `*100`); coupon type 2 is percent (no `/100`)
+- [ ] Plan `transfer_enable` is **GB**; **user** `transfer_enable`/`u`/`d` are **bytes**
+- [ ] Order text search uses filter condition `模糊`; IDs/status use `=`
+- [ ] Admin toolbar controls must not inherit modal `.input { width: 100% }` (breaks horizontal layout)
+- [ ] Admin modal width: global theme forces 480px unless `modal-wide` / `modal-edit` / `modal-detail` (see component-guidelines)
+- [ ] Order detail: backend joins `email`/`remarks`/`plan_name`; UI one-line user chip (see API `admin-commerce.md`)
+- [ ] Details: see [component-guidelines.md](../frontend/component-guidelines.md), API `admin-commerce.md`, `admin-user.md`
+
 ---
 
 ## Common Cross-Layer Mistakes

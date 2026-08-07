@@ -198,6 +198,20 @@ body.admin-theme .modal.modal-wide {
   max-width: 96vw;
 }
 
+/* 用户编辑等中等宽弹窗 */
+.admin-page .modal.modal-edit,
+body.admin-theme .modal.modal-edit {
+  width: min(1080px, 96vw);
+  max-width: 96vw;
+}
+
+/* 订单详情等双栏内容弹窗 */
+.admin-page .modal.modal-detail,
+body.admin-theme .modal.modal-detail {
+  width: min(960px, 96vw);
+  max-width: 96vw;
+}
+
 .admin-page .modal-header,
 body.admin-theme .modal-header {
   display: flex;

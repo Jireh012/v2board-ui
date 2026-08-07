@@ -28,6 +28,7 @@ export interface AdminUser {
   device_limit: number | null
   banned: number
   is_admin: number
+  is_staff?: number | null
   balance: number
   commission_balance: number
   commission_type: number | null
@@ -37,6 +38,8 @@ export interface AdminUser {
   invite_user_id: number | null
   telegram_id: number | null
   t: number | null
+  remarks?: string | null
+  last_login_at?: number | null
   created_at: number
   updated_at: number
   plan_name?: string
@@ -45,16 +48,30 @@ export interface AdminUser {
 }
 
 // ==================== Plan ====================
+/** 与后端 Plan JSON（snake_case）对齐；transfer_enable 单位为 GB */
 export interface AdminPlan {
   id?: number
   name: string
-  groupId?: number
-  transferEnable?: number
+  group_id?: number | null
+  transfer_enable?: number | null
+  device_limit?: number | null
+  speed_limit?: number | null
   show?: number
   renew?: number
-  sort?: number
-  monthPrice?: number
-  yearPrice?: number
+  sort?: number | null
+  content?: string | null
+  month_price?: number | null
+  quarter_price?: number | null
+  half_year_price?: number | null
+  year_price?: number | null
+  two_year_price?: number | null
+  three_year_price?: number | null
+  onetime_price?: number | null
+  reset_price?: number | null
+  reset_traffic_method?: number | null
+  capacity_limit?: number | null
+  created_at?: number
+  updated_at?: number
   count?: number
 }
 
@@ -88,6 +105,8 @@ export interface AdminOrderRow {
 }
 
 export interface AdminOrderDetail extends AdminOrderRow {
+  email?: string | null
+  remarks?: string | null
   commission_log?: CommissionLog[]
   surplus_orders?: AdminOrderRow[]
 }
@@ -163,16 +182,17 @@ export interface StatUserRank {
   total: number
 }
 
+/** 管理端按天聚合后的流量行（id/created_at 可能不存在） */
 export interface StatUserRecord {
-  id: number
+  id?: number
   user_id: number
   server_rate: number
   u: number
   d: number
   record_at: number
-  record_type: string
-  created_at: number
-  updated_at: number
+  record_type?: string
+  created_at?: number
+  updated_at?: number
 }
 
 // ==================== Notice ====================
@@ -192,13 +212,13 @@ export interface AdminCoupon {
   id?: number
   name?: string
   code?: string
-  type?: number  // 1=金额, 2=比例
+  type?: number  // 1=金额(分), 2=比例(%)
   value?: number
   show?: number
-  limit_use?: number
-  limit_use_with_user?: number
-  limit_plan_ids?: string
-  limit_period?: string
+  limit_use?: number | null
+  limit_use_with_user?: number | null
+  limit_plan_ids?: string | null
+  limit_period?: string | null
   started_at?: number
   ended_at?: number
   created_at?: number
@@ -210,11 +230,12 @@ export interface AdminGiftcard {
   id?: number
   name?: string
   code?: string
+  /** 1余额(分) 2延长天 3流量GB 4清空已用 5指定套餐 */
   type?: number
   value?: number
   plan_id?: number | null
-  limit_use?: number
-  used_user_ids?: string
+  limit_use?: number | null
+  used_user_ids?: string | null
   started_at?: number
   ended_at?: number
   created_at?: number
@@ -314,6 +335,29 @@ export async function resetAdminUserSecret(id: number): Promise<boolean> {
   })
 }
 
+export interface AdminUserLoginLog {
+  id: number
+  user_id: number
+  ip: string | null
+  user_agent: string | null
+  created_at: number
+}
+
+export interface AdminUserLoginLogResult extends PageResult<AdminUserLoginLog> {
+  email?: string
+  last_login_at?: number | null
+}
+
+export async function fetchAdminUserLoginLog(
+  userId: number,
+  current = 1,
+  pageSize = 10
+): Promise<AdminUserLoginLogResult> {
+  return request<AdminUserLoginLogResult>(
+    `/api/v1/admin/user/getLoginLog?user_id=${userId}&current=${current}&pageSize=${pageSize}`
+  )
+}
+
 // ==================== Plan API ====================
 export async function fetchAdminPlans(): Promise<AdminPlan[]> {
   return request<AdminPlan[]>('/api/v1/admin/plan/fetch')
@@ -342,6 +386,20 @@ export async function sortAdminPlans(ids: number[]): Promise<boolean> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(ids)
+  })
+}
+
+/** 快速切换前台显示 / 允许续费 */
+export async function updateAdminPlanFlags(
+  id: number,
+  flags: { show?: number; renew?: number }
+): Promise<boolean> {
+  const params = new URLSearchParams()
+  params.set('id', String(id))
+  if (flags.show !== undefined) params.set('show', String(flags.show))
+  if (flags.renew !== undefined) params.set('renew', String(flags.renew))
+  return request<boolean>(`/api/v1/admin/plan/update?${params.toString()}`, {
+    method: 'POST'
   })
 }
 
@@ -418,8 +476,20 @@ export async function assignAdminOrder(
 }
 
 // ==================== Ticket API ====================
-export async function fetchAdminTickets(current = 1, pageSize = 10): Promise<PageResult<AdminTicket>> {
-  return request<PageResult<AdminTicket>>(`/api/v1/admin/ticket/fetch?current=${current}&pageSize=${pageSize}`)
+export async function fetchAdminTickets(
+  current = 1,
+  pageSize = 10,
+  opts: { status?: number | null; reply_status?: number[] | null; email?: string | null } = {}
+): Promise<PageResult<AdminTicket>> {
+  const params = new URLSearchParams()
+  params.set('current', String(current))
+  params.set('pageSize', String(pageSize))
+  if (opts.status != null) params.set('status', String(opts.status))
+  if (opts.reply_status?.length) {
+    opts.reply_status.forEach((s) => params.append('reply_status', String(s)))
+  }
+  if (opts.email) params.set('email', opts.email)
+  return request<PageResult<AdminTicket>>(`/api/v1/admin/ticket/fetch?${params.toString()}`)
 }
 
 export async function fetchAdminTicketDetail(id: number): Promise<AdminTicket> {
@@ -427,10 +497,13 @@ export async function fetchAdminTicketDetail(id: number): Promise<AdminTicket> {
 }
 
 export async function replyAdminTicket(id: number, message: string): Promise<boolean> {
+  const body = new URLSearchParams()
+  body.set('id', String(id))
+  body.set('message', message)
   return request<boolean>('/api/v1/admin/ticket/reply', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, message })
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body
   })
 }
 

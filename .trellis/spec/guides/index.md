@@ -38,6 +38,8 @@ These guides help you **ask the right questions before coding**.
 - [ ] UI / command code starts casting raw payload fields directly
 - [ ] Copying / importing `subscribe_url` → absolute-ize relative paths ([component-guidelines.md](../frontend/component-guidelines.md))
 - [ ] Admin node editor IDs (group / route / parent) → select by name ([component-guidelines.md](../frontend/component-guidelines.md))
+- [ ] Admin money/traffic units or order filters → [component-guidelines.md](../frontend/component-guidelines.md) + API `admin-commerce.md`
+- [ ] Horizontal admin search bar → avoid full-width `.input` stacking
 
 → Read [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md)
 
