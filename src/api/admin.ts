@@ -268,9 +268,11 @@ export async function adminLogin(email: string, password: string): Promise<Login
 }
 
 // ==================== User API ====================
+/** sort: created_at (默认) | total_used | expired_at | t（最近使用）；sortType: ASC | DESC */
 export async function fetchAdminUsers(
   current = 1, pageSize = 10, filters: OrderFilter[] = [],
-  sort = 'created_at', sortType = 'DESC'
+  sort: 'created_at' | 'total_used' | 'expired_at' | 't' | string = 'created_at',
+  sortType: 'ASC' | 'DESC' = 'DESC'
 ): Promise<PageResult<AdminUser>> {
   const params = new URLSearchParams()
   params.set('current', String(current))

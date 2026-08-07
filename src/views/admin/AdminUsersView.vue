@@ -57,7 +57,7 @@
         </div>
         <button type="button" class="btn primary" @click="doSearch">搜索</button>
         <button
-          v-if="activeFilters.length || bannedQuick !== 'all' || planQuick !== 'all'"
+          v-if="activeFilters.length || bannedQuick !== 'all' || planQuick !== 'all' || expiredQuick !== 'all' || sortKey !== 'created_at' || sortType !== 'DESC'"
           type="button"
           class="btn"
           @click="clearSearch"
@@ -69,11 +69,22 @@
         <div class="filters">
           <button
             v-for="ft in bannedTabs"
-            :key="String(ft.value)"
+            :key="'ban-' + String(ft.value)"
             type="button"
             class="filter-btn"
             :class="{ active: bannedQuick === ft.value }"
             @click="bannedQuick = ft.value; doSearch()"
+          >
+            {{ ft.label }}
+          </button>
+          <span class="filter-sep" />
+          <button
+            v-for="ft in expiredTabs"
+            :key="'exp-' + String(ft.value)"
+            type="button"
+            class="filter-btn"
+            :class="{ active: expiredQuick === ft.value }"
+            @click="expiredQuick = ft.value; doSearch()"
           >
             {{ ft.label }}
           </button>
@@ -127,9 +138,52 @@
                 <th>邮箱</th>
                 <th>备注</th>
                 <th>套餐</th>
-                <th>流量</th>
+                <th>
+                  <button
+                    type="button"
+                    class="th-sort"
+                    :class="{ active: sortKey === 'total_used' }"
+                    @click="toggleColumnSort('total_used')"
+                    title="点击按已用流量排序"
+                  >
+                    流量(G)
+                    <span class="sort-carets" aria-hidden="true">
+                      <i class="caret up" :class="{ on: sortKey === 'total_used' && sortType === 'ASC' }" />
+                      <i class="caret down" :class="{ on: sortKey === 'total_used' && sortType === 'DESC' }" />
+                    </span>
+                  </button>
+                </th>
+                <th>
+                  <button
+                    type="button"
+                    class="th-sort"
+                    :class="{ active: sortKey === 't' }"
+                    @click="toggleColumnSort('t')"
+                    title="点击按最近使用时间排序（节点上报流量）"
+                  >
+                    最近使用
+                    <span class="sort-carets" aria-hidden="true">
+                      <i class="caret up" :class="{ on: sortKey === 't' && sortType === 'ASC' }" />
+                      <i class="caret down" :class="{ on: sortKey === 't' && sortType === 'DESC' }" />
+                    </span>
+                  </button>
+                </th>
                 <th>余额</th>
-                <th>到期</th>
+                <th>
+                  <button
+                    type="button"
+                    class="th-sort"
+                    :class="{ active: sortKey === 'expired_at' }"
+                    @click="toggleColumnSort('expired_at')"
+                    title="点击按到期时间排序"
+                  >
+                    到期时间
+                    <span class="sort-carets" aria-hidden="true">
+                      <i class="caret up" :class="{ on: sortKey === 'expired_at' && sortType === 'ASC' }" />
+                      <i class="caret down" :class="{ on: sortKey === 'expired_at' && sortType === 'DESC' }" />
+                    </span>
+                  </button>
+                </th>
                 <th>状态</th>
                 <th class="col-actions sticky-right">操作</th>
               </tr>
@@ -155,6 +209,7 @@
                   </div>
                   <span>{{ fmtGB(u.total_used) }} / {{ fmtGB(u.transfer_enable) }} GB</span>
                 </td>
+                <td class="last-use-cell" :title="lastUseText(u)">{{ lastUseText(u) }}</td>
                 <td class="amount">¥{{ fmtYuan(u.balance) }}</td>
                 <td>
                   <span :class="{ expired: isExpired(u) }">{{ expireText(u) }}</span>
@@ -572,7 +627,11 @@ const searchKey = ref('email')
 const searchValue = ref('')
 const activeFilters = ref<OrderFilter[]>([])
 const bannedQuick = ref<'all' | 0 | 1>('all')
+const expiredQuick = ref<'all' | 0 | 1>('all')
 const planQuick = ref<'all' | 'none' | number>('all')
+/** 默认 created_at：未点表头排序；点箭头后才切到业务列 */
+const sortKey = ref<'created_at' | 'total_used' | 'expired_at' | 't'>('created_at')
+const sortType = ref<'ASC' | 'DESC'>('DESC')
 
 const menuUser = ref<AdminUser | null>(null)
 const menuStyle = ref<Record<string, string>>({})
@@ -670,6 +729,11 @@ const bannedTabs = [
   { value: 0 as const, label: '正常' },
   { value: 1 as const, label: '封禁' }
 ]
+const expiredTabs = [
+  { value: 'all' as const, label: '全部' },
+  { value: 0 as const, label: '未过期' },
+  { value: 1 as const, label: '已过期' }
+]
 
 function showToast(msg: string, error = false) {
   toastMessage.value = msg
@@ -689,6 +753,11 @@ function isExpired(u: AdminUser) {
 function expireText(u: AdminUser) {
   if (!u.expired_at) return '长期'
   return fmtTime(u.expired_at)
+}
+/** v2_user.t：节点上报流量时写入的最近使用时间 */
+function lastUseText(u: AdminUser) {
+  if (!u.t) return '—'
+  return fmtTime(u.t)
 }
 function fmtTime(ts: number | null | undefined) {
   if (!ts) return '—'
@@ -737,6 +806,9 @@ function buildFilters(): OrderFilter[] {
   if (bannedQuick.value !== 'all') {
     filters.push({ key: 'banned', condition: '=', value: String(bannedQuick.value) })
   }
+  if (expiredQuick.value !== 'all') {
+    filters.push({ key: 'expired', condition: '=', value: String(expiredQuick.value) })
+  }
   if (planQuick.value === 'none') {
     filters.push({ key: 'plan_id', condition: '=', value: 'null' })
   } else if (typeof planQuick.value === 'number') {
@@ -749,7 +821,7 @@ async function load() {
   loading.value = true
   try {
     const [res, planList]: [PageResult<AdminUser>, AdminPlan[]] = await Promise.all([
-      fetchAdminUsers(currentPage.value, pageSize.value, activeFilters.value),
+      fetchAdminUsers(currentPage.value, pageSize.value, activeFilters.value, sortKey.value, sortType.value),
       plans.value.length ? Promise.resolve(plans.value) : fetchAdminPlans()
     ])
     rows.value = res.data || []
@@ -772,8 +844,26 @@ function clearSearch() {
   searchKey.value = 'email'
   searchValue.value = ''
   bannedQuick.value = 'all'
+  expiredQuick.value = 'all'
   planQuick.value = 'all'
+  sortKey.value = 'created_at'
+  sortType.value = 'DESC'
   activeFilters.value = []
+  currentPage.value = 1
+  load()
+}
+
+/** 无排序 → DESC → ASC → 无排序（回默认 created_at） */
+function toggleColumnSort(key: 'total_used' | 'expired_at' | 't') {
+  if (sortKey.value !== key) {
+    sortKey.value = key
+    sortType.value = 'DESC'
+  } else if (sortType.value === 'DESC') {
+    sortType.value = 'ASC'
+  } else {
+    sortKey.value = 'created_at'
+    sortType.value = 'DESC'
+  }
   currentPage.value = 1
   load()
 }
@@ -917,7 +1007,10 @@ function goUserInvites(u: AdminUser) {
   searchKey.value = 'invite_user_id'
   searchValue.value = String(u.id)
   bannedQuick.value = 'all'
+  expiredQuick.value = 'all'
   planQuick.value = 'all'
+  sortKey.value = 'created_at'
+  sortType.value = 'DESC'
   activeFilters.value = [{ key: 'invite_user_id', condition: '=', value: String(u.id) }]
   currentPage.value = 1
   load()
@@ -1192,6 +1285,21 @@ onUnmounted(() => {
   padding: 12px 14px; border-bottom: 1px solid #f1f5f9; text-align: left; vertical-align: middle; white-space: nowrap;
 }
 .table th { font-size: 12px; font-weight: 700; color: #94a3b8; background: #f8fafc; position: sticky; top: 0; z-index: 1; }
+.th-sort {
+  display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent;
+  font: inherit; font-size: 12px; font-weight: 700; color: #94a3b8; cursor: pointer;
+}
+.th-sort:hover, .th-sort.active { color: #1d4ed8; }
+.sort-carets {
+  display: inline-flex; flex-direction: column; gap: 1px; line-height: 0;
+}
+.sort-carets .caret {
+  display: block; width: 0; height: 0; border-left: 3.5px solid transparent; border-right: 3.5px solid transparent;
+  opacity: 0.35;
+}
+.sort-carets .caret.up { border-bottom: 4px solid currentColor; }
+.sort-carets .caret.down { border-top: 4px solid currentColor; }
+.sort-carets .caret.on { opacity: 1; color: #1d4ed8; }
 .table tbody tr:hover { background: #f8fafc; }
 .id-cell { color: #94a3b8; font-weight: 700; }
 .name-cell { display: flex; flex-direction: column; gap: 4px; }
@@ -1205,6 +1313,7 @@ onUnmounted(() => {
   color: #475569;
   font-weight: 600;
 }
+.last-use-cell { color: #64748b; font-variant-numeric: tabular-nums; }
 .badge {
   font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
 }
