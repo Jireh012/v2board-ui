@@ -6,8 +6,12 @@
         <p class="page-subtitle">定时拉取外部订阅，经 sing-box 连通探测后并入用户订阅列表。</p>
       </div>
       <div class="header-actions">
+        <button class="btn" :disabled="loading" @click="load" title="刷新列表">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :class="{ spinning: loading }"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+          刷新
+        </button>
         <button class="btn" :disabled="syncingAll || loading" @click="doSyncAll">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           {{ syncingAll ? '同步中…' : '同步全部' }}
         </button>
         <button class="btn primary" @click="openAdd">
@@ -470,6 +474,14 @@ load()
   display: flex;
   gap: 10px;
   flex-shrink: 0;
+}
+
+.header-actions .spinning {
+  animation: ext-spin 0.8s linear infinite;
+}
+
+@keyframes ext-spin {
+  to { transform: rotate(360deg); }
 }
 
 .header-actions .btn,
