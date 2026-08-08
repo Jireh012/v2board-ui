@@ -12,7 +12,7 @@
             <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <h1 class="login-brand-name">谜之站点</h1>
+        <h1 class="login-brand-name">{{ appName }}</h1>
         <span class="login-brand-tag">用户中心</span>
       </div>
 
@@ -55,6 +55,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '../api/auth'
 import { setSession } from '../auth'
+import { appName } from '../siteBrand'
 import '../styles/login.css'
 
 const router = useRouter()

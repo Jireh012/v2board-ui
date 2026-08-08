@@ -16,6 +16,7 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 |-------|-------------|--------|
 | [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
 | [Component Guidelines](./component-guidelines.md) | Subscribe URL absolute-ize, admin selects, scoped CSS | Active |
+| [Site Brand](./site-brand.md) | Dynamic `app_name` via public config + `siteBrand.ts` | Active |
 | [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | To fill |
 | [State Management](./state-management.md) | Local state, global state, server state | To fill |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
@@ -26,6 +27,7 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 ## Pre-Development Checklist
 
 - [ ] Read [component-guidelines.md](./component-guidelines.md) for admin modals, toggles, and subscribe copy UX
+- [ ] Read [site-brand.md](./site-brand.md) if changing site name / login brand / `document.title`
 - [ ] If changing subscribe copy/import: absolute-ize relative `subscribe_url`
 - [ ] If changing node editor: permission groups / routes / parent must select by **name**, not raw IDs
 - [ ] Same-file `defineComponent` + `h()` children need `:deep()` for scoped styles

@@ -12,7 +12,7 @@
             </svg>
           </div>
           <div class="brand-meta">
-            <span class="brand-name">谜之站点</span>
+            <span class="brand-name">{{ appName }}</span>
             <span class="user-badge">用户中心</span>
           </div>
         </RouterLink>
@@ -149,7 +149,7 @@
             </div>
             <span class="menu-text">后台管理</span>
           </RouterLink>
-          <div class="sidebar-brand">谜之站点 · 用户中心</div>
+          <div class="sidebar-brand">{{ appName }} · 用户中心</div>
         </div>
       </aside>
       
@@ -177,6 +177,7 @@ import {
   isLoggedIn,
   setUserEmail
 } from './auth'
+import { appName } from './siteBrand'
 
 const route = useRoute()
 const router = useRouter()

@@ -11,7 +11,7 @@
             </svg>
           </div>
           <div class="brand-meta">
-            <span class="brand-name">谜之站点</span>
+            <span class="brand-name">{{ appName }}</span>
             <span class="admin-badge">管理后台</span>
           </div>
         </RouterLink>
@@ -84,7 +84,7 @@
             </RouterLink>
           </div>
         </div>
-        <div class="sidebar-footer">谜之站点 Admin</div>
+        <div class="sidebar-footer">{{ appName }} Admin</div>
       </aside>
 
       <main class="content">
@@ -104,6 +104,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter, RouterView, RouterLink } from 'vue-router'
 import { clearSession, currentUserEmail } from '../auth'
+import { appName } from '../siteBrand'
 import '../styles/admin.css'
 
 onMounted(() => document.body.classList.add('admin-theme'))
