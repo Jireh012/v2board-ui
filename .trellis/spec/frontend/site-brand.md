@@ -76,7 +76,7 @@ const envelope = await request<{ iv: string; payload: string }>(...)
 ### 2. Signatures
 
 - `fetchPublicSiteConfig()` — `src/api/site.ts` (decrypts envelope → `PublicSiteConfig`)
-- `appName`, `stopRegister`, `inviteForce`, `emailVerify`, `safeMode`, `recaptchaEnable`, `recaptchaSiteKey`, `recaptchaRequired`, `adminBasePath`, `adminUrl()`, `isAdminUiPath()`, `registerEnabled`, `loadSiteBrand()` — `src/siteBrand.ts`
+- `appName`, `stopRegister`, `inviteForce`, `emailVerify`, `safeMode`, `recaptchaEnable`, `recaptchaSiteKey`, `telegramDiscussLink`, `recaptchaRequired`, `adminBasePath`, `adminUrl()`, `isAdminUiPath()`, `registerEnabled`, `loadSiteBrand()`, `applyFrontendTheme()` — `src/siteBrand.ts`
 - Bootstrap: `main.ts` → `await loadSiteBrand()` then dynamic `import('./router')` so admin routes use the resolved path
 - Forget: `/forget` (`ForgetView.vue`); login link always shown
 - Safe mode: `router.beforeEach` awaits `loadSiteBrand()`; anonymous users only `/login` `/register` `/forget`
@@ -90,6 +90,7 @@ const envelope = await request<{ iv: string; payload: string }>(...)
 | Name fallback | cache → `"V2Board"` |
 | Admin path fallback | cache → `"admin"`; empty/invalid public `secure_path` → `"admin"` |
 | Title | `document.title = appName` |
+| Static shell | `index.html` initial `<title>` is neutral (`Panel`); favicon `/favicon.svg` — never `V2Board` / Vite default before JS |
 | Register entry | show only when `registerEnabled` (`stop_register != 1`) |
 | Invite field | required in UI when `inviteForce` |
 | Email code on register | show + require when `emailVerify` (`email_verify=1`) |
@@ -97,6 +98,11 @@ const envelope = await request<{ iv: string; payload: string }>(...)
 | Safe mode | when `safeMode`, unauthenticated business routes → `/login?redirect=` |
 | Admin UI entry | `/{secure_path}` and `/{secure_path}/login`; API stays `/api/v1/admin/**` |
 | reCAPTCHA | when `recaptchaRequired`, Login/Register show v2 widget; submit `recaptcha_data` |
+| Frontend theme | `loadSiteBrand` → `applyFrontendTheme(data)` sets `html` `data-theme-sidebar` / `data-theme-header` / `data-theme-color`, CSS `--primary-color` (+ hover/soft), and `--app-bg-image` / `data-app-bg` when URL set |
+| Telegram discuss | `telegramDiscussLink` from public `telegram_discuss_link`; Profile shows open-link + unbind when `user.telegram_id` set |
+| Theme color map | `default` `#2563eb`, `darkblue` `#1e3a8a`, `black` `#0f172a`, `green` `#059669` |
+| Theme scope | User shell (`.app-root`) + login/register/forget; `.admin-root` / `.admin-login-page` reset primary vars — admin UI does not follow personalization |
+| Legacy `frontend_theme` | Admin config field only (PHP package name); Vue UI does not switch theme packages |
 
 ### 4. Validation & Error Matrix
 

@@ -94,6 +94,29 @@
             </label>
           </div>
         </section>
+
+        <!-- Telegram -->
+        <section v-if="telegramDiscussLink || info.telegram_id" class="card settings-card">
+          <h3 class="card-title">Telegram</h3>
+          <div v-if="telegramDiscussLink" class="setting-row">
+            <div class="setting-main">
+              <span class="setting-name">官方群组</span>
+              <p class="setting-desc">加入 Telegram 群组获取最新公告与支持</p>
+            </div>
+            <a class="btn-telegram-link" :href="telegramDiscussLink" target="_blank" rel="noopener noreferrer">
+              打开群组
+            </a>
+          </div>
+          <div v-if="info.telegram_id" class="setting-row">
+            <div class="setting-main">
+              <span class="setting-name">已绑定 Telegram</span>
+              <p class="setting-desc">ID：{{ info.telegram_id }}。解绑后需重新通过 Bot /bind</p>
+            </div>
+            <button type="button" class="btn-telegram-unbind" :disabled="unbindingTg" @click="handleUnbindTelegram">
+              {{ unbindingTg ? '解绑中…' : '解除绑定' }}
+            </button>
+          </div>
+        </section>
       </div>
 
       <!-- 右侧：用户信息 -->
@@ -245,14 +268,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getUserInfo, changePassword, updateUserInfo, resetSecurity, redeemGiftcard, type UserInfo } from '../api/user'
+import { getUserInfo, changePassword, updateUserInfo, resetSecurity, redeemGiftcard, unbindTelegram, type UserInfo } from '../api/user'
 import { createOrder } from '../api/order'
+import { telegramDiscussLink } from '../siteBrand'
 
 const router = useRouter()
 const info = ref<UserInfo | null>(null)
 const loading = ref(false)
 const resetting = ref(false)
 const redeeming = ref(false)
+const unbindingTg = ref(false)
 const giftcardCode = ref('')
 const message = ref('')
 const isError = ref(false)
@@ -334,6 +359,20 @@ async function handleRedeemGiftcard() {
     giftcardCode.value = ''; await loadInfo()
   } catch (e) { showMessage(e instanceof Error ? e.message : '兑换码无效', true) }
   finally { redeeming.value = false }
+}
+
+async function handleUnbindTelegram() {
+  if (!info.value?.telegram_id || unbindingTg.value) return
+  unbindingTg.value = true
+  try {
+    await unbindTelegram()
+    info.value.telegram_id = null
+    showMessage('已解除 Telegram 绑定')
+  } catch (e) {
+    showMessage(e instanceof Error ? e.message : '解绑失败', true)
+  } finally {
+    unbindingTg.value = false
+  }
 }
 
 const formatAmount = (cents: number | null | undefined) => cents ? (cents / 100).toFixed(2) : '0.00'
@@ -536,6 +575,23 @@ onMounted(loadInfo)
 .setting-row:last-child { border: none; }
 .setting-name { font-size: 15px; font-weight: 700; color: var(--text-main); }
 .setting-desc { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+.btn-telegram-link,
+.btn-telegram-unbind {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: #f8fafc;
+  color: var(--text-main);
+}
+.btn-telegram-link:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.btn-telegram-unbind { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
+.btn-telegram-unbind:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Switch Overlay */
 .premium-switch { position: relative; width: 48px; height: 26px; }

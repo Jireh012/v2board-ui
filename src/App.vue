@@ -253,6 +253,10 @@ const goProfile = () => {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
+  background-image: var(--app-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
 }
 
@@ -295,13 +299,13 @@ const goProfile = () => {
 .logo-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(145deg, #3b82f6, #2563eb);
+  background: linear-gradient(145deg, var(--primary-hover, #3b82f6), var(--primary-color));
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 8px 18px -6px color-mix(in srgb, var(--primary-color) 45%, transparent);
   flex-shrink: 0;
 }
 
@@ -325,9 +329,9 @@ const goProfile = () => {
 .user-badge {
   padding: 4px 10px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #eff6ff, #dbeafe);
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
+  background: linear-gradient(180deg, var(--primary-color-soft, #eff6ff), var(--primary-color-soft, #dbeafe));
+  border: 1px solid color-mix(in srgb, var(--primary-color) 35%, #e2e8f0);
+  color: var(--primary-hover, #1d4ed8);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -370,19 +374,19 @@ const goProfile = () => {
   padding: 0 18px;
   border: none;
   border-radius: 999px;
-  background: linear-gradient(145deg, #3b82f6, #2563eb);
+  background: linear-gradient(145deg, var(--primary-hover, #3b82f6), var(--primary-color));
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 8px 18px -8px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--primary-color) 45%, transparent);
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 .btn-login:hover {
   opacity: 0.95;
   transform: translateY(-1px);
-  box-shadow: 0 12px 22px -10px rgba(37, 99, 235, 0.5);
+  box-shadow: 0 12px 22px -10px color-mix(in srgb, var(--primary-color) 50%, transparent);
 }
 
 .user-profile-trigger {
@@ -409,7 +413,7 @@ const goProfile = () => {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #60a5fa, #2563eb);
+  background: linear-gradient(145deg, var(--primary-hover, #60a5fa), var(--primary-color));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -614,7 +618,7 @@ const goProfile = () => {
 }
 
 .menu-item.router-link-active {
-  background-color: #eff6ff;
+  background-color: var(--primary-color-soft, #eff6ff);
   color: var(--primary-color);
 }
 
@@ -633,19 +637,19 @@ const goProfile = () => {
 }
 
 .admin-link {
-  background: linear-gradient(180deg, #eff6ff, #f8fbff);
-  border: 1px solid #dbeafe;
-  color: #1d4ed8;
+  background: linear-gradient(180deg, var(--primary-color-soft, #eff6ff), #f8fbff);
+  border: 1px solid color-mix(in srgb, var(--primary-color) 25%, #e2e8f0);
+  color: var(--primary-hover, #1d4ed8);
 }
 
 .admin-link:hover {
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--primary-color-soft, #eff6ff);
+  color: var(--primary-hover, #1e40af);
 }
 
 .admin-link .menu-icon {
   opacity: 1;
-  color: #2563eb;
+  color: var(--primary-color);
 }
 
 .sidebar-brand {

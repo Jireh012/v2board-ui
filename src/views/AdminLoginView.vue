@@ -1,5 +1,5 @@
 <template>
-  <div class="login-page">
+  <div class="login-page admin-login-page">
     <div class="login-orb login-orb-a" aria-hidden="true" />
     <div class="login-orb login-orb-b" aria-hidden="true" />
 

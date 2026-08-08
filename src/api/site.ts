@@ -13,6 +13,16 @@ export interface PublicSiteConfig {
   secure_path?: string
   recaptcha_enable?: number
   recaptcha_site_key?: string
+  /** User shell sidebar: light | dark */
+  frontend_theme_sidebar?: string
+  /** User shell header: light | dark */
+  frontend_theme_header?: string
+  /** Theme color key: default | darkblue | black | green */
+  frontend_theme_color?: string
+  /** Optional background image URL (empty ok) */
+  frontend_background_url?: string
+  /** Telegram discuss / group invite link (empty ok) */
+  telegram_discuss_link?: string
 }
 
 interface Sm4Envelope {

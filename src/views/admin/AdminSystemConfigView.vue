@@ -50,8 +50,11 @@
           placeholder="留空则使用站点 URL&#10;https://sub1.example.com&#10;https://sub2.example.com"
         />
       </Row>
-      <Row label="订阅路径" desc="用于订阅所使用，留空则为 /api/v1/client/subscribe；保存后立即生效，无需重启。">
-        <input v-model="config.site.subscribe_path" class="input" placeholder="/api/v1/client/subscribe" />
+      <Row
+        label="订阅路径"
+        desc="客户端拉取订阅的 HTTP 路径。默认 /api/v1/client/subscribe 易被扫描识别，强烈建议改为自定义短路径（如 /s/xxxx）。留空则使用默认；保存后立即生效，旧路径失效，无需重启。"
+      >
+        <input v-model="config.site.subscribe_path" class="input" placeholder="/s/your-secret-path" />
       </Row>
       <Row label="用户条款 URL" desc="用于跳转到用户条款 (TOS)。">
         <input v-model="config.site.tos_url" class="input" placeholder="https://example.com/tos" />
@@ -243,7 +246,7 @@
 
     <!-- ==================== 个性化 ==================== -->
     <form v-else-if="currentTab === 'frontend' && config?.frontend" class="panel" @submit.prevent="saveGroup('frontend')">
-      <Row label="主题" desc="前端使用的主题。">
+      <Row label="主题" desc="旧主题包名（如 v2board），仅兼容存库；本 Vue 前端不切换主题包。">
         <input v-model="config.frontend.frontend_theme" class="input" placeholder="v2board" />
       </Row>
       <Row label="侧栏风格" desc="侧栏颜色风格。">

@@ -95,6 +95,10 @@ export async function resetSecurity(): Promise<string> {
   return request<string>('/api/v1/user/resetSecurity', { method: 'POST' })
 }
 
+export async function unbindTelegram(): Promise<boolean> {
+  return request<boolean>('/api/v1/user/unbindTelegram', { method: 'POST' })
+}
+
 export async function redeemGiftcard(giftcard: string): Promise<{ type: number, value: number }> {
   const body = new URLSearchParams()
   body.set('giftcard', giftcard)

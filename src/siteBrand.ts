@@ -1,10 +1,55 @@
 import { computed, ref } from 'vue'
-import { fetchPublicSiteConfig } from './api/site'
+import { fetchPublicSiteConfig, type PublicSiteConfig } from './api/site'
 
 const STORAGE_KEY = 'v2board_app_name'
 const ADMIN_PATH_KEY = 'v2board_admin_path'
 const FALLBACK_NAME = 'V2Board'
 const DEFAULT_ADMIN_PATH = 'admin'
+
+const THEME_COLOR_MAP: Record<string, { primary: string; hover: string; soft: string }> = {
+  default: { primary: '#2563eb', hover: '#1d4ed8', soft: '#eff6ff' },
+  darkblue: { primary: '#1e3a8a', hover: '#172554', soft: '#dbeafe' },
+  black: { primary: '#0f172a', hover: '#020617', soft: '#e2e8f0' },
+  green: { primary: '#059669', hover: '#047857', soft: '#ecfdf5' }
+}
+
+function cssUrl(raw: string): string {
+  const escaped = raw.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+  return `url("${escaped}")`
+}
+
+/** Apply public frontend theme to documentElement (user shell + login; admin resets via CSS). */
+export function applyFrontendTheme(data: Pick<
+  PublicSiteConfig,
+  | 'frontend_theme_sidebar'
+  | 'frontend_theme_header'
+  | 'frontend_theme_color'
+  | 'frontend_background_url'
+>) {
+  if (typeof document === 'undefined') return
+  const root = document.documentElement
+  const sidebar = (data.frontend_theme_sidebar || 'light').trim() || 'light'
+  const header = (data.frontend_theme_header || 'dark').trim() || 'dark'
+  const colorKey = (data.frontend_theme_color || 'default').trim() || 'default'
+  const bg = (data.frontend_background_url || '').trim()
+
+  root.dataset.themeSidebar = sidebar === 'dark' ? 'dark' : 'light'
+  root.dataset.themeHeader = header === 'dark' ? 'dark' : 'light'
+  root.dataset.themeColor = THEME_COLOR_MAP[colorKey] ? colorKey : 'default'
+
+  const colors = THEME_COLOR_MAP[root.dataset.themeColor] || THEME_COLOR_MAP.default
+  root.style.setProperty('--primary-color', colors.primary)
+  root.style.setProperty('--primary-hover', colors.hover)
+  root.style.setProperty('--primary-color-soft', colors.soft)
+
+  if (bg) {
+    root.style.setProperty('--app-bg-image', cssUrl(bg))
+    root.dataset.appBg = '1'
+  } else {
+    root.style.removeProperty('--app-bg-image')
+    delete root.dataset.appBg
+  }
+}
 
 function readCachedName(): string {
   try {
@@ -72,6 +117,8 @@ export const emailVerify = ref(false)
 export const safeMode = ref(false)
 export const recaptchaEnable = ref(false)
 export const recaptchaSiteKey = ref('')
+/** Telegram 群组讨论链接（公开配置；可为空）。 */
+export const telegramDiscussLink = ref('')
 /** Admin UI path segment (no leading slash), default `admin`. */
 export const adminBasePath = ref(readCachedAdminPath())
 /** 注册入口是否展示（未停止注册） */
@@ -112,11 +159,13 @@ export async function loadSiteBrand(): Promise<string> {
       safeMode.value = asFlag(data.safe_mode_enable)
       recaptchaEnable.value = asFlag(data.recaptcha_enable)
       recaptchaSiteKey.value = (data.recaptcha_site_key || '').trim()
+      telegramDiscussLink.value = (data.telegram_discuss_link || '').trim()
       const path = normalizeAdminPath(data.secure_path)
       adminBasePath.value = path
       writeCachedAdminPath(path)
       writeCachedName(name)
       applyDocumentTitle(name)
+      applyFrontendTheme(data)
       return name
     } catch {
       const fallback = readCachedName()
