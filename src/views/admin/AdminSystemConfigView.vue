@@ -280,8 +280,20 @@
       <Row label="节点 API URL" desc="节点与面板通讯的 API 地址，留空则使用站点 URL。">
         <input v-model="config.server.server_api_url" class="input" placeholder="留空则使用站点 URL" />
       </Row>
-      <Row label="通讯密钥" desc="面板和节点间的通讯密钥，最少 16 位。">
-        <input v-model="config.server.server_token" class="input" placeholder="至少16位" />
+      <Row label="通讯密钥" desc="面板和节点间的通讯密钥，最少 16 位。可一键生成随机密钥。">
+        <div class="token-field">
+          <input
+            v-model="config.server.server_token"
+            class="input"
+            :type="showServerToken ? 'text' : 'password'"
+            autocomplete="off"
+            placeholder="至少16位"
+          />
+          <button type="button" class="btn secondary" @click="showServerToken = !showServerToken">
+            {{ showServerToken ? '隐藏' : '显示' }}
+          </button>
+          <button type="button" class="btn secondary" @click="generateServerToken">生成密钥</button>
+        </div>
       </Row>
       <Row label="节点拉取间隔（秒）" desc="节点从面板拉取用户数据的间隔秒数。">
         <input v-model.number="config.server.server_pull_interval" type="number" class="input" />
@@ -481,6 +493,7 @@ const testing = ref(false)
 const saveMessage = ref('')
 const saveMessageType = ref<'ok' | 'err'>('ok')
 const config = ref<ConfigData | null>(null)
+const showServerToken = ref(false)
 
 /** 订阅 URL：DB/API 仍为逗号串；编辑时按行展示 */
 const subscribeUrlText = computed(() => {
@@ -513,9 +526,28 @@ async function load() {
   }
 }
 
+function generateServerToken() {
+  if (!config.value?.server) return
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = new Uint8Array(32)
+  crypto.getRandomValues(bytes)
+  config.value.server.server_token = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
+  showServerToken.value = true
+}
+
 /* ---- 保存当前分组 ---- */
 async function saveGroup(group: string) {
   if (!config.value) return
+  if (group === 'server') {
+    const server = config.value.server
+    if (!server) return
+    const token = String(server.server_token ?? '').trim()
+    if (token.length < 16) {
+      showMsg('通讯密钥至少 16 位', 'err')
+      return
+    }
+    server.server_token = token
+  }
   saving.value = true
   saveMessage.value = ''
   const prevAdminPath = adminBasePath.value
@@ -574,7 +606,12 @@ function showMsg(text: string, type: 'ok' | 'err') {
   if (type === 'ok') setTimeout(() => { saveMessage.value = '' }, 3000)
 }
 
-watch(currentTab, () => { saveMessage.value = '' })
+watch(currentTab, () => {
+  saveMessage.value = ''
+  if (currentTab.value !== 'server') {
+    showServerToken.value = false
+  }
+})
 
 load()
 </script>
@@ -685,6 +722,24 @@ load()
   min-width: 0;
   display: flex;
   align-items: center;
+}
+
+.config-page :deep(.token-field) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.config-page :deep(.token-field .input) {
+  flex: 1;
+  min-width: 0;
+}
+
+.config-page :deep(.token-field .btn) {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .config-page :deep(.input) {
