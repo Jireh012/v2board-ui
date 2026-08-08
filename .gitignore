@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# 本地/打包密钥（保留 .env.example）
+.env
+.env.development
+.env.production
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

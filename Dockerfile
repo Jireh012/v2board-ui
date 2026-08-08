@@ -8,6 +8,8 @@ RUN npm ci
 COPY index.html vite.config.ts tsconfig.json ./
 COPY public ./public
 COPY src ./src
+# vite build 读取 mode=production 的环境变量（含 VITE_SM4_KEY）
+COPY .env.production .env.production
 
 # 跳过 vue-tsc，避免构建镜像时被类型检查环境差异阻塞
 RUN npx vite build
