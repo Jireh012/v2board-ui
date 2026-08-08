@@ -168,43 +168,87 @@
     <!-- 订阅弹窗 -->
     <transition name="modal">
       <div v-if="showSubscribeModal" class="modal-mask" @click.self="closeSubscribeModal">
-        <div class="modal-dialog">
-          <div class="modal-header">
-            <h3>快捷同步订阅</h3>
-            <button class="close-btn" @click="closeSubscribeModal">×</button>
+        <div class="modal-dialog subscribe-modal">
+          <div class="modal-header sub-modal-header">
+            <div class="sub-modal-title">
+              <div class="sub-modal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </div>
+              <div>
+                <h3>快捷同步订阅</h3>
+                <p class="sub-modal-desc">复制链接、扫码或一键导入客户端</p>
+              </div>
+            </div>
+            <button type="button" class="close-btn-round" @click="closeSubscribeModal" aria-label="关闭">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
           </div>
           <div v-if="!showSubscribeQr" class="modal-body sub-options">
-            <div class="sub-method" @click="copySubscribeUrl">
-              <div class="m-icon">📋</div>
-              <span>复制订阅地址</span>
-            </div>
-            <div class="sub-method" @click="openSubscribeQr">
-              <div class="m-icon">🔳</div>
-              <span>扫描二维码</span>
-            </div>
-            <div class="sub-divider">或一键导入到客户端</div>
+            <button type="button" class="sub-method" @click="copySubscribeUrl">
+              <div class="m-icon m-icon-copy">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              </div>
+              <div class="m-text">
+                <span class="m-title">复制订阅地址</span>
+                <span class="m-sub">粘贴到客户端即可更新节点</span>
+              </div>
+              <svg class="m-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            <button type="button" class="sub-method" @click="openSubscribeQr">
+              <div class="m-icon m-icon-qr">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+              </div>
+              <div class="m-text">
+                <span class="m-title">扫描二维码</span>
+                <span class="m-sub">手机客户端扫码快速导入</span>
+              </div>
+              <svg class="m-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            <div class="sub-divider"><span>或一键导入到客户端</span></div>
             <div class="client-grid">
-              <div class="client-item" @click="openClient(hiddifyLink)">
-                <span class="c-icon">H</span><span>Hiddify</span>
-              </div>
-              <div class="client-item" @click="openClient(singboxLink)">
-                <span class="c-icon">S</span><span>Sing-box</span>
-              </div>
-              <div class="client-item" @click="openClient(clashMetaLink)">
-                <span class="c-icon">M</span><span>ClashMeta</span>
-              </div>
+              <button type="button" class="client-item client-hiddify" @click="openClient(hiddifyLink)">
+                <span class="c-icon" aria-hidden="true">
+                  <svg viewBox="0 0 32 32" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 6h5.2v8.2H19V6h5.2v20H19v-7.2h-5.8V26H8V6z" fill="currentColor"/>
+                  </svg>
+                </span>
+                <span class="c-name">Hiddify</span>
+              </button>
+              <button type="button" class="client-item client-singbox" @click="openClient(singboxLink)">
+                <span class="c-icon" aria-hidden="true">
+                  <svg viewBox="0 0 32 32" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="5" width="22" height="22" rx="6" stroke="currentColor" stroke-width="2.4"/>
+                    <path d="M11 16h10M16 11v10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span class="c-name">Sing-box</span>
+              </button>
+              <button type="button" class="client-item client-clash" @click="openClient(clashMetaLink)">
+                <span class="c-icon" aria-hidden="true">
+                  <svg viewBox="0 0 32 32" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 5c-3.2 0-5.8 2.2-5.8 5.4 0 2.1 1 3.5 2.3 4.8L16 27l3.5-11.8c1.3-1.3 2.3-2.7 2.3-4.8C21.8 7.2 19.2 5 16 5z" fill="currentColor"/>
+                    <circle cx="16" cy="10.2" r="2.2" fill="#fff"/>
+                  </svg>
+                </span>
+                <span class="c-name">Clash Meta</span>
+              </button>
             </div>
           </div>
           <div v-else class="modal-body qr-panel">
-            <img
-              v-if="subscribeQrUrl"
-              class="qr-image"
-              :src="subscribeQrUrl"
-              alt="订阅二维码"
-            />
-            <p v-else class="qr-empty">暂无订阅地址，无法生成二维码</p>
+            <div class="qr-frame">
+              <img
+                v-if="subscribeQrUrl"
+                class="qr-image"
+                :src="subscribeQrUrl"
+                alt="订阅二维码"
+              />
+              <p v-else class="qr-empty">暂无订阅地址，无法生成二维码</p>
+            </div>
             <p class="qr-tip">使用客户端扫描上方二维码以导入订阅</p>
-            <button type="button" class="btn-back" @click="showSubscribeQr = false">返回</button>
+            <button type="button" class="btn-back" @click="showSubscribeQr = false">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              返回
+            </button>
           </div>
         </div>
       </div>
@@ -793,31 +837,81 @@ const noticeDialogContent = computed(() => (noticeDetail.value ?? currentNotice.
 
 .close-btn { background: none; border: none; font-size: 28px; color: #94a3b8; }
 
-.sub-options { padding: 24px; }
+.subscribe-modal { max-width: 420px; border-radius: 28px; }
+
+.sub-modal-header {
+  padding: 22px 22px 18px;
+  border-bottom: none;
+  align-items: flex-start;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.sub-modal-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.sub-modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #fff;
+  box-shadow: 0 8px 20px -8px rgba(37, 99, 235, 0.55);
+  flex-shrink: 0;
+}
+
+.sub-modal-title h3 {
+  margin: 2px 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.sub-modal-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.sub-options { padding: 8px 22px 22px; }
 
 .qr-panel {
-  padding: 24px;
+  padding: 8px 22px 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+}
+
+.qr-frame {
+  padding: 14px;
+  border-radius: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
 .qr-image {
   width: 220px;
   height: 220px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   background: #ffffff;
-  padding: 10px;
+  display: block;
   box-sizing: border-box;
 }
 
 .qr-empty {
-  margin: 24px 0;
+  margin: 48px 24px;
   color: #ef4444;
   font-size: 14px;
   font-weight: 600;
+  text-align: center;
 }
 
 .qr-tip {
@@ -828,14 +922,18 @@ const noticeDialogContent = computed(() => (noticeDetail.value ?? currentNotice.
 }
 
 .btn-back {
-  margin-top: 8px;
-  padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 10px 18px;
   border-radius: 999px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   color: var(--text-main);
   font-weight: 700;
   font-size: 13px;
+  cursor: pointer;
 }
 
 .btn-back:hover {
@@ -847,70 +945,111 @@ const noticeDialogContent = computed(() => (noticeDetail.value ?? currentNotice.
 .sub-method {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: #f8fafc;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e8eef7;
   border-radius: 16px;
-  margin-bottom: 12px;
-  font-weight: 700;
+  margin-bottom: 10px;
   cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.sub-method:hover { background: #eff6ff; color: var(--primary-color); }
+.sub-method:hover {
+  background: #f8fbff;
+  border-color: #bfdbfe;
+  box-shadow: 0 8px 18px -12px rgba(37, 99, 235, 0.35);
+}
 
-.m-icon { font-size: 20px; }
+.sub-method:hover .m-chevron { color: var(--primary-color); transform: translateX(2px); }
+
+.m-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.m-icon-copy { background: #eff6ff; color: #2563eb; }
+.m-icon-qr { background: #ecfdf5; color: #059669; }
+
+.m-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.m-title { font-size: 14px; font-weight: 750; color: var(--text-main); }
+.m-sub { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.m-chevron { color: #94a3b8; flex-shrink: 0; transition: transform 0.15s ease, color 0.15s ease; }
 
 .sub-divider {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
   font-size: 12px;
   color: #94a3b8;
-  margin: 20px 0;
-  position: relative;
+  font-weight: 600;
 }
 
-.sub-divider::before, .sub-divider::after {
+.sub-divider::before,
+.sub-divider::after {
   content: '';
-  position: absolute;
-  top: 50%;
-  width: 25%;
+  flex: 1;
   height: 1px;
   background: #e2e8f0;
 }
-.sub-divider::before { left: 0; }
-.sub-divider::after { right: 0; }
+
+.sub-divider span { white-space: nowrap; }
 
 .client-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 10px;
 }
 
 .client-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 12px 0;
+  gap: 10px;
+  padding: 14px 8px 12px;
   background: #f8fafc;
+  border: 1px solid transparent;
   border-radius: 16px;
   font-size: 12px;
   font-weight: 700;
+  color: var(--text-main);
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
-.client-item:hover { background: #f1f5f9; }
+.client-item:hover {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  transform: translateY(-1px);
+}
 
 .c-icon {
-  width: 32px;
-  height: 32px;
-  background: white;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 6px 14px -8px rgba(15, 23, 42, 0.35);
 }
+
+.c-name { letter-spacing: -0.01em; }
+
+.client-hiddify .c-icon { background: linear-gradient(135deg, #4f46e5, #6366f1); color: #fff; }
+.client-singbox .c-icon { background: linear-gradient(135deg, #0f172a, #334155); color: #fff; }
+.client-clash .c-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; }
+
+.client-hiddify:hover { border-color: #c7d2fe; }
+.client-singbox:hover { border-color: #cbd5e1; }
+.client-clash:hover { border-color: #bae6fd; }
 
 /* Notice Modal */
 .notice-modal { max-width: 580px; border-radius: 32px; border: none; }
