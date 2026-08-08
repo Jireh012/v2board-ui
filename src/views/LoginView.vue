@@ -1,22 +1,51 @@
 <template>
   <div class="login-page">
-    <div class="login-card">
-      <h1 class="title">登录 V2Board</h1>
-      <p class="subtitle">使用邮箱和密码登录用户中心</p>
-      <form @submit.prevent="onSubmit">
-        <label class="field">
-          <span>邮箱</span>
-          <input v-model="email" type="email" required autocomplete="email" />
-        </label>
-        <label class="field">
-          <span>密码</span>
-          <input v-model="password" type="password" required autocomplete="current-password" />
-        </label>
-        <button class="btn" type="submit" :disabled="loading">
-          {{ loading ? '登录中...' : '登录' }}
-        </button>
-        <p v-if="error" class="error-text">{{ error }}</p>
-      </form>
+    <div class="login-orb login-orb-a" aria-hidden="true" />
+    <div class="login-orb login-orb-b" aria-hidden="true" />
+
+    <div class="login-shell">
+      <div class="login-brand">
+        <div class="login-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="login-brand-name">谜之站点</h1>
+        <span class="login-brand-tag">用户中心</span>
+      </div>
+
+      <div class="login-card">
+        <h2 class="login-card-title">欢迎回来</h2>
+        <p class="login-card-sub">使用邮箱与密码登录账户</p>
+        <form @submit.prevent="onSubmit">
+          <label class="login-field">
+            <span>邮箱</span>
+            <input
+              v-model="email"
+              type="email"
+              required
+              autocomplete="email"
+              placeholder="name@example.com"
+            />
+          </label>
+          <label class="login-field">
+            <span>密码</span>
+            <input
+              v-model="password"
+              type="password"
+              required
+              autocomplete="current-password"
+              placeholder="请输入密码"
+            />
+          </label>
+          <button class="login-submit" type="submit" :disabled="loading">
+            {{ loading ? '登录中...' : '登录' }}
+          </button>
+          <p v-if="error" class="login-error">{{ error }}</p>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -26,6 +55,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '../api/auth'
 import { setSession } from '../auth'
+import '../styles/login.css'
 
 const router = useRouter()
 const email = ref('')
@@ -53,82 +83,3 @@ async function onSubmit() {
   }
 }
 </script>
-
-<style scoped>
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at top, #1f2933 0, #020617 60%);
-}
-
-.login-card {
-  width: 360px;
-  padding: 28px 24px 24px;
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.96);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
-  color: #e5e7eb;
-}
-
-.title {
-  font-size: 20px;
-  margin: 0 0 4px;
-}
-
-.subtitle {
-  font-size: 13px;
-  margin-bottom: 20px;
-  color: #9ca3af;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 14px;
-  font-size: 13px;
-}
-
-.field span {
-  margin-bottom: 6px;
-}
-
-input {
-  border-radius: 8px;
-  border: 1px solid #334155;
-  padding: 8px 10px;
-  background: #020617;
-  color: inherit;
-  outline: none;
-}
-
-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
-}
-
-.btn {
-  width: 100%;
-  margin-top: 8px;
-  padding: 9px 12px;
-  border-radius: 999px;
-  border: none;
-  background: linear-gradient(135deg, #3b82f6, #22c55e);
-  color: #f9fafb;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.error-text {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #fca5a5;
-}
-</style>
-
