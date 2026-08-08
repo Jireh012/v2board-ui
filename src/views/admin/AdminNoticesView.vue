@@ -109,7 +109,7 @@
 
     <Teleport to="body">
       <div v-if="showModal" class="modal-mask" @click.self="closeModal">
-        <div class="modal edit-modal" role="dialog" aria-modal="true">
+        <div class="modal edit-modal" role="dialog" aria-modal="true" style="width: min(1280px, calc(100vw - 48px)); max-width: calc(100vw - 48px);">
           <div class="modal-header">
             <div>
               <h2>{{ form.id ? '编辑公告' : '新建公告' }}</h2>
@@ -127,7 +127,7 @@
               <textarea
                 v-model="form.content"
                 class="input textarea"
-                rows="8"
+                rows="14"
                 placeholder="支持 HTML，如 &lt;p&gt;公告内容&lt;/p&gt;"
               />
             </div>
@@ -697,16 +697,17 @@ onUnmounted(() => {
 .modal {
   background: #fff;
   border-radius: 16px;
-  width: 520px;
-  max-width: 96vw;
   max-height: 92vh;
   overflow: auto;
   border: 1px solid #e2e8f0;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
 }
 
-.edit-modal { width: min(640px, 96vw); }
-.confirm-modal { width: 420px; }
+.modal.edit-modal {
+  width: min(1280px, calc(100vw - 48px));
+  max-width: calc(100vw - 48px);
+}
+.modal.confirm-modal { width: min(420px, calc(100vw - 48px)); }
 
 .modal-header {
   display: flex;
@@ -772,7 +773,7 @@ onUnmounted(() => {
   border-color: #93c5fd;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
-.textarea { resize: vertical; min-height: 120px; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.textarea { resize: vertical; min-height: 240px; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 
 .switch-row {
   display: inline-flex;
