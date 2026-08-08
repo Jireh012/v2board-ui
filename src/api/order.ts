@@ -47,10 +47,18 @@ export async function fetchOrderDetail(tradeNo: string): Promise<OrderDetail> {
   return request<OrderDetail>(url)
 }
 
-export async function createOrder(planId: number, period: string): Promise<string> {
+export async function createOrder(
+  planId: number,
+  period: string,
+  couponCode?: string
+): Promise<string> {
   const body = new URLSearchParams()
   body.set('plan_id', String(planId))
   body.set('period', period)
+  const code = (couponCode || '').trim()
+  if (code) {
+    body.set('coupon_code', code)
+  }
   const tradeNo = await request<string>('/api/v1/user/order/save', {
     method: 'POST',
     headers: {

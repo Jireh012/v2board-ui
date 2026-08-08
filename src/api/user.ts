@@ -34,6 +34,8 @@ export interface SubscribeInfo {
   subscribe_url: string
   reset_day: number | null
   allow_new_period: number
+  /** 用户端「即将到期」徽章提前天数 */
+  show_subscribe_expire?: number
   alive_ip: number
   plan?: Plan
 }

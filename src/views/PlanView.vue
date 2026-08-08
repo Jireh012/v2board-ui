@@ -95,6 +95,12 @@
                 <span>周期系数</span>
                 <span>{{ currentPeriodLabel }}</span>
              </div>
+             <p v-if="periodLockedHint" class="period-lock-hint">{{ periodLockedHint }}</p>
+
+             <label class="coupon-field">
+               <span>优惠券码（可选）</span>
+               <input v-model="couponCode" type="text" autocomplete="off" placeholder="有券可填" />
+             </label>
              
              <div class="sum-divider"></div>
              
@@ -105,6 +111,7 @@
                    <span class="a">{{ formatPrice(currentPeriodPrice) }}</span>
                 </div>
              </div>
+             <p class="balance-tip">有余额时将在创建订单时自动抵扣</p>
              
              <button class="btn-checkout-submit" @click="submitOrder" :disabled="submittingOrder">
                 {{ submittingOrder ? '创建订单中...' : '提交订单' }}
@@ -148,7 +155,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { fetchPlans, type Plan } from '../api/plan'
-import { createOrder } from '../api/order'
+import { createOrder, fetchOrders } from '../api/order'
+import { getSubscribe } from '../api/user'
 import { useRoute, useRouter } from 'vue-router'
 
 interface PeriodOption { key: string; label: string; price: number }
@@ -156,6 +164,11 @@ const route = useRoute(), router = useRouter()
 const plans = ref<Plan[]>([]), message = ref(''), loading = ref(false), submittingOrder = ref(false)
 const filterMode = ref<'all' | 'period' | 'traffic'>('all'), activePlan = ref<Plan | null>(null), selectedPeriod = ref<string | null>(null)
 const showUnfinishedOrderDialog = ref(false)
+const couponCode = ref('')
+const allowNewPeriod = ref(true)
+const lockedPeriod = ref<string | null>(null)
+const currentUserPlanId = ref<number | null>(null)
+const currentExpiredAt = ref<number | null>(null)
 
 const hasCyclePrice = (plan: Plan) => [plan.month_price, plan.quarter_price, plan.half_year_price, plan.year_price, plan.two_year_price, plan.three_year_price, plan.onetime_price].some(v => v != null && v > 0)
 const planIdFromRoute = computed(() => {
@@ -170,9 +183,30 @@ const displayPlans = computed(() => {
   return list
 })
 
-const periodOptions = computed<PeriodOption[]>(() => activePlan.value ? buildPeriodOptions(activePlan.value) : [])
+const isRenewSamePlan = computed(() => {
+  const plan = activePlan.value
+  if (!plan || currentUserPlanId.value == null) return false
+  const now = Math.floor(Date.now() / 1000)
+  const active = currentExpiredAt.value != null && currentExpiredAt.value > now
+  return active && plan.id === currentUserPlanId.value
+})
+
+const periodOptions = computed<PeriodOption[]>(() => {
+  if (!activePlan.value) return []
+  const all = buildPeriodOptions(activePlan.value)
+  if (isRenewSamePlan.value && !allowNewPeriod.value && lockedPeriod.value) {
+    const locked = all.filter((o) => o.key === lockedPeriod.value)
+    return locked.length ? locked : all
+  }
+  return all
+})
 const currentPeriodPrice = computed(() => (periodOptions.value.find(o => o.key === selectedPeriod.value)?.price || 0))
 const currentPeriodLabel = computed(() => (periodOptions.value.find(o => o.key === selectedPeriod.value)?.label || ''))
+const periodLockedHint = computed(() =>
+  isRenewSamePlan.value && !allowNewPeriod.value && lockedPeriod.value
+    ? '当前不允许更换续费周期，已锁定为原周期'
+    : ''
+)
 
 function getPeriodPrice(plan: Plan): number | null {
   const candidates = [plan.month_price, plan.quarter_price, plan.half_year_price, plan.year_price, plan.two_year_price, plan.three_year_price, plan.onetime_price].filter((v): v is number => v != null && v > 0)
@@ -194,31 +228,93 @@ function buildPeriodOptions(p: Plan): PeriodOption[] {
 }
 
 async function loadPlans() {
-  loading.value = true; try { plans.value = await fetchPlans() } catch (e) { message.value = '订阅方案同步失败' } finally { loading.value = false }
+  loading.value = true
+  try {
+    plans.value = await fetchPlans()
+  } catch {
+    message.value = '订阅方案同步失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function loadSubscribeContext() {
+  try {
+    const sub = await getSubscribe()
+    allowNewPeriod.value = Number(sub.allow_new_period) === 1
+    currentUserPlanId.value = sub.plan_id ?? null
+    currentExpiredAt.value = sub.expired_at ?? null
+    if (sub.plan_id != null && !allowNewPeriod.value) {
+      const orders = await fetchOrders(3)
+      const last = orders.find(
+        (o) => o.plan_id === sub.plan_id && o.period && o.period !== 'reset_price'
+      )
+      lockedPeriod.value = last?.period ?? null
+    } else {
+      lockedPeriod.value = null
+    }
+  } catch {
+    allowNewPeriod.value = true
+    lockedPeriod.value = null
+  }
 }
 
 function syncActivePlanFromRoute() {
-  const id = planIdFromRoute.value; if (!id || !plans.value.length) return
-  const found = plans.value.find(p => p.id === id); if (found) { activePlan.value = found; const opts = buildPeriodOptions(found); selectedPeriod.value = opts.length ? opts[0].key : null }
+  const id = planIdFromRoute.value
+  if (!id || !plans.value.length) return
+  const found = plans.value.find((p) => p.id === id)
+  if (found) {
+    activePlan.value = found
+    const opts = periodOptions.value.length
+      ? periodOptions.value
+      : buildPeriodOptions(found)
+    selectedPeriod.value = opts.length ? opts[0].key : null
+  }
 }
 
 const setFilter = (m: 'all'|'period'|'traffic') => filterMode.value = m
 const selectPeriod = (k: string) => selectedPeriod.value = k
 const backToList = () => { activePlan.value = null; if (route.params.id) router.replace('/plan') }
 
-onMounted(async () => { await loadPlans(); syncActivePlanFromRoute() })
+onMounted(async () => {
+  await Promise.all([loadPlans(), loadSubscribeContext()])
+  syncActivePlanFromRoute()
+})
 watch(planIdFromRoute, syncActivePlanFromRoute)
+watch(periodOptions, (opts) => {
+  if (!opts.length) return
+  if (!opts.some((o) => o.key === selectedPeriod.value)) {
+    selectedPeriod.value = opts[0].key
+  }
+})
 const formatPrice = (cents: number | null | undefined) => cents ? (cents / 100).toFixed(2) : '0.00'
-const onBuy = (plan: Plan) => { if (!route.params.id) router.push(`/plan/${plan.id}`); activePlan.value = plan; const opts = buildPeriodOptions(plan); selectedPeriod.value = opts[0]?.key || null }
+const onBuy = (plan: Plan) => {
+  if (!route.params.id) router.push(`/plan/${plan.id}`)
+  activePlan.value = plan
+  const opts = periodOptions.value.length ? periodOptions.value : buildPeriodOptions(plan)
+  selectedPeriod.value = opts[0]?.key || null
+}
 
 async function submitOrder() {
   if (!activePlan.value || !selectedPeriod.value) return
-  submittingOrder.value = true; message.value = ''
-  try { const tradeNo = await createOrder(activePlan.value.id, selectedPeriod.value); router.push(`/order/${tradeNo}`) } 
-  catch (e: any) { 
-    if (e.message?.includes('You have an unpaid or pending order') || e.message?.includes('未付款')) showUnfinishedOrderDialog.value = true
-    else message.value = e.message || '订单创建失败'
-  } finally { submittingOrder.value = false }
+  submittingOrder.value = true
+  message.value = ''
+  try {
+    const tradeNo = await createOrder(
+      activePlan.value.id,
+      selectedPeriod.value,
+      couponCode.value
+    )
+    router.push(`/order/${tradeNo}`)
+  } catch (e: any) {
+    if (e.message?.includes('You have an unpaid or pending order') || e.message?.includes('未付款')) {
+      showUnfinishedOrderDialog.value = true
+    } else {
+      message.value = e.message || '订单创建失败'
+    }
+  } finally {
+    submittingOrder.value = false
+  }
 }
 
 const closeUnfinishedDialog = () => showUnfinishedOrderDialog.value = false
@@ -287,6 +383,13 @@ const goToOrders = () => { showUnfinishedOrderDialog.value = false; router.push(
 }
 .period-item:hover { border-color: #cbd5e1; }
 .period-item.active { border-color: var(--primary-color); background: #eff6ff; }
+.period-lock-hint { margin: 10px 0 0; font-size: 12px; color: #b45309; }
+.coupon-field { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; font-size: 13px; color: var(--text-muted); }
+.coupon-field input {
+  border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; outline: none;
+}
+.coupon-field input:focus { border-color: var(--primary-color); }
+.balance-tip { margin: 8px 0 0; font-size: 12px; color: var(--text-muted); }
 .p-label { font-weight: 800; color: var(--text-main); }
 .p-price { font-weight: 700; color: var(--primary-color); font-size: 15px; }
 

@@ -47,8 +47,14 @@
               <div class="plan-details">
                 <div class="plan-name-row">
                   <h2 class="plan-name">{{ subscribe.plan?.name || '基础套餐' }}</h2>
-                  <span class="plan-badge" :class="{ 'badge-expired': isExpired(subscribe.expired_at) }">
-                    {{ isExpired(subscribe.expired_at) ? '已过期' : '使用中' }}
+                  <span
+                    class="plan-badge"
+                    :class="{
+                      'badge-expired': isExpired(subscribe.expired_at),
+                      'badge-expiring': isExpiringSoon(subscribe.expired_at)
+                    }"
+                  >
+                    {{ planBadgeText(subscribe.expired_at) }}
                   </span>
                 </div>
                 
@@ -351,6 +357,25 @@ const formatTime = (ts: number | null) => ts ? new Date(ts * 1000).toLocaleDateS
 const formatDate = (ts: number | null) => ts ? new Date(ts * 1000).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) : '-'
 const isExpired = (ts: number | null) => ts ? ts <= Date.now() / 1000 : false
 
+const daysLeft = (ts: number) => {
+  const diff = ts - Date.now() / 1000
+  return diff > 0 ? Math.floor(diff / 86400) : 0
+}
+
+/** 未过期且剩余天数 ≤ show_subscribe_expire（默认 5）时显示「即将到期」 */
+const isExpiringSoon = (ts: number | null | undefined) => {
+  if (ts == null || isExpired(ts)) return false
+  const n = subscribe.value?.show_subscribe_expire ?? 5
+  const left = daysLeft(ts)
+  return left > 0 && left <= n
+}
+
+const planBadgeText = (ts: number | null | undefined) => {
+  if (isExpired(ts ?? null)) return '已过期'
+  if (isExpiringSoon(ts)) return '即将到期'
+  return '使用中'
+}
+
 const usagePercent = computed(() => {
   if (!subscribe.value || !subscribe.value.transfer_enable) return 0
   const used = (subscribe.value.u || 0) + (subscribe.value.d || 0)
@@ -370,11 +395,6 @@ const showResetButton = computed(() => {
   if (!subscribe.value?.plan?.reset_price) return false
   return usagePercent.value >= 80 && !isExpired(subscribe.value.expired_at)
 })
-
-const daysLeft = (ts: number) => {
-  const diff = ts - Date.now() / 1000
-  return diff > 0 ? Math.floor(diff / 86400) : 0
-}
 
 const formatTraffic = (bytes: number | null | undefined) => {
   if (!bytes) return '0 B'
@@ -653,6 +673,7 @@ const noticeDialogContent = computed(() => (noticeDetail.value ?? currentNotice.
 }
 
 .plan-badge.badge-expired { background: #fef2f2; color: #ef4444; }
+.plan-badge.badge-expiring { background: #fffbeb; color: #d97706; }
 
 .plan-expiry {
   display: flex;

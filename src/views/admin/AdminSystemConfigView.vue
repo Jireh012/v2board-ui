@@ -112,13 +112,13 @@
       <Row v-if="config.safe.register_limit_by_ip_enable === 1" label="限制时间（分钟）" desc="注册限制的时间窗口。">
         <input v-model.number="config.safe.register_limit_expire" type="number" class="input" />
       </Row>
-      <Row label="密码错误限制" desc="开启后同 IP 密码错误达到上限将被暂时锁定。">
+      <Row label="密码错误限制" desc="开启后同一邮箱密码错误达到上限将被暂时锁定。">
         <Toggle v-model="config.safe.password_limit_enable" />
       </Row>
-      <Row v-if="config.safe.password_limit_enable === 1" label="最大错误次数" desc="锁定前允许的密码错误次数。">
+      <Row v-if="config.safe.password_limit_enable === 1" label="最大错误次数" desc="锁定前允许的密码错误次数（按邮箱计数）。">
         <input v-model.number="config.safe.password_limit_count" type="number" class="input" />
       </Row>
-      <Row v-if="config.safe.password_limit_enable === 1" label="锁定时间（分钟）" desc="密码错误锁定时长。">
+      <Row v-if="config.safe.password_limit_enable === 1" label="锁定时间（分钟）" desc="该邮箱密码错误锁定时长。">
         <input v-model.number="config.safe.password_limit_expire" type="number" class="input" />
       </Row>
       <Actions :saving="saving" :msg="saveMessage" :msg-type="saveMessageType" />
@@ -144,19 +144,19 @@
       <Row label="允许选择新周期" desc="开启后用户续费时可选择不同周期。">
         <Toggle v-model="config.subscribe.allow_new_period" />
       </Row>
-      <Row label="新购事件 ID" desc="新购订阅时触发的事件 ID，0 不触发。">
-        <input v-model.number="config.subscribe.new_order_event_id" type="number" class="input" />
+      <Row label="新购时清零已用流量" desc="开启后新购订阅开通成功时将用户已用流量（上传/下载）清零。">
+        <Toggle v-model="config.subscribe.new_order_event_id" />
       </Row>
-      <Row label="续费事件 ID" desc="续费订阅时触发的事件 ID，0 不触发。">
-        <input v-model.number="config.subscribe.renew_order_event_id" type="number" class="input" />
+      <Row label="续费时清零已用流量" desc="开启后续费订阅开通成功时将用户已用流量（上传/下载）清零。">
+        <Toggle v-model="config.subscribe.renew_order_event_id" />
       </Row>
-      <Row label="变更事件 ID" desc="变更订阅时触发的事件 ID，0 不触发。">
-        <input v-model.number="config.subscribe.change_order_event_id" type="number" class="input" />
+      <Row label="变更时清零已用流量" desc="开启后变更订阅开通成功时将用户已用流量（上传/下载）清零。">
+        <Toggle v-model="config.subscribe.change_order_event_id" />
       </Row>
       <Row label="节点端显示用户信息" desc="开启后节点端能获取到用户的订阅信息。">
         <Toggle v-model="config.subscribe.show_info_to_server_enable" />
       </Row>
-      <Row label="订阅展示方式" desc="控制用户端订阅信息的展示方式。">
+      <Row label="订阅展示方式" desc="控制订阅链接中信息节点的展示内容（流量 / 重置天 / 到期），不影响订阅 URL。">
         <select v-model.number="config.subscribe.show_subscribe_method" class="input">
           <option :value="0">全部</option>
           <option :value="1">只显示到期时间</option>
