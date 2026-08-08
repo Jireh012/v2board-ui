@@ -654,6 +654,10 @@ export async function fetchAdminKnowledge(): Promise<AdminKnowledge[]> {
   return request<AdminKnowledge[]>('/api/v1/admin/knowledge/fetch')
 }
 
+export async function fetchAdminKnowledgeById(id: number): Promise<AdminKnowledge> {
+  return request<AdminKnowledge>(`/api/v1/admin/knowledge/fetch?id=${id}`)
+}
+
 export async function fetchAdminKnowledgeCategory(): Promise<string[]> {
   return request<string[]>('/api/v1/admin/knowledge/category')
 }
@@ -680,7 +684,8 @@ export async function sortAdminKnowledge(ids: number[]): Promise<boolean> {
   return request<boolean>('/api/v1/admin/knowledge/sort', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(ids)
+    // Wire format must be snake_case (global Jackson SNAKE_CASE → SortRequest.knowledgeIds)
+    body: JSON.stringify({ knowledge_ids: ids })
   })
 }
 

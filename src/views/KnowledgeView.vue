@@ -112,7 +112,8 @@ const loadingDetail = ref(false), keyword = ref('')
 async function loadList() {
   try {
     const data = await request<Record<string, KnowledgeItem[]>>('/api/v1/user/knowledge/fetch' + (keyword.value ? `?keyword=${encodeURIComponent(keyword.value)}` : ''))
-    categories.value = Object.entries(data).map(([name, items]) => ({ name, items: items.sort((a, b) => b.updated_at - a.updated_at) }))
+    // Preserve backend order (sort ASC); do not re-sort by updated_at
+    categories.value = Object.entries(data).map(([name, items]) => ({ name, items }))
     currentId.value = null; currentArticle.value = null
   } catch { categories.value = [] }
 }
