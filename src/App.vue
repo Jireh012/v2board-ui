@@ -184,7 +184,7 @@ const router = useRouter()
 
 const isLogin = isLoggedIn
 const isAdminRoute = computed(() => route.path.startsWith('/admin'))
-const isLoginRoute = computed(() => route.path === '/login')
+const isLoginRoute = computed(() => route.path === '/login' || route.path === '/register')
 
 const userEmail = currentUserEmail
 const showUserMenu = ref(false)

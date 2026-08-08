@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import LoginView from './views/LoginView.vue'
+import RegisterView from './views/RegisterView.vue'
 import DashboardHome from './views/DashboardHome.vue'
 import PlanView from './views/PlanView.vue'
 import OrderView from './views/OrderView.vue'
@@ -37,6 +38,10 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     component: LoginView
+  },
+  {
+    path: '/register',
+    component: RegisterView
   },
   {
     path: '/dashboard',

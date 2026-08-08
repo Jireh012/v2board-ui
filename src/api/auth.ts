@@ -20,3 +20,27 @@ export async function login(email: string, password: string): Promise<LoginResul
   return data
 }
 
+export async function register(payload: {
+  email: string
+  password: string
+  invite_code?: string
+}): Promise<LoginResult> {
+  const body: Record<string, string> = {
+    email: payload.email.trim(),
+    password: payload.password
+  }
+  const code = (payload.invite_code || '').trim()
+  if (code) {
+    body.invite_code = code
+  }
+  return request<LoginResult>(
+    '/api/v1/passport/auth/register',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    },
+    { auth: false }
+  )
+}
+

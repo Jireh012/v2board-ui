@@ -25,8 +25,9 @@
 | Cache key | `localStorage` `v2board_app_name` |
 | Fallback | Cached value → `"V2Board"` |
 | Title | `document.title = appName` on init and after fetch |
+| Register gate | `stop_register` / `invite_force` → `registerEnabled` / `inviteForce` in `siteBrand.ts` |
 
-Bind `{{ appName }}` in templates; do not hardcode brand strings.
+Bind `{{ appName }}` in templates; do not hardcode brand strings. Show login→register link only when `registerEnabled`.
 
 ### 4. Validation & Error Matrix
 

@@ -45,17 +45,21 @@
           </button>
           <p v-if="error" class="login-error">{{ error }}</p>
         </form>
+        <p v-if="registerEnabled" class="login-footer">
+          还没有账户？
+          <RouterLink to="/register">注册</RouterLink>
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
+import { useRouter, RouterLink } from 'vue-router'
 import { login } from '../api/auth'
 import { setSession } from '../auth'
-import { appName } from '../siteBrand'
+import { appName, loadSiteBrand, registerEnabled } from '../siteBrand'
 import '../styles/login.css'
 
 const router = useRouter()
@@ -63,6 +67,10 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+
+onMounted(() => {
+  void loadSiteBrand()
+})
 
 async function onSubmit() {
   error.value = ''

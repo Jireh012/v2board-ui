@@ -41,10 +41,16 @@
       <Row label="LOGO" desc="用于显示需要 LOGO 的地方。">
         <input v-model="config.site.logo" class="input" placeholder="请输入 LOGO URL" />
       </Row>
-      <Row label="订阅 URL" desc="用于订阅所使用，留空则为站点 URL；多个用逗号分割。">
-        <input v-model="config.site.subscribe_url" class="input" placeholder="留空则使用站点 URL" />
+      <Row label="订阅 URL" desc="用于订阅所使用，留空则为站点 URL；多个请每行一条（也可逗号分隔）。">
+        <textarea
+          :value="subscribeUrlText"
+          @input="onSubscribeUrlInput(($event.target as HTMLTextAreaElement).value)"
+          class="input textarea"
+          rows="3"
+          placeholder="留空则使用站点 URL&#10;https://sub1.example.com&#10;https://sub2.example.com"
+        />
       </Row>
-      <Row label="订阅路径" desc="用于订阅所使用，留空则为 /api/v1/client/subscribe。">
+      <Row label="订阅路径" desc="用于订阅所使用，留空则为 /api/v1/client/subscribe；保存后立即生效，无需重启。">
         <input v-model="config.site.subscribe_path" class="input" placeholder="/api/v1/client/subscribe" />
       </Row>
       <Row label="用户条款 URL" desc="用于跳转到用户条款 (TOS)。">
@@ -377,7 +383,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, defineComponent, h, type PropType } from 'vue'
+import { computed, ref, watch, defineComponent, h, type PropType } from 'vue'
 import {
   fetchConfig, saveConfig, testSendMail, setTelegramWebhook,
   type ConfigData
@@ -471,6 +477,25 @@ const testing = ref(false)
 const saveMessage = ref('')
 const saveMessageType = ref<'ok' | 'err'>('ok')
 const config = ref<ConfigData | null>(null)
+
+/** 订阅 URL：DB/API 仍为逗号串；编辑时按行展示 */
+const subscribeUrlText = computed(() => {
+  const raw = config.value?.site?.subscribe_url ?? ''
+  return raw
+    .split(/[,\n\r]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join('\n')
+})
+
+function onSubscribeUrlInput(value: string) {
+  if (!config.value?.site) return
+  config.value.site.subscribe_url = value
+    .split(/[,\n\r]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(',')
+}
 
 /* ---- 加载 ---- */
 async function load() {
