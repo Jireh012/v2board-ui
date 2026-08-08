@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { adminBasePath, adminUrl, isAdminUiPath, loadSiteBrand, safeMode } from './siteBrand'
 import LoginView from './views/LoginView.vue'
 import RegisterView from './views/RegisterView.vue'
 import DashboardHome from './views/DashboardHome.vue'
@@ -29,6 +30,7 @@ import AdminNoticesView from './views/admin/AdminNoticesView.vue'
 import AdminCouponsView from './views/admin/AdminCouponsView.vue'
 import AdminGiftcardsView from './views/admin/AdminGiftcardsView.vue'
 import AdminKnowledgeView from './views/admin/AdminKnowledgeView.vue'
+import ForgetView from './views/ForgetView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -42,6 +44,10 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/register',
     component: RegisterView
+  },
+  {
+    path: '/forget',
+    component: ForgetView
   },
   {
     path: '/dashboard',
@@ -88,11 +94,11 @@ const routes: RouteRecordRaw[] = [
     component: ProfileView
   },
   {
-    path: '/admin/login',
+    path: `/${adminBasePath.value}/login`,
     component: AdminLoginView
   },
   {
-    path: '/admin',
+    path: `/${adminBasePath.value}`,
     component: AdminLayout,
     children: [
       {
@@ -164,14 +170,26 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, _from, next) => {
-  if (to.path.startsWith('/admin') && to.path !== '/admin/login') {
-    const auth = localStorage.getItem('auth_data')
-    if (!auth) {
-      return next('/admin/login')
+const PUBLIC_USER_PATHS = new Set(['/login', '/register', '/forget'])
+
+router.beforeEach(async (to, _from, next) => {
+  if (isAdminUiPath(to.path)) {
+    if (to.path !== adminUrl('/login') && !localStorage.getItem('auth_data')) {
+      return next(adminUrl('/login'))
+    }
+    return next()
+  }
+
+  if (!PUBLIC_USER_PATHS.has(to.path)) {
+    await loadSiteBrand()
+    if (safeMode.value && !localStorage.getItem('auth_data')) {
+      return next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      })
     }
   }
-  next()
+  return next()
 })
 
 export default router

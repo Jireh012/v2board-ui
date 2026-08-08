@@ -143,7 +143,7 @@
         </div>
 
         <div class="sidebar-footer">
-          <RouterLink v-if="isAdminUser" to="/admin" class="menu-item admin-link">
+          <RouterLink v-if="isAdminUser" :to="adminHome" class="menu-item admin-link">
             <div class="menu-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </div>
@@ -177,14 +177,17 @@ import {
   isLoggedIn,
   setUserEmail
 } from './auth'
-import { appName } from './siteBrand'
+import { adminUrl, appName, isAdminUiPath } from './siteBrand'
 
 const route = useRoute()
 const router = useRouter()
 
 const isLogin = isLoggedIn
-const isAdminRoute = computed(() => route.path.startsWith('/admin'))
-const isLoginRoute = computed(() => route.path === '/login' || route.path === '/register')
+const isAdminRoute = computed(() => isAdminUiPath(route.path))
+const adminHome = computed(() => adminUrl())
+const isLoginRoute = computed(
+  () => route.path === '/login' || route.path === '/register' || route.path === '/forget'
+)
 
 const userEmail = currentUserEmail
 const showUserMenu = ref(false)

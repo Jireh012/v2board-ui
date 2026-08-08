@@ -388,6 +388,7 @@ import {
   fetchConfig, saveConfig, testSendMail, setTelegramWebhook,
   type ConfigData
 } from '../../api/admin/config'
+import { adminBasePath, adminUrl, loadSiteBrand } from '../../siteBrand'
 
 /* ---- 子组件：表单行 ---- */
 const Row = defineComponent({
@@ -514,10 +515,20 @@ async function saveGroup(group: string) {
   if (!config.value) return
   saving.value = true
   saveMessage.value = ''
+  const prevAdminPath = adminBasePath.value
   try {
     const payload: Record<string, unknown> = {}
     payload[group] = (config.value as Record<string, unknown>)[group]
     await saveConfig(payload as ConfigData)
+    if (group === 'safe') {
+      // Routes are registered once at boot; path change needs a full reload.
+      await loadSiteBrand()
+      if (adminBasePath.value !== prevAdminPath) {
+        showMsg('保存成功，正在跳转到新后台路径…', 'ok')
+        window.location.href = adminUrl('/config/system')
+        return
+      }
+    }
     showMsg('保存成功', 'ok')
   } catch (e) {
     showMsg((e as Error).message, 'err')

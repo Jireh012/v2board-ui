@@ -42,6 +42,29 @@
                 placeholder="name@example.com"
               />
             </label>
+            <label v-if="emailVerify" class="login-field">
+              <span>邮箱验证码</span>
+              <div class="login-code-row">
+                <input
+                  v-model="emailCode"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="\d{6}"
+                  maxlength="6"
+                  required
+                  autocomplete="one-time-code"
+                  placeholder="6 位验证码"
+                />
+                <button
+                  type="button"
+                  class="login-code-btn"
+                  :disabled="sending || cooldown > 0 || !email.trim()"
+                  @click="onSendCode"
+                >
+                  {{ cooldown > 0 ? `${cooldown}s` : sending ? '发送中…' : '发送验证码' }}
+                </button>
+              </div>
+            </label>
             <label class="login-field">
               <span>密码</span>
               <input
@@ -74,9 +97,17 @@
                 placeholder="邀请码"
               />
             </label>
+            <RecaptchaV2
+              v-if="recaptchaRequired"
+              ref="captchaRef"
+              :site-key="recaptchaSiteKey"
+              @token="onCaptchaToken"
+              @expired="onCaptchaExpired"
+            />
             <button class="login-submit" type="submit" :disabled="loading">
               {{ loading ? '注册中...' : '注册' }}
             </button>
+            <p v-if="hint" class="login-success">{{ hint }}</p>
             <p v-if="error" class="login-error">{{ error }}</p>
           </form>
           <p class="login-footer">
@@ -90,22 +121,46 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import { register } from '../api/auth'
+import RecaptchaV2 from '../components/RecaptchaV2.vue'
+import { register, sendEmailVerify } from '../api/auth'
 import { setSession } from '../auth'
-import { appName, inviteForce, loadSiteBrand, registerEnabled } from '../siteBrand'
+import {
+  appName,
+  emailVerify,
+  inviteForce,
+  loadSiteBrand,
+  recaptchaRequired,
+  recaptchaSiteKey,
+  registerEnabled
+} from '../siteBrand'
 import '../styles/login.css'
 
 const route = useRoute()
 const router = useRouter()
 const ready = ref(false)
 const email = ref('')
+const emailCode = ref('')
 const password = ref('')
 const password2 = ref('')
 const inviteCode = ref('')
 const loading = ref(false)
+const sending = ref(false)
 const error = ref('')
+const hint = ref('')
+const cooldown = ref(0)
+const captchaToken = ref('')
+const captchaRef = ref<{ reset: () => void } | null>(null)
+let timer: ReturnType<typeof setInterval> | null = null
+
+function onCaptchaToken(token: string) {
+  captchaToken.value = token
+}
+
+function onCaptchaExpired() {
+  captchaToken.value = ''
+}
 
 onMounted(async () => {
   const code = route.query.code
@@ -118,8 +173,44 @@ onMounted(async () => {
   ready.value = true
 })
 
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
+
+function startCooldown(seconds = 60) {
+  cooldown.value = seconds
+  if (timer) clearInterval(timer)
+  timer = setInterval(() => {
+    cooldown.value -= 1
+    if (cooldown.value <= 0 && timer) {
+      clearInterval(timer)
+      timer = null
+    }
+  }, 1000)
+}
+
+async function onSendCode() {
+  error.value = ''
+  hint.value = ''
+  if (!email.value.trim()) {
+    error.value = '请先填写邮箱'
+    return
+  }
+  sending.value = true
+  try {
+    await sendEmailVerify(email.value, 0)
+    startCooldown(60)
+    hint.value = '验证码已发送，请查收邮箱'
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '发送失败'
+  } finally {
+    sending.value = false
+  }
+}
+
 async function onSubmit() {
   error.value = ''
+  hint.value = ''
   if (password.value !== password2.value) {
     error.value = '两次输入的密码不一致'
     return
@@ -128,12 +219,22 @@ async function onSubmit() {
     error.value = '请填写邀请码'
     return
   }
+  if (emailVerify.value && !/^\d{6}$/.test(emailCode.value.trim())) {
+    error.value = '请输入 6 位数字验证码'
+    return
+  }
+  if (recaptchaRequired.value && !captchaToken.value) {
+    error.value = '请先完成人机验证'
+    return
+  }
   loading.value = true
   try {
     const res = await register({
       email: email.value,
       password: password.value,
-      invite_code: inviteCode.value
+      invite_code: inviteCode.value,
+      email_code: emailVerify.value ? emailCode.value : undefined,
+      recaptcha_data: recaptchaRequired.value ? captchaToken.value : undefined
     })
     setSession({
       auth_data: res.auth_data,
@@ -144,6 +245,8 @@ async function onSubmit() {
     await router.push('/dashboard')
   } catch (e) {
     error.value = e instanceof Error ? e.message : '注册失败'
+    captchaToken.value = ''
+    captchaRef.value?.reset()
   } finally {
     loading.value = false
   }

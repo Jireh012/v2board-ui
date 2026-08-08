@@ -16,7 +16,7 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 |-------|-------------|--------|
 | [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
 | [Component Guidelines](./component-guidelines.md) | Subscribe URL absolute-ize, admin selects, scoped CSS | Active |
-| [Site Brand](./site-brand.md) | Dynamic `app_name`, register gate, `/register` | Active |
+| [Site Brand](./site-brand.md) | SM4 decrypt public config; register/email-verify/safe-mode; `/forget` | Active |
 | [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | To fill |
 | [State Management](./state-management.md) | Local state, global state, server state | To fill |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
@@ -27,8 +27,10 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 ## Pre-Development Checklist
 
 - [ ] Read [component-guidelines.md](./component-guidelines.md) for admin modals, toggles, and subscribe copy UX
-- [ ] Read [site-brand.md](./site-brand.md) if changing site name, login/register brand, or register gate
-- [ ] Login→register link only when public `stop_register != 1`; `/register` in auth shell like `/login`
+- [ ] Read [site-brand.md](./site-brand.md) if changing site name, login/register/forget, email verify, safe mode, or public-config SM4 decrypt
+- [ ] Login→register link only when public `stop_register != 1`; `/register` `/forget` in auth shell like `/login`
+- [ ] Safe mode: await `loadSiteBrand` in `beforeEach`; public paths only login/register/forget
+- [ ] Public config: decrypt `{ iv, payload }` with `VITE_SM4_KEY` matching API `SM4_KEY`; do not read plaintext `data.app_name`
 - [ ] If changing subscribe copy/import: absolute-ize relative `subscribe_url`
 - [ ] If changing node editor: permission groups / routes / parent must select by **name**, not raw IDs
 - [ ] Same-file `defineComponent` + `h()` children need `:deep()` for scoped styles

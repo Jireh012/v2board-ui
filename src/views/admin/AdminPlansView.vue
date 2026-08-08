@@ -289,7 +289,7 @@
             <div class="form-row">
               <div class="label-row">
                 <label>权限组</label>
-                <RouterLink class="link-btn" to="/admin/servers/groups" target="_blank">添加权限组</RouterLink>
+                <RouterLink class="link-btn" :to="adminUrl('/servers/groups')" target="_blank">添加权限组</RouterLink>
               </div>
               <select v-model.number="form.group_id" class="input" required>
                 <option :value="0" disabled>请选择权限组</option>
@@ -401,6 +401,7 @@ import {
   type AdminPlan
 } from '../../api/admin'
 import { fetchGroups, type ServerGroup } from '../../api/admin/group'
+import { adminUrl } from '../../siteBrand'
 
 type FilterKey = 'all' | 'show' | 'hide' | 'renew'
 

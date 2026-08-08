@@ -10,10 +10,12 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "sm-crypto": "^0.5.5",
     "vue": "^3.5.13",
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
+    "@types/sm-crypto": "^0.3.4",
     "@vitejs/plugin-vue": "^6.0.8",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",

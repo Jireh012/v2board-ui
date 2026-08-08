@@ -609,6 +609,7 @@ import {
   type PageResult,
   type StatUserRecord
 } from '../../api/admin'
+import { adminUrl } from '../../siteBrand'
 
 const route = useRoute()
 const router = useRouter()
@@ -996,11 +997,11 @@ async function doResetSecret(u: AdminUser) {
 }
 
 function goSendOrder(u: AdminUser) {
-  router.push({ path: '/admin/orders', query: { assign_email: u.email } })
+  router.push({ path: adminUrl('/orders'), query: { assign_email: u.email } })
 }
 
 function goUserOrders(u: AdminUser) {
-  router.push({ path: '/admin/orders', query: { user_id: String(u.id) } })
+  router.push({ path: adminUrl('/orders'), query: { user_id: String(u.id) } })
 }
 
 function goUserInvites(u: AdminUser) {

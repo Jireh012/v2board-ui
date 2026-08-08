@@ -1,4 +1,5 @@
 import { clearSession } from '../auth'
+import { adminUrl, isAdminUiPath } from '../siteBrand'
 
 export interface ApiResponse<T> {
   code: number
@@ -32,8 +33,7 @@ export async function request<T>(
 
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname
-      const target =
-        currentPath.startsWith('/admin') ? '/admin/login' : '/login'
+      const target = isAdminUiPath(currentPath) ? adminUrl('/login') : '/login'
       if (currentPath !== target) {
         window.location.href = target
       }

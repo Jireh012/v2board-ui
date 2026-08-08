@@ -55,7 +55,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminLogin } from '../api/admin'
 import { setSession } from '../auth'
-import { appName } from '../siteBrand'
+import { adminUrl, appName } from '../siteBrand'
 import '../styles/login.css'
 
 const router = useRouter()
@@ -76,7 +76,7 @@ async function onSubmit() {
       email: email.value.trim()
     })
     localStorage.setItem('admin_email', email.value.trim())
-    await router.push('/admin')
+    await router.push(adminUrl())
   } catch (e) {
     const msg = e instanceof Error ? e.message : '登录失败'
     error.value = msg

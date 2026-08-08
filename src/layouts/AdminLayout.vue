@@ -104,7 +104,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter, RouterView, RouterLink } from 'vue-router'
 import { clearSession, currentUserEmail } from '../auth'
-import { appName } from '../siteBrand'
+import { adminUrl, appName } from '../siteBrand'
 import '../styles/admin.css'
 
 onMounted(() => document.body.classList.add('admin-theme'))
@@ -133,84 +133,71 @@ const icons = {
   knowledge: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6.5 15.5H20"/></svg>'
 }
 
-const menuGroups = [
+const menuGroups = computed(() => [
   {
     title: '总览',
-    items: [{ to: '/admin', label: '仪表盘', icon: icons.dashboard, exact: true }]
+    items: [{ to: adminUrl(), label: '仪表盘', icon: icons.dashboard, exact: true }]
   },
   {
     title: '设置',
     items: [
-      { to: '/admin/config/system', label: '系统配置', icon: icons.settings, match: '/admin/config' },
-      { to: '/admin/payments', label: '支付配置', icon: icons.payment, match: '/admin/payments' }
+      { to: adminUrl('/config/system'), label: '系统配置', icon: icons.settings, match: adminUrl('/config') },
+      { to: adminUrl('/payments'), label: '支付配置', icon: icons.payment, match: adminUrl('/payments') }
     ]
   },
   {
     title: '服务器',
     items: [
-      { to: '/admin/servers', label: '节点管理', icon: icons.server, exact: true },
-      { to: '/admin/servers/groups', label: '权限组管理', icon: icons.group, exact: true },
-      { to: '/admin/servers/routes', label: '路由管理', icon: icons.route, exact: true },
-      { to: '/admin/servers/external-subscribe', label: '第三方订阅源', icon: icons.link, exact: true }
+      { to: adminUrl('/servers'), label: '节点管理', icon: icons.server, exact: true },
+      { to: adminUrl('/servers/groups'), label: '权限组管理', icon: icons.group, exact: true },
+      { to: adminUrl('/servers/routes'), label: '路由管理', icon: icons.route, exact: true },
+      { to: adminUrl('/servers/external-subscribe'), label: '第三方订阅源', icon: icons.link, exact: true }
     ]
   },
   {
     title: '财务',
     items: [
-      { to: '/admin/plans', label: '订阅管理', icon: icons.plan, match: '/admin/plans' },
-      { to: '/admin/orders', label: '订单管理', icon: icons.order, match: '/admin/orders' },
-      { to: '/admin/coupons', label: '优惠券管理', icon: icons.coupon, match: '/admin/coupons' },
-      { to: '/admin/giftcards', label: '礼品卡管理', icon: icons.gift, match: '/admin/giftcards' }
+      { to: adminUrl('/plans'), label: '订阅管理', icon: icons.plan, match: adminUrl('/plans') },
+      { to: adminUrl('/orders'), label: '订单管理', icon: icons.order, match: adminUrl('/orders') },
+      { to: adminUrl('/coupons'), label: '优惠券管理', icon: icons.coupon, match: adminUrl('/coupons') },
+      { to: adminUrl('/giftcards'), label: '礼品卡管理', icon: icons.gift, match: adminUrl('/giftcards') }
     ]
   },
   {
     title: '用户',
     items: [
-      { to: '/admin/users', label: '用户管理', icon: icons.user, match: '/admin/users' },
-      { to: '/admin/tickets', label: '工单管理', icon: icons.ticket, match: '/admin/tickets' }
+      { to: adminUrl('/users'), label: '用户管理', icon: icons.user, match: adminUrl('/users') },
+      { to: adminUrl('/tickets'), label: '工单管理', icon: icons.ticket, match: adminUrl('/tickets') }
     ]
   },
   {
     title: '内容',
     items: [
-      { to: '/admin/notices', label: '公告管理', icon: icons.notice, match: '/admin/notices' },
-      { to: '/admin/knowledge', label: '知识库管理', icon: icons.knowledge, match: '/admin/knowledge' }
+      { to: adminUrl('/notices'), label: '公告管理', icon: icons.notice, match: adminUrl('/notices') },
+      { to: adminUrl('/knowledge'), label: '知识库管理', icon: icons.knowledge, match: adminUrl('/knowledge') }
     ]
   }
-]
-
-const pageTitleMap: Record<string, string> = {
-  '/admin': '仪表盘',
-  '/admin/config/system': '系统配置',
-  '/admin/users': '用户管理',
-  '/admin/plans': '订阅管理',
-  '/admin/orders': '订单管理',
-  '/admin/tickets': '工单管理',
-  '/admin/payments': '支付配置',
-  '/admin/servers': '节点管理',
-  '/admin/servers/groups': '权限组管理',
-  '/admin/servers/routes': '路由管理',
-  '/admin/servers/external-subscribe': '第三方订阅源',
-  '/admin/notices': '公告管理',
-  '/admin/coupons': '优惠券管理',
-  '/admin/giftcards': '礼品卡管理',
-  '/admin/knowledge': '知识库管理'
-}
+])
 
 const pageTitle = computed(() => {
   const path = route.path
-  if (pageTitleMap[path]) return pageTitleMap[path]
-  if (path.startsWith('/admin/config')) return '系统配置'
-  if (path.startsWith('/admin/users')) return '用户管理'
-  if (path.startsWith('/admin/plans')) return '订阅管理'
-  if (path.startsWith('/admin/orders')) return '订单管理'
-  if (path.startsWith('/admin/tickets')) return '工单管理'
-  if (path.startsWith('/admin/payments')) return '支付配置'
-  if (path.startsWith('/admin/servers')) return '节点管理'
-  if (path.startsWith('/admin/notices')) return '公告管理'
-  if (path.startsWith('/admin/coupons')) return '优惠券管理'
-  if (path.startsWith('/admin/giftcards')) return '礼品卡管理'
-  if (path.startsWith('/admin/knowledge')) return '知识库管理'
+  if (path === adminUrl()) return '仪表盘'
+  const titleBySuffix: [string, string][] = [
+    ['/config', '系统配置'],
+    ['/users', '用户管理'],
+    ['/plans', '订阅管理'],
+    ['/orders', '订单管理'],
+    ['/tickets', '工单管理'],
+    ['/payments', '支付配置'],
+    ['/servers', '节点管理'],
+    ['/notices', '公告管理'],
+    ['/coupons', '优惠券管理'],
+    ['/giftcards', '礼品卡管理'],
+    ['/knowledge', '知识库管理']
+  ]
+  for (const [suffix, title] of titleBySuffix) {
+    if (path.startsWith(adminUrl(suffix))) return title
+  }
   return '仪表盘'
 })
 
@@ -236,7 +223,7 @@ function goUserHome() {
 function logout() {
   closeUserMenu()
   clearSession()
-  router.push('/admin/login')
+  router.push(adminUrl('/login'))
 }
 </script>
 
