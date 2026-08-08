@@ -30,11 +30,13 @@
               <h3 class="section-title">所购服务内容</h3>
               <div class="product-info-box">
                  <div class="p-main">
-                    <div class="p-name">{{ order.plan?.name || '基础订阅' }}</div>
+                    <div class="p-name">{{ isDeposit ? '钱包充值' : (order.plan?.name || '基础订阅') }}</div>
                     <div class="p-details">
                        <span>{{ periodLabel(order.period) }}</span>
-                       <span class="dot">·</span>
-                       <span>包含 {{ formatTraffic(order.plan?.transfer_enable) }} 流量</span>
+                       <template v-if="!isDeposit">
+                         <span class="dot">·</span>
+                         <span>包含 {{ formatTraffic(order.plan?.transfer_enable) }} 流量</span>
+                       </template>
                     </div>
                  </div>
                  <div class="p-price">
@@ -84,11 +86,11 @@
             <div class="bill-header">账单结算</div>
             <div class="bill-content">
                <div class="bill-row">
-                  <span>{{ order.plan?.name || '订阅服务' }}</span>
+                  <span>{{ isDeposit ? '钱包充值' : (order.plan?.name || '订阅服务') }}</span>
                   <span>¥ {{ (order.total_amount / 100).toFixed(2) }}</span>
                </div>
                <div class="bill-row sub">
-                  <span>周期: {{ periodLabel(order.period) }}</span>
+                  <span>{{ isDeposit ? '类型' : '周期' }}: {{ periodLabel(order.period) }}</span>
                   <span>-</span>
                </div>
                <div class="bill-divider"></div>
@@ -166,12 +168,13 @@ let checkTimer: number | null = null
 
 const payDisabled = computed(() => !order.value || order.value.status !== 0 || !selectedMethodId.value || paying.value)
 const payButtonText = computed(() => paying.value ? '订单处理中...' : '提交订单支付')
+const isDeposit = computed(() => order.value?.period === 'deposit' || order.value?.plan_id === 0)
 
 const formatTime = (ts?: number | null) => ts ? new Date(ts * 1000).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'
 const formatTraffic = (gb?: number | null) => gb ? `${gb.toFixed(0)} GB` : '-'
 
 const periodLabel = (p?: string | null) => {
-  const map: any = { month_price: '月付', quarter_price: '季付', half_year_price: '半年付', year_price: '年付', two_year_price: '两年付', three_year_price: '三年付', onetime_price: '一次性', reset_price: '流量包', deposit: '充值' }
+  const map: any = { month_price: '月付', quarter_price: '季付', half_year_price: '半年付', year_price: '年付', two_year_price: '两年付', three_year_price: '三年付', onetime_price: '一次性', reset_price: '流量包', deposit: '钱包充值' }
   return map[p || ''] || p || '-'
 }
 

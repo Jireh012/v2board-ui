@@ -6,10 +6,11 @@
         <p class="page-subtitle">遇到网络或账户问题？我们的专业团队随时为您提供技术支持。</p>
       </div>
       <div class="header-actions">
-        <button class="btn-primary-premium" @click="showCreate = true">
+        <button v-if="statusReady && ticketOpen" class="btn-primary-premium" @click="showCreate = true">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
           发起新工单
         </button>
+        <p v-else-if="statusReady && !ticketOpen" class="ticket-closed-hint">工单系统已关闭</p>
       </div>
     </div>
 
@@ -60,7 +61,8 @@
     <div v-else class="empty-state">
        <div class="empty-icon">📂</div>
        <h3>暂无活跃工单</h3>
-       <p>目前还没有发起任何技术支持请求。如果您遇到问题，请点击右上角发起工单。</p>
+       <p v-if="!statusReady || ticketOpen">目前还没有发起任何技术支持请求。如果您遇到问题，请点击右上角发起工单。</p>
+       <p v-else>工单系统已关闭，暂无法发起新工单。已有工单仍可查看与回复。</p>
     </div>
 
     <!-- 新建工单弹窗 -->
@@ -162,12 +164,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, reactive, nextTick } from 'vue'
+import { computed, onMounted, ref, reactive, nextTick } from 'vue'
 import { 
   fetchTickets, fetchTicketDetail, saveTicket, replyTicket, closeTicket, type Ticket 
 } from '../api/ticket'
+import { getSubscribe } from '../api/user'
 
 const tickets = ref<Ticket[]>([])
+const ticketStatus = ref(0)
+const statusReady = ref(false)
+const ticketOpen = computed(() => ticketStatus.value !== 2)
 const loading = ref(false), showCreate = ref(false), creating = ref(false)
 const message = ref(''), isError = ref(false), detailVisible = ref(false), detailLoading = ref(false)
 const currentTicket = ref<Ticket | null>(null), replyContent = ref(''), replying = ref(false), closing = ref(false)
@@ -176,6 +182,17 @@ const form = reactive({ subject: '', level: 1, message: '' })
 
 async function loadTickets() {
   loading.value = true; try { tickets.value = await fetchTickets() } finally { loading.value = false }
+}
+
+async function loadTicketStatus() {
+  try {
+    const sub = await getSubscribe()
+    ticketStatus.value = sub.ticket_status ?? 0
+  } catch {
+    ticketStatus.value = 0
+  } finally {
+    statusReady.value = true
+  }
 }
 
 async function handleCreate() {
@@ -228,7 +245,10 @@ const formatTime = (ts: number) => new Date(ts * 1000).toLocaleString('zh-CN', {
 const closeDetail = () => { detailVisible.value = false; currentTicket.value = null; replyContent.value = '' }
 const scrollToBottom = () => { if (messageBox.value) messageBox.value.scrollTop = messageBox.value.scrollHeight }
 
-onMounted(loadTickets)
+onMounted(() => {
+  loadTickets()
+  loadTicketStatus()
+})
 </script>
 
 <style scoped>
@@ -244,6 +264,7 @@ onMounted(loadTickets)
   transition: transform 0.2s;
 }
 .btn-primary-premium:hover { transform: translateY(-2px); }
+.ticket-closed-hint { margin: 0; font-size: 13px; font-weight: 700; color: #94a3b8; }
 
 .status-summary { margin-bottom: 24px; }
 .status-pill {

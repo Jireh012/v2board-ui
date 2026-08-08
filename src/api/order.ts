@@ -50,14 +50,26 @@ export async function fetchOrderDetail(tradeNo: string): Promise<OrderDetail> {
 export async function createOrder(
   planId: number,
   period: string,
-  couponCode?: string
+  couponCode?: string,
+  /** 充值金额（分）；planId===0 时必填 */
+  depositAmountCents?: number
 ): Promise<string> {
   const body = new URLSearchParams()
   body.set('plan_id', String(planId))
-  body.set('period', period)
-  const code = (couponCode || '').trim()
-  if (code) {
-    body.set('coupon_code', code)
+  if (planId === 0) {
+    if (depositAmountCents == null || depositAmountCents <= 0) {
+      throw new Error('充值金额必须大于 0')
+    }
+    body.set('deposit_amount', String(depositAmountCents))
+    if (period) {
+      body.set('period', period)
+    }
+  } else {
+    body.set('period', period)
+    const code = (couponCode || '').trim()
+    if (code) {
+      body.set('coupon_code', code)
+    }
   }
   const tradeNo = await request<string>('/api/v1/user/order/save', {
     method: 'POST',

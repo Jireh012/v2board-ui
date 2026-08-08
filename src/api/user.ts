@@ -36,6 +36,8 @@ export interface SubscribeInfo {
   allow_new_period: number
   /** 用户端「即将到期」徽章提前天数 */
   show_subscribe_expire?: number
+  /** 工单开单策略：0 全开；1 仅有付费订单；2 关闭 */
+  ticket_status?: number
   alive_ip: number
   plan?: Plan
 }

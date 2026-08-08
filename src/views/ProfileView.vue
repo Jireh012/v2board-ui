@@ -24,7 +24,7 @@
                 <span class="cny">CNY</span>
               </div>
             </div>
-            <button class="btn-deposit" @click="goOrder">
+            <button class="btn-deposit" @click="openDepositModal">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
               立即充值
             </button>
@@ -131,7 +131,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
 
-          <button class="btn-safety-item caution" @click="handleResetSecurity" :disabled="resetting">
+          <button class="btn-safety-item caution" @click="openResetSecurityModal" :disabled="resetting">
             <div class="safety-icon icon-red">
                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
             </div>
@@ -150,6 +150,38 @@
         </div>
       </aside>
     </div>
+
+    <!-- 钱包充值弹窗 -->
+    <transition name="modal">
+      <div v-if="showDepositModal" class="modal-mask" @click.self="closeDepositModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h3>钱包充值</h3>
+            <button class="close-btn" @click="closeDepositModal">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>充值金额（元）</label>
+              <input
+                type="number"
+                v-model="depositYuan"
+                min="0.01"
+                step="0.01"
+                placeholder="请输入充值金额"
+                @keyup.enter="submitDeposit"
+              >
+            </div>
+            <p class="deposit-hint">充值成功后金额将进入钱包余额，可用于订阅消费。</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel" @click="closeDepositModal" :disabled="depositLoading">取消</button>
+            <button class="btn-confirm" @click="submitDeposit" :disabled="depositLoading">
+              {{ depositLoading ? '创建中...' : '确认充值' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- 修改密码弹窗 -->
     <transition name="modal">
@@ -183,6 +215,29 @@
       </div>
     </transition>
 
+    <!-- 重置连接信息二次确认 -->
+    <transition name="modal">
+      <div v-if="showResetSecurityModal" class="modal-mask" @click.self="closeResetSecurityModal">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reset-security-title">
+          <div class="modal-header">
+            <h3 id="reset-security-title">确认重置连接信息？</h3>
+            <button type="button" class="close-btn" :disabled="resetting" @click="closeResetSecurityModal">×</button>
+          </div>
+          <div class="modal-body">
+            <p class="confirm-warn-text">
+              重置后原有订阅链接与 UUID 将立即失效，已导入的客户端需重新订阅才能连接。此操作不可撤销。
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" :disabled="resetting" @click="closeResetSecurityModal">取消</button>
+            <button type="button" class="btn-confirm btn-danger" :disabled="resetting" @click="handleResetSecurity">
+              {{ resetting ? '重置中...' : '确认重置' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <p v-if="message" class="toast" :class="{ error: isError }">{{ message }}</p>
   </div>
 </template>
@@ -191,6 +246,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserInfo, changePassword, updateUserInfo, resetSecurity, redeemGiftcard, type UserInfo } from '../api/user'
+import { createOrder } from '../api/order'
 
 const router = useRouter()
 const info = ref<UserInfo | null>(null)
@@ -203,6 +259,10 @@ const isError = ref(false)
 const showPwdModal = ref(false)
 const pwdLoading = ref(false)
 const pwdForm = ref({ old_password: '', new_password: '', confirm_password: '' })
+const showDepositModal = ref(false)
+const depositYuan = ref('')
+const depositLoading = ref(false)
+const showResetSecurityModal = ref(false)
 
 async function loadInfo() {
   loading.value = true
@@ -235,15 +295,28 @@ async function handleChangePassword() {
   finally { pwdLoading.value = false }
 }
 
+function openResetSecurityModal() {
+  if (resetting.value) return
+  showResetSecurityModal.value = true
+}
+
+function closeResetSecurityModal() {
+  if (resetting.value) return
+  showResetSecurityModal.value = false
+}
+
 async function handleResetSecurity() {
-  if (!confirm('重置安全信息将立即失效原有的订阅链接与 UUID。确认重置？')) return
   resetting.value = true
   try {
     await resetSecurity()
+    showResetSecurityModal.value = false
     showMessage('安全信息重置成功，请更新您的订阅配置')
     await loadInfo()
-  } catch (e) { showMessage(e instanceof Error ? e.message : '重置失败', true) }
-  finally { resetting.value = false }
+  } catch (e) {
+    showMessage(e instanceof Error ? e.message : '重置失败', true)
+  } finally {
+    resetting.value = false
+  }
 }
 
 function showMessage(msg: string, error = false) {
@@ -275,7 +348,37 @@ const formatTime = (ts: number | null) =>
         hour12: false,
       })
     : '-'
-const goOrder = () => router.push('/order')
+
+function openDepositModal() {
+  depositYuan.value = ''
+  showDepositModal.value = true
+}
+
+function closeDepositModal() {
+  if (depositLoading.value) return
+  showDepositModal.value = false
+}
+
+async function submitDeposit() {
+  const yuan = Number(depositYuan.value)
+  if (!Number.isFinite(yuan) || yuan <= 0) {
+    return showMessage('请输入大于 0 的充值金额', true)
+  }
+  const cents = Math.round(yuan * 100)
+  if (cents <= 0) {
+    return showMessage('请输入大于 0 的充值金额', true)
+  }
+  depositLoading.value = true
+  try {
+    const tradeNo = await createOrder(0, 'deposit', undefined, cents)
+    showDepositModal.value = false
+    router.push(`/order/${tradeNo}`)
+  } catch (e) {
+    showMessage(e instanceof Error ? e.message : '创建充值订单失败', true)
+  } finally {
+    depositLoading.value = false
+  }
+}
 
 onMounted(loadInfo)
 </script>
@@ -329,13 +432,17 @@ onMounted(loadInfo)
   width: 140px;
   height: 140px;
   background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .wallet-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
 }
 
 .wallet-label { font-size: 13px; font-weight: 700; opacity: 0.6; display: block; margin-bottom: 8px; }
@@ -346,6 +453,9 @@ onMounted(loadInfo)
 .cny { font-size: 14px; font-weight: 700; opacity: 0.6; }
 
 .btn-deposit {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
   background: white;
   color: var(--text-main);
   border: none;
@@ -353,14 +463,16 @@ onMounted(loadInfo)
   border-radius: 99px;
   font-weight: 800;
   font-size: 14px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-deposit:hover { transform: scale(1.05); }
+.btn-deposit:active { transform: scale(0.98); }
 
 .wallet-footer {
   padding-top: 20px;
@@ -496,9 +608,14 @@ input:checked + .slider:before { transform: translateX(22px); }
   width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px;
   font-size: 14px; font-weight: 600; box-sizing: border-box;
 }
+.deposit-hint { margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+.confirm-warn-text { margin: 0; font-size: 14px; line-height: 1.6; color: #475569; font-weight: 600; }
 .modal-footer { padding: 20px 24px; background: #f8fafc; display: flex; justify-content: flex-end; gap: 12px; border-radius: 0 0 24px 24px; }
 .btn-cancel { background: none; border: none; color: #64748b; font-weight: 700; cursor: pointer; }
+.btn-cancel:disabled, .btn-confirm:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn-confirm { padding: 10px 20px; background: var(--text-main); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
+.btn-confirm.btn-danger { background: #dc2626; }
+.btn-confirm.btn-danger:hover:not(:disabled) { background: #b91c1c; }
 
 /* Toast */
 .toast {
@@ -519,5 +636,9 @@ input:checked + .slider:before { transform: translateX(22px); }
 .modal-enter-active, .modal-leave-active { transition: opacity 0.3s; }
 .modal-enter-from, .modal-leave-to { opacity: 0; }
 
-@media (max-width: 900px) { .profile-layout { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .profile-layout { grid-template-columns: 1fr; }
+  .wallet-header { flex-wrap: wrap; align-items: flex-start; }
+  .btn-deposit { margin-top: 4px; }
+}
 </style>
