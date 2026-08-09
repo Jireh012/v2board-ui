@@ -10,7 +10,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :class="{ spinning: loading }"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
           刷新
         </button>
-        <button class="btn primary" @click="openAssign">
+        <button class="btn primary" @click="openAssign()">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
           分配订单
         </button>
@@ -106,7 +106,7 @@
       <div v-else-if="!rows.length" class="state-box empty">
         <h3>暂无订单</h3>
         <p>调整筛选条件，或使用「分配订单」手动创建。</p>
-        <button class="btn primary" @click="openAssign">分配订单</button>
+        <button class="btn primary" @click="openAssign()">分配订单</button>
       </div>
       <template v-else>
         <div class="table-wrap">
