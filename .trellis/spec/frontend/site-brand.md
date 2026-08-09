@@ -30,7 +30,7 @@
 
 | Condition | Behavior |
 |-----------|----------|
-| Missing `VITE_SM4_KEY` / bad length | Throw in decrypt; `loadSiteBrand` catch → cached name / flags false |
+| Missing `VITE_SM4_KEY` / bad length | Throw in decrypt; `loadSiteBrand` catch → cached name or empty (no `V2Board`) / flags false |
 | Missing `iv`/`payload` | Throw「公开配置响应格式无效」 |
 | Wrong key | Decrypt/parse fails → same catch path (no white screen) |
 
@@ -73,7 +73,7 @@ const data = await fetchPublicSiteConfig() // GET /config, decrypt, setApiBases
 ### 2. Signatures
 
 - `fetchPublicSiteConfig()` — `src/api/site.ts` (decrypts envelope → `PublicSiteConfig`)
-- `appName`, `stopRegister`, `inviteForce`, `emailVerify`, `safeMode`, `recaptchaEnable`, `recaptchaSiteKey`, `telegramDiscussLink`, `recaptchaRequired`, `adminBasePath`, `adminUrl()`, `isAdminUiPath()`, `registerEnabled`, `loadSiteBrand()`, `applyFrontendTheme()` — `src/siteBrand.ts`
+- `appName`, `hasSiteBrand`, `stopRegister`, `inviteForce`, `emailVerify`, `safeMode`, `recaptchaEnable`, `recaptchaSiteKey`, `telegramDiscussLink`, `recaptchaRequired`, `adminBasePath`, `adminUrl()`, `isAdminUiPath()`, `registerEnabled`, `loadSiteBrand()`, `applyFrontendTheme()` — `src/siteBrand.ts`
 - Bootstrap: `main.ts` → `await loadSiteBrand()` then dynamic `import('./router')` so admin routes use the resolved path
 - Forget: `/forget` (`ForgetView.vue`); login link always shown
 - User auth guard: `router.beforeEach` — anonymous users only `/login` `/register` `/forget` (always; not gated by `safe_mode_enable`)
@@ -84,9 +84,10 @@ const data = await fetchPublicSiteConfig() // GET /config, decrypt, setApiBases
 |------|--------|
 | Request auth | `{ auth: false }` |
 | Cache | `localStorage` `v2board_app_name`, `v2board_admin_path` |
-| Name fallback | cache → `"V2Board"` |
+| Name fallback | cache only (ignore legacy cached `"V2Board"`); else empty — **never** invent product name |
+| Brand UI | login/register/forget/admin-login show `.login-brand` only when `hasSiteBrand` |
 | Admin path fallback | cache → `"admin"`; empty/invalid public `secure_path` → `"admin"` |
-| Title | `document.title = appName` |
+| Title | `document.title = appName` or neutral `Panel` when empty |
 | Static shell | `index.html` initial `<title>` is neutral (`Panel`); favicon `/favicon.svg` — never `V2Board` / Vite default before JS |
 | Register entry | show only when `registerEnabled` (`stop_register != 1`) |
 | Invite field | required in UI when `inviteForce` |
@@ -105,8 +106,8 @@ const data = await fetchPublicSiteConfig() // GET /config, decrypt, setApiBases
 
 | Condition | Behavior |
 |-----------|----------|
-| Fetch/decrypt fails | Keep cached name; register flags stay previous/false |
-| Empty `app_name` | Fallback `V2Board` |
+| Fetch/decrypt fails | Keep non-placeholder cached name only; no brand UI / title `Panel`; register flags stay previous/false |
+| Empty `app_name` | `appName=""`, hide brand block; do not write cache |
 | `stop_register=1` | Hide login→register link; `/register` closed state |
 | No `auth_data` | Block `/dashboard` etc.; allow login/register/forget |
 

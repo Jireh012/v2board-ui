@@ -3,7 +3,8 @@ import { fetchPublicSiteConfig, type PublicSiteConfig } from './api/site'
 
 const STORAGE_KEY = 'v2board_app_name'
 const ADMIN_PATH_KEY = 'v2board_admin_path'
-const FALLBACK_NAME = 'V2Board'
+/** document.title when no site name (never product string "V2Board") */
+const NEUTRAL_TITLE = 'Panel'
 const DEFAULT_ADMIN_PATH = 'admin'
 
 const THEME_COLOR_MAP: Record<string, { primary: string; hover: string; soft: string }> = {
@@ -54,13 +55,15 @@ export function applyFrontendTheme(data: Pick<
 function readCachedName(): string {
   try {
     const cached = localStorage.getItem(STORAGE_KEY)
-    if (cached && cached.trim()) {
-      return cached.trim()
+    const name = cached?.trim() || ''
+    // Legacy placeholder from older builds — not a real site brand.
+    if (name && name !== 'V2Board') {
+      return name
     }
   } catch {
     // ignore storage errors
   }
-  return FALLBACK_NAME
+  return ''
 }
 
 function writeCachedName(name: string) {
@@ -101,7 +104,7 @@ function normalizeAdminPath(raw: unknown): string {
 
 function applyDocumentTitle(name: string) {
   if (typeof document !== 'undefined') {
-    document.title = name
+    document.title = name.trim() || NEUTRAL_TITLE
   }
 }
 
@@ -109,7 +112,7 @@ function asFlag(v: unknown): boolean {
   return v === 1 || v === true || v === '1'
 }
 
-/** 响应式站点名；同步预填缓存，避免首屏闪旧硬编码名 */
+/** 响应式站点名；同步预填缓存。无缓存时为空（不显示 V2Board 占位）。 */
 export const appName = ref(readCachedName())
 export const stopRegister = ref(false)
 export const inviteForce = ref(false)
@@ -127,6 +130,8 @@ export const registerEnabled = computed(() => !stopRegister.value)
 export const recaptchaRequired = computed(
   () => recaptchaEnable.value && !!recaptchaSiteKey.value.trim()
 )
+/** 是否有可展示的站点品牌名（公开配置成功或有本地缓存） */
+export const hasSiteBrand = computed(() => !!appName.value.trim())
 
 /** Build admin UI URL, e.g. adminUrl('/orders') → `/admin888/orders`. */
 export function adminUrl(sub = ''): string {
@@ -151,7 +156,7 @@ export async function loadSiteBrand(): Promise<string> {
   loadPromise = (async () => {
     try {
       const data = await fetchPublicSiteConfig()
-      const name = (data.app_name || '').trim() || FALLBACK_NAME
+      const name = (data.app_name || '').trim()
       appName.value = name
       stopRegister.value = asFlag(data.stop_register)
       inviteForce.value = asFlag(data.invite_force)
@@ -163,11 +168,14 @@ export async function loadSiteBrand(): Promise<string> {
       const path = normalizeAdminPath(data.secure_path)
       adminBasePath.value = path
       writeCachedAdminPath(path)
-      writeCachedName(name)
+      if (name) {
+        writeCachedName(name)
+      }
       applyDocumentTitle(name)
       applyFrontendTheme(data)
       return name
     } catch {
+      // Config/decrypt failure: keep prior cache only — never invent "V2Board".
       const fallback = readCachedName()
       appName.value = fallback
       adminBasePath.value = readCachedAdminPath()

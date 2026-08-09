@@ -4,7 +4,7 @@
     <div class="login-orb login-orb-b" aria-hidden="true" />
 
     <div class="login-shell">
-      <div class="login-brand">
+      <div v-if="hasSiteBrand" class="login-brand">
         <div class="login-logo" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -55,7 +55,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminLogin } from '../api/admin'
 import { setSession } from '../auth'
-import { adminUrl, appName } from '../siteBrand'
+import { adminUrl, appName, hasSiteBrand } from '../siteBrand'
 import '../styles/login.css'
 
 const router = useRouter()
