@@ -237,6 +237,16 @@ filters.push({
 
 ---
 
+## Convention: User「我的订单」infinite scroll
+
+**What**: `OrderView.vue` uses `fetchOrdersPage({ status, current, pageSize })` → `{ data, total }`. Sentinel + `IntersectionObserver` appends pages; filter tabs map to API `status` (pending=`0`, finished=`3`) and reset the list. Legacy `fetchOrders()` (no `pageSize`) stays for `PlanView`.
+
+**Why**: Avoid loading the full order history on first paint.
+
+**Related**: API `admin-commerce.md`「User order list fetch».
+
+---
+
 ## Convention: Admin dashboard stats
 
 **What**: `AdminDashboardView.vue` loads KPIs/ranks via `fetchStat*` (`api/admin.ts`). Trend + bar ranks use **ECharts** (tree-shaken `echarts/core`). Money from `getOverride` is **cents** → display `/100` with two decimals + `CNY`. Rank `total` is already **GB**; tooltips use two decimals. Dispose charts on unmount; section failures use `Promise.allSettled` / per-block retry.

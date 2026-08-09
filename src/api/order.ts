@@ -37,9 +37,28 @@ export interface OrderDetail {
   } | null
 }
 
+export interface OrderPageResult {
+  data: OrderListItem[]
+  total: number
+}
+
+/** Full list (PHP-compatible). Prefer {@link fetchOrdersPage} for the order list UI. */
 export async function fetchOrders(status?: number): Promise<OrderListItem[]> {
   const qs = status != null ? `?status=${status}` : ''
   return request<OrderListItem[]>(`/api/v1/user/order/fetch${qs}`)
+}
+
+/** Paginated fetch for infinite scroll on「我的订单」. */
+export async function fetchOrdersPage(opts: {
+  status?: number
+  current?: number
+  pageSize?: number
+} = {}): Promise<OrderPageResult> {
+  const params = new URLSearchParams()
+  if (opts.status != null) params.set('status', String(opts.status))
+  params.set('current', String(opts.current ?? 1))
+  params.set('pageSize', String(opts.pageSize ?? 10))
+  return request<OrderPageResult>(`/api/v1/user/order/fetch?${params.toString()}`)
 }
 
 export async function fetchOrderDetail(tradeNo: string): Promise<OrderDetail> {

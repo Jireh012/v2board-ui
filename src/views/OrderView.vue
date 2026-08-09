@@ -6,18 +6,17 @@
         <p class="page-subtitle">管理您的历史账单，查看订阅续费与充值记录。</p>
       </div>
       <div class="header-actions">
-        <button class="btn-refresh-premium" :disabled="loading" @click="load">
-          <svg :class="{ 'spin': loading }" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-          {{ loading ? '加载中' : '刷新列表' }}
+        <button class="btn-refresh-premium" :disabled="loading" @click="reload">
+          <svg :class="{ spin: loading }" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          {{ loading && !orders.length ? '加载中' : '刷新列表' }}
         </button>
       </div>
     </div>
 
-    <!-- 过滤器集成在卡片外 -->
     <div class="filter-bar animate-fade-in delay-100">
       <div class="segment-control">
-        <button 
-          v-for="f in (['all', 'pending', 'finished'] as StatusFilter[])" 
+        <button
+          v-for="f in (['all', 'pending', 'finished'] as StatusFilter[])"
           :key="f"
           class="segment-item"
           :class="{ active: statusFilter === f }"
@@ -33,47 +32,73 @@
       <p>为您调取账单记录...</p>
     </div>
 
-    <div v-else-if="displayOrders.length" class="orders-list animate-fade-in delay-200">
-      <div v-for="o in displayOrders" :key="o.trade_no" class="order-item-card">
-         <div class="order-main">
-            <div class="order-info">
-               <div class="order-no code-font" @click="openDetail(o.trade_no)">{{ o.trade_no }}</div>
-               <div class="order-meta">
-                  <span class="period">{{ periodLabel(o.period) }}</span>
-                  <span class="dot">·</span>
-                  <span class="time">{{ formatTime(o.created_at) }}</span>
-               </div>
+    <div v-else-if="orders.length" class="orders-list animate-fade-in delay-200">
+      <div v-for="o in orders" :key="o.trade_no" class="order-item-card">
+        <div class="order-main">
+          <div class="order-info">
+            <div class="order-no code-font" @click="openDetail(o.trade_no)">{{ o.trade_no }}</div>
+            <div class="order-meta">
+              <span class="period">{{ periodLabel(o.period) }}</span>
+              <span class="dot">·</span>
+              <span class="time">{{ formatTime(o.created_at) }}</span>
             </div>
-            
-            <div class="order-status-box">
-               <div class="status-badge" :class="statusBadgeClass(o.status)">
-                  {{ statusLabel(o.status) }}
-               </div>
-            </div>
+          </div>
 
-            <div class="order-amount">
-               <span class="currency">¥</span>
-               <span class="amount">{{ (o.total_amount / 100).toFixed(2) }}</span>
+          <div class="order-status-box">
+            <div class="status-badge" :class="statusBadgeClass(o.status)">
+              {{ statusLabel(o.status) }}
             </div>
+          </div>
 
-            <div class="order-actions">
-               <button class="btn-action-view" @click="openDetail(o.trade_no)">
-                  {{ o.status === 0 ? '完成支付' : '详情' }}
-               </button>
-               <button v-if="o.status === 0" class="btn-action-cancel" @click="cancel(o.trade_no)" :disabled="cancelling === o.trade_no">
-                  <svg v-if="cancelling !== o.trade_no" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                  {{ cancelling === o.trade_no ? '取消中' : '取消' }}
-               </button>
-            </div>
-         </div>
+          <div class="order-amount">
+            <span class="currency">¥</span>
+            <span class="amount">{{ (o.total_amount / 100).toFixed(2) }}</span>
+          </div>
+
+          <div class="order-actions">
+            <button class="btn-action-view" @click="openDetail(o.trade_no)">
+              {{ o.status === 0 ? '完成支付' : '详情' }}
+            </button>
+            <button
+              v-if="o.status === 0"
+              class="btn-action-cancel"
+              :disabled="cancelling === o.trade_no"
+              @click="cancel(o.trade_no)"
+            >
+              <svg
+                v-if="cancelling !== o.trade_no"
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+              </svg>
+              {{ cancelling === o.trade_no ? '取消中' : '取消' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div ref="sentinelEl" class="load-sentinel">
+        <div v-if="loadingMore" class="load-more-hint">
+          <div class="spinner sm"></div>
+          <span>加载更多…</span>
+        </div>
+        <p v-else-if="!hasMore" class="load-end-hint">已加载全部 {{ total }} 条订单</p>
       </div>
     </div>
 
     <div v-else class="empty-state">
-       <div class="empty-icon">💸</div>
-       <h3>暂无账单记录</h3>
-       <p>目前没有符合条件的订单，快去开启您的第一份订阅吧。</p>
-       <button class="btn-primary-mini" @click="$router.push('/plan')">选购订阅计划</button>
+      <div class="empty-icon">💸</div>
+      <h3>暂无账单记录</h3>
+      <p>目前没有符合条件的订单，快去开启您的第一份订阅吧。</p>
+      <button class="btn-primary-mini" @click="$router.push('/plan')">选购订阅计划</button>
     </div>
 
     <p v-if="message" class="toast" :class="{ error: isError }">{{ message }}</p>
@@ -81,41 +106,114 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { cancelOrder, fetchOrders, type OrderListItem } from '../api/order'
+import { cancelOrder, fetchOrdersPage, type OrderListItem } from '../api/order'
 
 type StatusFilter = 'all' | 'pending' | 'finished'
+
+const PAGE_SIZE = 10
 const router = useRouter()
 const orders = ref<OrderListItem[]>([])
+const total = ref(0)
+const currentPage = ref(0)
 const loading = ref(false)
+const loadingMore = ref(false)
 const statusFilter = ref<StatusFilter>('all')
 const cancelling = ref<string | null>(null)
 const message = ref('')
 const isError = ref(false)
+const sentinelEl = ref<HTMLElement | null>(null)
 
-const displayOrders = computed(() => {
-  if (statusFilter.value === 'pending') return orders.value.filter(o => o.status === 0)
-  if (statusFilter.value === 'finished') return orders.value.filter(o => o.status === 3)
-  return orders.value
-})
+let observer: IntersectionObserver | null = null
 
-async function load() {
-  loading.value = true
-  try { orders.value = await fetchOrders() }
-  catch (e) { orders.value = [] }
-  finally { loading.value = false }
+const hasMore = computed(() => orders.value.length < total.value)
+
+function statusParam(): number | undefined {
+  if (statusFilter.value === 'pending') return 0
+  if (statusFilter.value === 'finished') return 3
+  return undefined
 }
 
-function setStatusFilter(f: StatusFilter) { statusFilter.value = f }
+async function loadPage(page: number, append: boolean) {
+  if (append) {
+    if (loadingMore.value || !hasMore.value) return
+    loadingMore.value = true
+  } else {
+    loading.value = true
+  }
+  try {
+    const res = await fetchOrdersPage({
+      status: statusParam(),
+      current: page,
+      pageSize: PAGE_SIZE
+    })
+    const chunk = res.data || []
+    total.value = Number(res.total) || 0
+    currentPage.value = page
+    orders.value = append ? [...orders.value, ...chunk] : chunk
+  } catch {
+    if (!append) {
+      orders.value = []
+      total.value = 0
+      currentPage.value = 0
+    }
+  } finally {
+    loading.value = false
+    loadingMore.value = false
+  }
+}
+
+async function reload() {
+  currentPage.value = 0
+  orders.value = []
+  total.value = 0
+  await loadPage(1, false)
+  await nextTick()
+  observeSentinel()
+}
+
+function setStatusFilter(f: StatusFilter) {
+  if (statusFilter.value === f) return
+  statusFilter.value = f
+}
+
+watch(statusFilter, () => {
+  reload()
+})
+
+function observeSentinel() {
+  observer?.disconnect()
+  if (!sentinelEl.value) return
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((e) => e.isIntersecting) && hasMore.value && !loading.value && !loadingMore.value) {
+        loadPage(currentPage.value + 1, true)
+      }
+    },
+    { root: null, rootMargin: '120px', threshold: 0 }
+  )
+  observer.observe(sentinelEl.value)
+}
 
 function formatTime(ts: number) {
   const d = new Date(ts * 1000)
-  return `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 function periodLabel(p: string | null) {
-  const map: any = { month_price: '月付', quarter_price: '季付', half_year_price: '半年付', year_price: '年付', two_year_price: '两年付', three_year_price: '三年付', onetime_price: '一次性', reset_price: '流量包', deposit: '钱包充值' }
+  const map: Record<string, string> = {
+    month_price: '月付',
+    quarter_price: '季付',
+    half_year_price: '半年付',
+    year_price: '年付',
+    two_year_price: '两年付',
+    three_year_price: '三年付',
+    onetime_price: '一次性',
+    reset_price: '流量包',
+    deposit: '钱包充值'
+  }
   return map[p || ''] || p || '-'
 }
 
@@ -134,17 +232,28 @@ async function cancel(no: string) {
   cancelling.value = no
   try {
     await cancelOrder(no)
-    await load()
-    message.value = '订单已撤销'; isError.value = false
-  } catch (e: any) {
-    message.value = e.message || '取消失败'; isError.value = true
+    await reload()
+    message.value = '订单已撤销'
+    isError.value = false
+  } catch (e: unknown) {
+    message.value = e instanceof Error ? e.message : '取消失败'
+    isError.value = true
   } finally {
     cancelling.value = null
-    setTimeout(() => message.value = '', 3000)
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  await reload()
+})
+
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  observer = null
+})
 </script>
 
 <style scoped>
@@ -211,11 +320,34 @@ onMounted(load)
   border: none; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer;
 }
 
+.load-sentinel {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0 24px;
+}
+.load-more-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.load-end-hint {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
 .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 700; z-index: 3000; }
 .toast.error { background: #ef4444; }
 
 .loading-state { padding: 100px 0; text-align: center; color: var(--text-muted); }
 .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+.spinner.sm { width: 18px; height: 18px; border-width: 2px; margin: 0; }
 
 .empty-state { padding: 80px 40px; text-align: center; background: white; border-radius: 24px; border: 2px dashed var(--border-color); }
 .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }

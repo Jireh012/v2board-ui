@@ -165,7 +165,7 @@
           <button class="btn-page" :disabled="currentPage <= 1" @click="goPage(currentPage - 1)">上一页</button>
           <span class="page-num">{{ currentPage }} / {{ totalPages }}</span>
           <button class="btn-page" :disabled="currentPage >= totalPages" @click="goPage(currentPage + 1)">下一页</button>
-          <select v-model="pageSize" class="input page-size" @change="doSearch">
+          <select v-model.number="pageSize" class="input page-size" @change="doSearch">
             <option :value="10">10 条/页</option>
             <option :value="20">20 条/页</option>
             <option :value="50">50 条/页</option>
