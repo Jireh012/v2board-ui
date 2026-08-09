@@ -350,9 +350,9 @@
                   <textarea v-model="networkSettingsText" class="input textarea" rows="6"
                     :placeholder="networkSettingsPlaceholder" />
                 </div>
-                <div class="form-row full-width" v-if="form.install_command">
+                <div class="form-row full-width" v-if="displayInstallCommand">
                   <label>一键安装命令</label>
-                  <textarea class="input textarea install-cmd" rows="3" readonly :value="String(form.install_command || '')" />
+                  <textarea class="input textarea install-cmd" rows="3" readonly :value="displayInstallCommand" />
                 </div>
               </div>
               </section>
@@ -790,6 +790,40 @@ const tagsText = ref('')
 const xffText = ref('')
 const tlsForm = ref<TlsForm>(emptyTlsForm())
 const networkSettingsText = ref('')
+
+/**
+ * Fill empty --api-host when config URLs are blank.
+ * Prefer API origin: Vite UI (5173) is not reachable by v2node — map to :8080 in local dev.
+ */
+function resolveInstallApiHost(): string {
+  if (typeof window === 'undefined') return ''
+  const { protocol, hostname, port } = window.location
+  // Common Vite ports → Spring Boot default in this monorepo
+  if (port === '5173' || port === '5174' || port === '4173') {
+    return `${protocol}//${hostname}:8080`
+  }
+  return window.location.origin
+}
+
+const displayInstallCommand = computed(() => {
+  const raw = String(form.value.install_command || '')
+  if (!raw) return ''
+  const host = resolveInstallApiHost()
+  if (!host) return raw
+  const quoted = "'" + host.replace(/'/g, "'\\''") + "'"
+  return raw
+    .replace(/--api-host\s+''/g, `--api-host ${quoted}`)
+    .replace(/--api-host\s+""/g, `--api-host ${quoted}`)
+    // Already filled with Vite origin by mistake — rewrite to API port
+    .replace(
+      /--api-host\s+'https?:\/\/[^']+:517[34]'/g,
+      `--api-host ${quoted}`
+    )
+    .replace(
+      /--api-host\s+'https?:\/\/[^']+:4173'/g,
+      `--api-host ${quoted}`
+    )
+})
 
 const networkSettingsPlaceholder = computed(() => {
   const n = form.value.network || 'tcp'
