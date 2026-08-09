@@ -51,6 +51,7 @@ These guides help you **ask the right questions before coding**.
 - [ ] Admin node editor IDs (group / route / parent) → select by name ([component-guidelines.md](../frontend/component-guidelines.md))
 - [ ] Admin money/traffic units or order filters → [component-guidelines.md](../frontend/component-guidelines.md) + API `admin-commerce.md`
 - [ ] Horizontal admin search bar → avoid full-width `.input` stacking
+- [ ] Panel API prefixes / SM4 / `X-A` / fixed `/config` → [panel-api-sm4.md](../frontend/panel-api-sm4.md) + [site-brand.md](../frontend/site-brand.md); key is `VITE_SM4_KEY` only (not node `ApiKey`)
 
 → Read [Cross-Layer Thinking Guide](./cross-layer-thinking-guide.md)
 

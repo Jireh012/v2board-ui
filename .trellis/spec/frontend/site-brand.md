@@ -8,24 +8,23 @@
 
 ### 1. Scope / Trigger
 
-- Trigger: `GET /api/v1/passport/comm/config` returns `{ iv, payload }` base64, not plaintext flags.
-- Must stay compatible with API `public-site-config.md` (SM4-CBC/PKCS7).
+- Trigger: Fixed `GET /config` returns outer `{ iv, payload }` (whole ApiResponse), not plaintext flags.
+- Must stay compatible with API `public-site-config.md` (SM4-CBC/PKCS7). Prefix wiring: [panel-api-sm4.md](./panel-api-sm4.md).
 
 ### 2. Signatures
 
-- `fetchPublicSiteConfig()` — `src/api/site.ts`
-- Env: `VITE_SM4_KEY` (`.env.development` / `.env.example`) — same material as backend `SM4_KEY`
-- Lib: `sm-crypto` (`import smCrypto from 'sm-crypto'; const { sm4 } = smCrypto`)
+- `fetchPublicSiteConfig()` — `src/api/site.ts` → `PUBLIC_CONFIG_PATH` (`/config`)
+- Env: `VITE_SM4_KEY` only (no public-path env) — same material as backend `SM4_KEY`
+- Helpers: `src/api/sm4.ts` (`decryptFromEnvelope`)
 
 ### 3. Contracts
 
 | Step | Rule |
 |------|------|
-| HTTP `data` | Only `iv` + `payload` (base64) |
-| Key | 16 UTF-8 bytes **or** 32 hex → convert to hex for `sm-crypto` |
-| IV / ciphertext | base64 → bytes → hex before `sm4.decrypt` |
-| Decrypt options | `{ mode: 'cbc', iv, padding: 'pkcs#7' }` |
-| Output | `JSON.parse` → `PublicSiteConfig` |
+| HTTP body | Outer envelope only `iv` + `payload` (base64) |
+| After decrypt | `ApiResponse` JSON → use `data` as `PublicSiteConfig`; call `setApiBases(...)` |
+| Key | 16 UTF-8 bytes **or** 32 hex |
+| Output | Brand/gates + `passport_api_prefix` / `user_api_prefix` / `admin_api_prefix` |
 
 ### 4. Validation & Error Matrix
 
@@ -52,16 +51,14 @@
 
 ```ts
 const data = await request<PublicSiteConfig>('/api/v1/passport/comm/config', ...)
-return data // data.iv is not app_name
+return data // classic path 404; envelope is not app_name
 ```
 
 #### Correct
 
 ```ts
-import smCrypto from 'sm-crypto'
-const { sm4 } = smCrypto
-const envelope = await request<{ iv: string; payload: string }>(...)
-// base64 → hex, sm4.decrypt CBC, JSON.parse
+const data = await fetchPublicSiteConfig() // GET /config, decrypt, setApiBases
+// data.app_name, data.passport_api_prefix, …
 ```
 
 ---
@@ -96,7 +93,7 @@ const envelope = await request<{ iv: string; payload: string }>(...)
 | Email code on register | show + require when `emailVerify` (`email_verify=1`) |
 | Forget password | always available; send code with `isforget=1` |
 | Safe mode | when `safeMode`, unauthenticated business routes → `/login?redirect=` |
-| Admin UI entry | `/{secure_path}` and `/{secure_path}/login`; API stays `/api/v1/admin/**` |
+| Admin UI entry | `/{secure_path}` and `/{secure_path}/login`; admin **REST** uses `admin_api_prefix` from public config (not classic `/api/v1/admin`) |
 | reCAPTCHA | when `recaptchaRequired`, Login/Register show v2 widget; submit `recaptcha_data` |
 | Frontend theme | `loadSiteBrand` → `applyFrontendTheme(data)` sets `html` `data-theme-sidebar` / `data-theme-header` / `data-theme-color`, CSS `--primary-color` (+ hover/soft), and `--app-bg-image` / `data-app-bg` when URL set |
 | Telegram discuss | `telegramDiscussLink` from public `telegram_discuss_link`; Profile shows open-link + unbind when `user.telegram_id` set |
@@ -322,7 +319,7 @@ route.path === '/login' || route.path === '/register' || route.path === '/forget
 
 ### 1. Scope / Trigger
 
-- Trigger: Admin `safe.secure_path` changes the SPA admin entry; must not change REST `/api/v1/admin/**`.
+- Trigger: Admin `safe.secure_path` changes the SPA admin entry only; REST admin prefix is `admin_api_prefix` (separate).
 - Empty config → UI path `admin`; non-empty must satisfy backend (≥8 alphanumeric, not reserved).
 
 ### 2. Signatures
