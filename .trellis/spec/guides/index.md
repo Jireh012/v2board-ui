@@ -34,6 +34,11 @@ These guides help you **ask the right questions before coding**.
 - [ ] Message = `type(scope): 中文摘要` + 空行 + 中文正文 → [commit-message.md](./commit-message.md)
 - [ ] 勿用纯中文无前缀，或英文摘要覆盖本仓库约定
 
+### When Aligning with PHP (“对照原版”)
+
+- [ ] Canonical PHP: [wyx2685/v2board](https://github.com/wyx2685/v2board) `master`（细则在 API 仓 `.trellis/spec/backend/php-upstream.md`）
+- [ ] 勿默认对照 `v2board/v2board` 或其他 fork
+
 ### When to Think About Cross-Layer Issues
 
 - [ ] Feature touches 3+ layers (API, Service, Component, Database)
