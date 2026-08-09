@@ -11,6 +11,8 @@ export interface ExternalSubscribeSource {
   name: string
   url: string
   enable: number
+  /** 0 direct; 1 auto pre-proxy via reachable library node */
+  pre_proxy_enable?: number
   remark?: string | null
   name_filters?: ExternalNameFilterRule[] | null
   last_sync_at?: number | null
@@ -42,6 +44,7 @@ export function saveExternalSource(body: {
   name: string
   url: string
   enable?: number
+  pre_proxy_enable?: number
   remark?: string
   name_filters?: ExternalNameFilterRule[]
 }): Promise<boolean> {

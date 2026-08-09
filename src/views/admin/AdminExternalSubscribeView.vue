@@ -77,10 +77,13 @@
                 <code class="url-chip" :title="s.url">{{ s.url }}</code>
               </td>
               <td>
-                <span class="pill" :class="s.enable === 1 ? 'pill-on' : 'pill-off'">
-                  <i class="dot"></i>
-                  {{ s.enable === 1 ? '启用' : '停用' }}
-                </span>
+                <div class="status-stack">
+                  <span class="pill" :class="s.enable === 1 ? 'pill-on' : 'pill-off'">
+                    <i class="dot"></i>
+                    {{ s.enable === 1 ? '启用' : '停用' }}
+                  </span>
+                  <span v-if="s.pre_proxy_enable === 1" class="pill pill-proxy">前置代理</span>
+                </div>
               </td>
               <td>
                 <div class="node-metric">
@@ -168,6 +171,11 @@
               <input v-model="form.enable" type="checkbox" />
               <span>保存后立即启用该订阅源</span>
             </label>
+            <label class="switch-row">
+              <input v-model="form.pre_proxy_enable" type="checkbox" />
+              <span>前置代理拉取（自动选用节点库其它源的可达节点）</span>
+            </label>
+            <p class="filter-hint">开启后同步不再直连订阅地址；若库中无可用前置节点将同步失败。</p>
             <div class="modal-footer">
               <button type="button" class="btn" @click="showModal = false">取消</button>
               <button type="submit" class="btn primary" :disabled="saving">
@@ -273,6 +281,7 @@ const form = reactive({
   url: '',
   remark: '',
   enable: true,
+  pre_proxy_enable: false,
   name_filters: [] as ExternalNameFilterRule[]
 })
 
@@ -373,6 +382,7 @@ function openAdd() {
   form.url = ''
   form.remark = ''
   form.enable = true
+  form.pre_proxy_enable = false
   form.name_filters = []
   showModal.value = true
 }
@@ -383,6 +393,7 @@ function openEdit(s: ExternalSubscribeSource) {
   form.url = s.url
   form.remark = s.remark || ''
   form.enable = s.enable === 1
+  form.pre_proxy_enable = s.pre_proxy_enable === 1
   form.name_filters = (s.name_filters || []).map((r) => ({
     pattern: r.pattern || '',
     replacement: r.replacement ?? '',
@@ -415,6 +426,7 @@ async function doSave() {
       url: form.url.trim(),
       remark: form.remark.trim(),
       enable: form.enable ? 1 : 0,
+      pre_proxy_enable: form.pre_proxy_enable ? 1 : 0,
       name_filters
     })
     showModal.value = false
@@ -685,6 +697,18 @@ load()
 .pill-off {
   background: #f1f5f9;
   color: #64748b;
+}
+
+.status-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.pill-proxy {
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .node-metric {
