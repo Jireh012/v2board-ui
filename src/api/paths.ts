@@ -9,7 +9,7 @@ function normalizePrefix(raw: string): string {
 }
 
 /** Fixed bootstrap path; must match backend ConfigService.FIXED_PUBLIC_CONFIG_PATH */
-export const PUBLIC_CONFIG_PATH = '/config'
+export const PUBLIC_CONFIG_PATH = '/api/config'
 
 let passportBase = ''
 let userBase = ''

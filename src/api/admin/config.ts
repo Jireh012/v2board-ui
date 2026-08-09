@@ -9,13 +9,13 @@ export interface SiteConfig {
   logo?: string
   subscribe_url?: string
   subscribe_path?: string
-  /** Replaces /api/v1/passport; empty → auto-gen /p/+12 */
+  /** Replaces /api/v1/passport; empty → auto-gen /api/p/+12 */
   passport_api_prefix?: string
-  /** Replaces /api/v1/user; empty → auto-gen /u/+12 */
+  /** Replaces /api/v1/user; empty → auto-gen /api/u/+12 */
   user_api_prefix?: string
-  /** Replaces /api/v1/admin; empty → auto-gen /a/+12 */
+  /** Replaces /api/v1/admin; empty → auto-gen /api/a/+12 */
   admin_api_prefix?: string
-  /** Replaces /api/v1/guest/payment/notify; empty → auto-gen /g/+12 (plaintext) */
+  /** Replaces /api/v1/guest/payment/notify; empty → auto-gen /api/g/+12 (plaintext) */
   payment_notify_prefix?: string
   tos_url?: string
   stop_register?: number

@@ -8,12 +8,12 @@
 
 ### 1. Scope / Trigger
 
-- Trigger: Fixed `GET /config` returns outer `{ iv, payload }` (whole ApiResponse), not plaintext flags.
+- Trigger: Fixed `GET /api/config` returns outer `{ iv, payload }` (whole ApiResponse), not plaintext flags.
 - Must stay compatible with API `public-site-config.md` (SM4-CBC/PKCS7). Prefix wiring: [panel-api-sm4.md](./panel-api-sm4.md).
 
 ### 2. Signatures
 
-- `fetchPublicSiteConfig()` — `src/api/site.ts` → `PUBLIC_CONFIG_PATH` (`/config`)
+- `fetchPublicSiteConfig()` — `src/api/site.ts` → `PUBLIC_CONFIG_PATH` (`/api/config`)
 - Env: `VITE_SM4_KEY` only (no public-path env) — same material as backend `SM4_KEY`
 - Helpers: `src/api/sm4.ts` (`decryptFromEnvelope`)
 
@@ -57,7 +57,7 @@ return data // classic path 404; envelope is not app_name
 #### Correct
 
 ```ts
-const data = await fetchPublicSiteConfig() // GET /config, decrypt, setApiBases
+const data = await fetchPublicSiteConfig() // GET /api/config, decrypt, setApiBases
 // data.app_name, data.passport_api_prefix, …
 ```
 

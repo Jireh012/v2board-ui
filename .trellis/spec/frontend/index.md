@@ -38,7 +38,7 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 - [ ] Payment gateway URLs: copy admin `notify_url` (plaintext `/g/...`); never wrap with `apiUrl`/SM4
 - [ ] Login→register link only when public `stop_register != 1`; `/register` `/forget` in auth shell like `/login`
 - [ ] Safe mode: await `loadSiteBrand` in `beforeEach`; public paths only login/register/forget
-- [ ] Public config: `GET /config` → decrypt outer envelope with `VITE_SM4_KEY` (= API `SM4_KEY`); then `setApiBases`; never hard-code `/api/v1/passport|user|admin`
+- [ ] Public config: `GET /api/config` → decrypt outer envelope with `VITE_SM4_KEY` (= API `SM4_KEY`); then `setApiBases`; never hard-code `/api/v1/passport|user|admin`
 - [ ] If changing subscribe copy/import: absolute-ize relative `subscribe_url`
 - [ ] If changing node editor: permission groups / routes / parent must select by **name**, not raw IDs
 - [ ] Same-file `defineComponent` + `h()` children need `:deep()` for scoped styles

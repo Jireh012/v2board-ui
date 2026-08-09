@@ -28,7 +28,7 @@ export interface PublicSiteConfig {
 }
 
 /**
- * Bootstrap: GET fixed `/config` → outer SM4 envelope of whole ApiResponse;
+ * Bootstrap: GET fixed `/api/config` → outer SM4 envelope of whole ApiResponse;
  * data includes brand flags + passport/user/admin prefixes.
  */
 export async function fetchPublicSiteConfig(): Promise<PublicSiteConfig> {

@@ -58,56 +58,56 @@
       </Row>
       <Row
         label="Passport API 前缀"
-        desc="替换经典 /api/v1/passport。留空保存时自动生成（如 /p/xxxx）。变更后立即生效，旧前缀与经典路径均 404。"
+        desc="替换经典 /api/v1/passport。留空保存时自动生成（如 /api/p/xxxx）。须挂在 /api/ 下以便 Web 反代；变更后立即生效，旧前缀与经典路径均 404。"
       >
         <div class="token-field">
           <input
             v-model="config.site.passport_api_prefix"
             class="input"
             autocomplete="off"
-            placeholder="留空自动生成，例如 /p/abcdefghijkl"
+            placeholder="留空自动生成，例如 /api/p/abcdefghijkl"
           />
           <button type="button" class="btn secondary" @click="generatePassportApiPrefix">生成前缀</button>
         </div>
       </Row>
       <Row
         label="用户 API 前缀"
-        desc="替换经典 /api/v1/user。留空保存时自动生成（如 /u/xxxx）。变更后立即生效。"
+        desc="替换经典 /api/v1/user。留空保存时自动生成（如 /api/u/xxxx）。须挂在 /api/ 下；变更后立即生效。"
       >
         <div class="token-field">
           <input
             v-model="config.site.user_api_prefix"
             class="input"
             autocomplete="off"
-            placeholder="留空自动生成，例如 /u/abcdefghijkl"
+            placeholder="留空自动生成，例如 /api/u/abcdefghijkl"
           />
           <button type="button" class="btn secondary" @click="generateUserApiPrefix">生成前缀</button>
         </div>
       </Row>
       <Row
         label="管理 API 前缀"
-        desc="替换经典 /api/v1/admin。留空保存时自动生成（如 /a/xxxx）。变更后立即生效，旧前缀与经典路径均 404。与后台 UI 入口 secure_path 无关。"
+        desc="替换经典 /api/v1/admin。留空保存时自动生成（如 /api/a/xxxx）。须挂在 /api/ 下；变更后立即生效。与后台 UI 入口 secure_path 无关。"
       >
         <div class="token-field">
           <input
             v-model="config.site.admin_api_prefix"
             class="input"
             autocomplete="off"
-            placeholder="留空自动生成，例如 /a/abcdefghijkl"
+            placeholder="留空自动生成，例如 /api/a/abcdefghijkl"
           />
           <button type="button" class="btn secondary" @click="generateAdminApiPrefix">生成前缀</button>
         </div>
       </Row>
       <Row
         label="支付回调前缀"
-        desc="替换经典 /api/v1/guest/payment/notify。外网形态为 {前缀}/{支付方式}/{uuid}，请求体仍为明文（网关要求）。留空保存时自动生成（如 /g/xxxx）；变更后经典路径 404，请同步各支付渠道回调地址。"
+        desc="替换经典 /api/v1/guest/payment/notify。外网形态为 {前缀}/{支付方式}/{uuid}，请求体仍为明文（网关要求）。留空保存时自动生成（如 /api/g/xxxx）；变更后经典路径 404，请同步各支付渠道回调地址。"
       >
         <div class="token-field">
           <input
             v-model="config.site.payment_notify_prefix"
             class="input"
             autocomplete="off"
-            placeholder="留空自动生成，例如 /g/abcdefghijkl"
+            placeholder="留空自动生成，例如 /api/g/abcdefghijkl"
           />
           <button type="button" class="btn secondary" @click="generatePaymentNotifyPrefix">生成前缀</button>
         </div>
@@ -338,14 +338,14 @@
       </Row>
       <Row
         label="节点 API 前缀"
-        desc="节点通讯路径前缀（如 /n/xxxx）。留空保存时自动生成；变更后立即生效，旧前缀失效。"
+        desc="节点通讯路径前缀（如 /api/n/xxxx）。须挂在 /api/ 下；留空保存时自动生成；变更后立即生效，旧前缀失效。"
       >
         <div class="token-field">
           <input
             v-model="config.server.server_api_prefix"
             class="input"
             autocomplete="off"
-            placeholder="留空自动生成，例如 /n/abcdefghijkl"
+            placeholder="留空自动生成，例如 /api/n/abcdefghijkl"
           />
           <button type="button" class="btn secondary" @click="generateServerApiPrefix">生成前缀</button>
         </div>
@@ -615,7 +615,7 @@ function generateServerApiPrefix() {
   const bytes = new Uint8Array(12)
   crypto.getRandomValues(bytes)
   config.value.server.server_api_prefix =
-    '/n/' + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
+    '/api/n/' + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
 }
 
 function randomAlnum(len: number): string {
@@ -627,22 +627,22 @@ function randomAlnum(len: number): string {
 
 function generatePassportApiPrefix() {
   if (!config.value?.site) return
-  config.value.site.passport_api_prefix = '/p/' + randomAlnum(12)
+  config.value.site.passport_api_prefix = '/api/p/' + randomAlnum(12)
 }
 
 function generateUserApiPrefix() {
   if (!config.value?.site) return
-  config.value.site.user_api_prefix = '/u/' + randomAlnum(12)
+  config.value.site.user_api_prefix = '/api/u/' + randomAlnum(12)
 }
 
 function generateAdminApiPrefix() {
   if (!config.value?.site) return
-  config.value.site.admin_api_prefix = '/a/' + randomAlnum(12)
+  config.value.site.admin_api_prefix = '/api/a/' + randomAlnum(12)
 }
 
 function generatePaymentNotifyPrefix() {
   if (!config.value?.site) return
-  config.value.site.payment_notify_prefix = '/g/' + randomAlnum(12)
+  config.value.site.payment_notify_prefix = '/api/g/' + randomAlnum(12)
 }
 
 /* ---- 保存当前分组 ---- */

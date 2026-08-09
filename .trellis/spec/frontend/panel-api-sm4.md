@@ -16,7 +16,7 @@
 
 ```ts
 // src/api/paths.ts
-export const PUBLIC_CONFIG_PATH = '/config'
+export const PUBLIC_CONFIG_PATH = '/api/config'
 setApiBases(passport, user, _publicPath?, admin?)
 apiUrl(zone, classicPath) // always aliases
 deriveActionAlias(zone, classicRel)
@@ -31,7 +31,7 @@ isPanelEncryptedUrl(url)
 
 | Step | Rule |
 |------|------|
-| Bootstrap | `GET /config` only |
+| Bootstrap | `GET /api/config` only |
 | After decrypt | `setApiBases(passport, user, undefined, admin)` |
 | Business URLs | `apiUrl(zone, '/order/fetch')` — source classicRel; **wire** `{prefix}/{12hex}` |
 | Auth on SM4 URL | `X-A` compact SM4 of JWT; strip `Authorization` |
@@ -39,8 +39,7 @@ isPanelEncryptedUrl(url)
 | Response | Expect envelope (plaintext error `code`/`message` allowed on fail-closed) |
 | Payment notify | **Not** a browser `apiUrl` call — admin copies server-built `notify_url` (plaintext `/g/...`) |
 
-Vite + Docker `nginx.conf`: `/config`, `/api/`, `/p/`, `/u/`, `/a/`, `/n/`, `/g/` → API.
-If only `/api/` is proxied, `GET /config` returns SPA `index.html` (`text/html`) and bootstrap fails.
+Vite + Docker `nginx.conf`: only `location /api/` → API (covers `/api/config`, `/api/u/…`, `/api/v1/…`).
 
 ### 4. Validation & Error Matrix
 
@@ -53,7 +52,7 @@ If only `/api/` is proxied, `GET /config` returns SPA `index.html` (`text/html`)
 
 ### 5. Good/Base/Bad Cases
 
-- Good: Network shows `/config` + `{prefix}/{12hex}` only — no `getSubscribe`/`fetch`/`info` path segments.
+- Good: Network shows `/api/config` + `/api/{u|p|a}/…/{12hex}` only — no `getSubscribe`/`fetch`/`info` path segments.
 - Base: `VITE_SM4_KEY=0123456789abcdef` → `user/getSubscribe` alias `59327a5e63c5`.
 - Bad: `getUserBase() + '/getSubscribe'`; hard-code `/api/v1/...`.
 
@@ -164,7 +163,7 @@ See backend payment-notify scenario. Wrong: invent notify URL in Vue. Correct: c
 
 ## Design Decision: Fixed `/config` in source
 
-**Decision**: Hardcode `PUBLIC_CONFIG_PATH = '/config'`. Reverse proxy / container nginx **must** forward `/config` (and panel prefixes) to the API — see `nginx.conf`.
+**Decision**: Hardcode `PUBLIC_CONFIG_PATH = '/api/config'`. All panel prefixes are under `/api/` so Docker `nginx.conf` only needs one `location /api/`.
 
 ---
 
