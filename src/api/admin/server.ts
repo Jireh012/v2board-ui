@@ -16,6 +16,15 @@ export interface ServerNode {
   parent_id?: number | null
   created_at: number
   updated_at: number
+  /** Online user count from node push (Redis). */
+  online?: number
+  last_check_at?: number
+  last_push_at?: number
+  /**
+   * PHP available_status: 0 not running (red), 1 no traffic / push stale (yellow),
+   * 2 healthy (blue). Threshold 300s.
+   */
+  available_status?: 0 | 1 | 2
   // type-specific fields are dynamic
   [key: string]: unknown
 }

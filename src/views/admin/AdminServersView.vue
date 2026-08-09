@@ -3,7 +3,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">节点管理</h1>
-        <p class="page-subtitle">统一管理各协议节点，控制可见性与倍率。</p>
+        <p class="page-subtitle">统一管理各协议节点，查看运行状态、可见性与倍率。</p>
       </div>
       <div class="header-actions">
         <button class="btn primary" @click="showTypePicker = true">
@@ -48,17 +48,23 @@
         <strong class="stat-value">{{ rows.length }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">对外用户显示</span>
-        <strong class="stat-value ok">{{ visibleCount }}</strong>
+        <span class="stat-label">运行正常</span>
+        <strong class="stat-value status-ok">{{ statusCount(2) }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">已隐藏</span>
-        <strong class="stat-value muted">{{ rows.length - visibleCount }}</strong>
+        <span class="stat-label">上报异常 / 空闲</span>
+        <strong class="stat-value status-warn">{{ statusCount(1) }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">协议类型</span>
-        <strong class="stat-value accent">{{ typeCount }}</strong>
+        <span class="stat-label">未运行</span>
+        <strong class="stat-value status-down">{{ statusCount(0) }}</strong>
       </div>
+    </div>
+
+    <div v-if="!loading && rows.length" class="status-legend" title="与原版 V2Board 节点状态灯一致（300 秒阈值）">
+      <span class="legend-item"><i class="status-dot s2"></i>运行正常</span>
+      <span class="legend-item"><i class="status-dot s1"></i>无人使用或服务端上报异常</span>
+      <span class="legend-item"><i class="status-dot s0"></i>未运行</span>
     </div>
 
     <div class="filters">
@@ -92,11 +98,13 @@
           <thead>
             <tr>
               <th style="width:56px">#</th>
+              <th style="width:72px">状态</th>
               <th>节点名称</th>
               <th>类型</th>
               <th>地址</th>
               <th>端口</th>
               <th>倍率</th>
+              <th>在线</th>
               <th>显示</th>
               <th style="width:148px">操作</th>
             </tr>
@@ -104,6 +112,15 @@
           <tbody>
             <tr v-for="s in filtered" :key="`${s.type}-${s.id}`">
               <td class="id-cell">{{ s.id }}</td>
+              <td>
+                <span
+                  class="status-cell"
+                  :title="statusTitle(s)"
+                >
+                  <i class="status-dot" :class="'s' + statusCode(s)"></i>
+                  <span class="status-text">{{ statusLabel(s) }}</span>
+                </span>
+              </td>
               <td>
                 <div class="name-cell">
                   <span class="name">{{ s.name }}</span>
@@ -120,6 +137,7 @@
               <td>
                 <span class="rate-badge">{{ s.rate }}x</span>
               </td>
+              <td class="num-cell">{{ Number(s.online) || 0 }}</td>
               <td>
                 <button
                   class="pill"
@@ -899,8 +917,38 @@ const parentIdSelect = computed({
   }
 })
 
-const visibleCount = computed(() => rows.value.filter(s => s.show === 1).length)
-const typeCount = computed(() => new Set(rows.value.map(s => s.type)).size)
+function statusCode(s: ServerNode): 0 | 1 | 2 {
+  const v = Number(s.available_status)
+  if (v === 1 || v === 2) return v
+  return 0
+}
+
+function statusLabel(s: ServerNode): string {
+  switch (statusCode(s)) {
+    case 2: return '正常'
+    case 1: return '异常'
+    default: return '未运行'
+  }
+}
+
+function statusTitle(s: ServerNode): string {
+  const check = Number(s.last_check_at) || 0
+  const push = Number(s.last_push_at) || 0
+  const online = Number(s.online) || 0
+  const checkText = check > 0 ? new Date(check * 1000).toLocaleString() : '无'
+  const pushText = push > 0 ? new Date(push * 1000).toLocaleString() : '无'
+  const detail =
+    statusCode(s) === 2
+      ? '运行正常'
+      : statusCode(s) === 1
+        ? '无人使用或服务端上报异常'
+        : '未运行（节点未在 300 秒内拉取配置）'
+  return `${detail}\n在线用户：${online}\n最近检测：${checkText}\n最近上报：${pushText}`
+}
+
+function statusCount(code: 0 | 1 | 2) {
+  return rows.value.filter((s) => statusCode(s) === code).length
+}
 
 function typeLabel(type: string) {
   return serverTypes.find(t => t.value === type)?.label || type
@@ -1423,6 +1471,65 @@ onMounted(() => {
 .stat-value.accent { color: var(--primary-color, #2563eb); }
 .stat-value.ok { color: #059669; }
 .stat-value.muted { color: #94a3b8; }
+.stat-value.status-ok { color: #2563eb; }
+.stat-value.status-warn { color: #d97706; }
+.stat-value.status-down { color: #dc2626; }
+
+.status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  margin: -4px 0 14px;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.status-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
+}
+
+.status-dot.s0 {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.status-dot.s1 {
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+}
+
+.status-dot.s2 {
+  background: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
 
 .filters {
   display: flex;
