@@ -1,11 +1,18 @@
 import { request } from '../http'
 
+export interface ExternalNameFilterRule {
+  pattern: string
+  replacement: string
+  regex: boolean
+}
+
 export interface ExternalSubscribeSource {
   id: number
   name: string
   url: string
   enable: number
   remark?: string | null
+  name_filters?: ExternalNameFilterRule[] | null
   last_sync_at?: number | null
   last_sync_status?: string | null
   last_sync_message?: string | null
@@ -36,6 +43,7 @@ export function saveExternalSource(body: {
   url: string
   enable?: number
   remark?: string
+  name_filters?: ExternalNameFilterRule[]
 }): Promise<boolean> {
   return request<boolean>('/api/v1/admin/external-subscribe/save', {
     method: 'POST',

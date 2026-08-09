@@ -145,6 +145,25 @@
               <label>备注</label>
               <input v-model="form.remark" class="input" placeholder="可选说明" />
             </div>
+            <div class="form-row">
+              <div class="filter-head">
+                <label>名称过滤</label>
+                <button type="button" class="btn-sm edit" @click="addFilterRule">添加规则</button>
+              </div>
+              <p class="filter-hint">同步时按顺序对节点名做「匹配 → 替换」；替换可留空表示删除。支持正则与 <code>$1</code> 捕获组。</p>
+              <div v-if="!form.name_filters.length" class="filter-empty">暂无规则</div>
+              <div v-else class="filter-list">
+                <div v-for="(rule, idx) in form.name_filters" :key="idx" class="filter-row">
+                  <input v-model="rule.pattern" class="input" placeholder="匹配内容 / 正则" />
+                  <input v-model="rule.replacement" class="input" placeholder="替换为（可空）" />
+                  <label class="filter-regex">
+                    <input v-model="rule.regex" type="checkbox" />
+                    正则
+                  </label>
+                  <button type="button" class="btn-sm danger" @click="removeFilterRule(idx)">删除</button>
+                </div>
+              </div>
+            </div>
             <label class="switch-row">
               <input v-model="form.enable" type="checkbox" />
               <span>保存后立即启用该订阅源</span>
@@ -236,6 +255,7 @@ import {
   syncAllExternalSources,
   syncExternalSource,
   updateExternalSource,
+  type ExternalNameFilterRule,
   type ExternalSubscribeNode,
   type ExternalSubscribeSource
 } from '../../api/admin/externalSubscribe'
@@ -252,7 +272,8 @@ const form = reactive({
   name: '',
   url: '',
   remark: '',
-  enable: true
+  enable: true,
+  name_filters: [] as ExternalNameFilterRule[]
 })
 
 const showNodes = ref(false)
@@ -352,6 +373,7 @@ function openAdd() {
   form.url = ''
   form.remark = ''
   form.enable = true
+  form.name_filters = []
   showModal.value = true
 }
 
@@ -361,18 +383,39 @@ function openEdit(s: ExternalSubscribeSource) {
   form.url = s.url
   form.remark = s.remark || ''
   form.enable = s.enable === 1
+  form.name_filters = (s.name_filters || []).map((r) => ({
+    pattern: r.pattern || '',
+    replacement: r.replacement ?? '',
+    regex: !!r.regex
+  }))
   showModal.value = true
+}
+
+function addFilterRule() {
+  form.name_filters.push({ pattern: '', replacement: '', regex: false })
+}
+
+function removeFilterRule(idx: number) {
+  form.name_filters.splice(idx, 1)
 }
 
 async function doSave() {
   saving.value = true
   try {
+    const name_filters = form.name_filters
+      .map((r) => ({
+        pattern: (r.pattern || '').trim(),
+        replacement: r.replacement ?? '',
+        regex: !!r.regex
+      }))
+      .filter((r) => r.pattern.length > 0)
     await saveExternalSource({
       id: editId.value ?? undefined,
       name: form.name.trim(),
       url: form.url.trim(),
       remark: form.remark.trim(),
-      enable: form.enable ? 1 : 0
+      enable: form.enable ? 1 : 0,
+      name_filters
     })
     showModal.value = false
     await load()
@@ -1054,6 +1097,62 @@ load()
   font-size: 12px;
   font-weight: 700;
   color: #64748b;
+}
+
+.filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.filter-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+
+.filter-hint code {
+  font-size: 11px;
+  background: #f1f5f9;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.filter-empty {
+  font-size: 12px;
+  color: #cbd5e1;
+  padding: 8px 0;
+}
+
+.filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-regex {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .filter-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .req { color: #dc2626; }
