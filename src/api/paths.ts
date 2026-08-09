@@ -1,3 +1,5 @@
+import { sha256Hex } from './sha256'
+
 function normalizePrefix(raw: string): string {
   let t = (raw || '').trim()
   if (!t) return ''
@@ -42,14 +44,46 @@ export function getPublicConfigPath(): string {
   return PUBLIC_CONFIG_PATH
 }
 
-/** Build panel API URL: apiUrl('user', '/order/fetch') */
+export function normalizeClassicRel(path: string): string {
+  let t = (path || '').trim()
+  while (t.startsWith('/')) t = t.slice(1)
+  while (t.length > 1 && t.endsWith('/')) t = t.slice(0, -1)
+  return t
+}
+
+/**
+ * Opaque action alias — must match backend PanelApiActionAliases.deriveAlias.
+ * SHA-256(UTF-8(SM4_KEY) || 0x00 || zone || 0x00 || classicRel) hex[0:12]
+ */
+export function deriveActionAlias(zone: 'passport' | 'user' | 'admin', classicRel: string): string {
+  const key = import.meta.env.VITE_SM4_KEY || ''
+  if (!key) {
+    throw new Error('VITE_SM4_KEY is empty')
+  }
+  const rel = normalizeClassicRel(classicRel)
+  const enc = new TextEncoder()
+  const keyB = enc.encode(key)
+  const zoneB = enc.encode(zone)
+  const relB = enc.encode(rel)
+  const all = new Uint8Array(keyB.length + 1 + zoneB.length + 1 + relB.length)
+  all.set(keyB, 0)
+  all[keyB.length] = 0
+  all.set(zoneB, keyB.length + 1)
+  all[keyB.length + 1 + zoneB.length] = 0
+  all.set(relB, keyB.length + 1 + zoneB.length + 1)
+  return sha256Hex(all).slice(0, 12)
+}
+
+/**
+ * Build panel API URL. Source uses classicRel (e.g. '/getSubscribe'); wire is `{prefix}/{alias}`.
+ */
 export function apiUrl(zone: 'passport' | 'user' | 'admin', path: string): string {
   const base = zone === 'passport' ? passportBase : zone === 'user' ? userBase : adminBase
   if (!base) {
     throw new Error(`${zone} API 前缀尚未加载，请先拉取公开配置`)
   }
-  const p = path.startsWith('/') ? path : '/' + path
-  return base + p
+  const alias = deriveActionAlias(zone, path)
+  return `${base}/${alias}`
 }
 
 export function isPanelEncryptedUrl(url: string): boolean {

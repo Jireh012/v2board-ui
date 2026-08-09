@@ -15,6 +15,8 @@ export interface SiteConfig {
   user_api_prefix?: string
   /** Replaces /api/v1/admin; empty → auto-gen /a/+12 */
   admin_api_prefix?: string
+  /** Replaces /api/v1/guest/payment/notify; empty → auto-gen /g/+12 (plaintext) */
+  payment_notify_prefix?: string
   tos_url?: string
   stop_register?: number
   try_out_plan_id?: number

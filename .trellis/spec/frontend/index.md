@@ -19,7 +19,7 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 | [Directory Structure](./directory-structure.md) | Module organization and file layout | To fill |
 | [Component Guidelines](./component-guidelines.md) | Subscribe URL absolute-ize, admin selects, scoped CSS | Active |
 | [Site Brand](./site-brand.md) | SM4 decrypt public config; register/email-verify/safe-mode; `/forget` | Active |
-| [Panel API SM4](./panel-api-sm4.md) | Fixed `/config`, dynamic API bases, body SM4, `X-A` | Active |
+| [Panel API SM4](./panel-api-sm4.md) | Fixed `/config`, action aliases, body SM4/`X-A`, payment notify config | Active |
 | [Hook Guidelines](./hook-guidelines.md) | Custom hooks, data fetching patterns | To fill |
 | [State Management](./state-management.md) | Local state, global state, server state | To fill |
 | [Quality Guidelines](./quality-guidelines.md) | Code standards, forbidden patterns | To fill |
@@ -33,7 +33,9 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 - [ ] Admin dashboard KPIs/charts → [component-guidelines.md](./component-guidelines.md)「Admin dashboard stats」+ API `admin-stat.md`
 - [ ] Read [component-guidelines.md](./component-guidelines.md) for admin modals, toggles, and subscribe copy UX
 - [ ] Read [site-brand.md](./site-brand.md) if changing site name, login/register/forget, email verify, safe mode, or public-config SM4 decrypt
-- [ ] Read [panel-api-sm4.md](./panel-api-sm4.md) if changing `/config`, `apiUrl` / bases, `http.ts` SM4, or `X-A`
+- [ ] Read [panel-api-sm4.md](./panel-api-sm4.md) if changing `/config`, `apiUrl` / action aliases, payment notify prefix UI, or `http.ts` SM4
+- [ ] Panel calls must use `apiUrl(zone, classicRel)` — Network must not show classic action path segments
+- [ ] Payment gateway URLs: copy admin `notify_url` (plaintext `/g/...`); never wrap with `apiUrl`/SM4
 - [ ] Login→register link only when public `stop_register != 1`; `/register` `/forget` in auth shell like `/login`
 - [ ] Safe mode: await `loadSiteBrand` in `beforeEach`; public paths only login/register/forget
 - [ ] Public config: `GET /config` → decrypt outer envelope with `VITE_SM4_KEY` (= API `SM4_KEY`); then `setApiBases`; never hard-code `/api/v1/passport|user|admin`

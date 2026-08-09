@@ -98,6 +98,20 @@
           <button type="button" class="btn secondary" @click="generateAdminApiPrefix">生成前缀</button>
         </div>
       </Row>
+      <Row
+        label="支付回调前缀"
+        desc="替换经典 /api/v1/guest/payment/notify。外网形态为 {前缀}/{支付方式}/{uuid}，请求体仍为明文（网关要求）。留空保存时自动生成（如 /g/xxxx）；变更后经典路径 404，请同步各支付渠道回调地址。"
+      >
+        <div class="token-field">
+          <input
+            v-model="config.site.payment_notify_prefix"
+            class="input"
+            autocomplete="off"
+            placeholder="留空自动生成，例如 /g/abcdefghijkl"
+          />
+          <button type="button" class="btn secondary" @click="generatePaymentNotifyPrefix">生成前缀</button>
+        </div>
+      </Row>
       <Row label="用户条款 URL" desc="用于跳转到用户条款 (TOS)。">
         <input v-model="config.site.tos_url" class="input" placeholder="https://example.com/tos" />
       </Row>
@@ -626,6 +640,11 @@ function generateAdminApiPrefix() {
   config.value.site.admin_api_prefix = '/a/' + randomAlnum(12)
 }
 
+function generatePaymentNotifyPrefix() {
+  if (!config.value?.site) return
+  config.value.site.payment_notify_prefix = '/g/' + randomAlnum(12)
+}
+
 /* ---- 保存当前分组 ---- */
 async function saveGroup(group: string) {
   if (!config.value) return
@@ -645,6 +664,7 @@ async function saveGroup(group: string) {
     if (!String(config.value.site.passport_api_prefix ?? '').trim()) generatePassportApiPrefix()
     if (!String(config.value.site.user_api_prefix ?? '').trim()) generateUserApiPrefix()
     if (!String(config.value.site.admin_api_prefix ?? '').trim()) generateAdminApiPrefix()
+    if (!String(config.value.site.payment_notify_prefix ?? '').trim()) generatePaymentNotifyPrefix()
     delete (config.value.site as { public_config_path?: string }).public_config_path
   }
   saving.value = true

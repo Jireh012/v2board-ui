@@ -13,6 +13,7 @@ export default defineConfig({
       '/u/': { target: 'http://localhost:8080', changeOrigin: true },
       '/a/': { target: 'http://localhost:8080', changeOrigin: true },
       '/n/': { target: 'http://localhost:8080', changeOrigin: true },
+      '/g/': { target: 'http://localhost:8080', changeOrigin: true },
     }
   }
 })
