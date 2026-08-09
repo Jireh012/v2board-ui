@@ -74,15 +74,20 @@
               v-for="item in group.items"
               :key="item.to"
               :to="item.to"
-              class="menu-item"
-              active-class=""
-              exact-active-class=""
-              :class="{ 'router-link-active': isActive(item) }"
+              custom
+              v-slot="{ href, navigate }"
             >
-              <div class="menu-icon" aria-hidden="true">
-                <span v-html="item.icon"></span>
-              </div>
-              <span class="menu-text">{{ item.label }}</span>
+              <a
+                :href="href"
+                class="menu-item"
+                :class="{ 'is-active': isActive(item) }"
+                @click="navigate"
+              >
+                <div class="menu-icon" aria-hidden="true">
+                  <span v-html="item.icon"></span>
+                </div>
+                <span class="menu-text">{{ item.label }}</span>
+              </a>
             </RouterLink>
           </div>
         </div>
@@ -206,9 +211,13 @@ const pageTitle = computed(() => {
 })
 
 function isActive(item: { to: string; exact?: boolean; match?: string }) {
-  if (item.exact) return route.path === item.to
-  if (item.match) return route.path.startsWith(item.match)
-  return route.path === item.to
+  const path = route.path
+  // Dashboard is admin root (`/secure_path`); never treat it as a prefix of nested pages.
+  if (item.exact) return path === item.to || path === `${item.to}/`
+  if (item.match) {
+    return path === item.match || path.startsWith(`${item.match}/`)
+  }
+  return path === item.to || path === `${item.to}/`
 }
 
 function toggleUserMenu() {
@@ -574,12 +583,12 @@ function logout() {
   height: 20px;
 }
 
-.menu-item.router-link-active {
+.menu-item.is-active {
   background-color: #eff6ff;
   color: var(--primary-color);
 }
 
-.menu-item.router-link-active .menu-icon {
+.menu-item.is-active .menu-icon {
   opacity: 1;
   color: var(--primary-color);
 }
