@@ -1,4 +1,5 @@
 import { request } from './http'
+import { apiUrl } from './paths'
 import type { Plan } from './plan'
 
 export interface UserInfo {
@@ -52,25 +53,23 @@ export interface TrafficLog {
 }
 
 export async function getUserInfo(): Promise<UserInfo> {
-  return request<UserInfo>('/api/v1/user/info')
+  return request<UserInfo>(apiUrl('user', '/info'))
 }
 
 export async function getSubscribe(): Promise<SubscribeInfo> {
-  return request<SubscribeInfo>('/api/v1/user/getSubscribe')
+  return request<SubscribeInfo>(apiUrl('user', '/getSubscribe'))
 }
 
 export async function getUserStat(): Promise<number[]> {
-  return request<number[]>('/api/v1/user/getStat')
+  return request<number[]>(apiUrl('user', '/getStat'))
 }
 
 export async function changePassword(old_password: string, new_password: string): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('old_password', old_password)
-  body.set('new_password', new_password)
-  return request<boolean>('/api/v1/user/changePassword', {
+  const params = new URLSearchParams({ old_password, new_password })
+  return request<boolean>(`${apiUrl('user', '/changePassword')}?${params}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}'
   })
 }
 
@@ -79,38 +78,37 @@ export async function updateUserInfo(params: {
   remind_expire?: number
   remind_traffic?: number
 }): Promise<boolean> {
-  const body = new URLSearchParams()
-  if (params.auto_renewal !== undefined) body.set('auto_renewal', String(params.auto_renewal))
-  if (params.remind_expire !== undefined) body.set('remind_expire', String(params.remind_expire))
-  if (params.remind_traffic !== undefined) body.set('remind_traffic', String(params.remind_traffic))
+  const qs = new URLSearchParams()
+  if (params.auto_renewal !== undefined) qs.set('auto_renewal', String(params.auto_renewal))
+  if (params.remind_expire !== undefined) qs.set('remind_expire', String(params.remind_expire))
+  if (params.remind_traffic !== undefined) qs.set('remind_traffic', String(params.remind_traffic))
 
-  return request<boolean>('/api/v1/user/update', {
+  return request<boolean>(`${apiUrl('user', '/update')}?${qs}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}'
   })
 }
 
 export async function resetSecurity(): Promise<string> {
-  return request<string>('/api/v1/user/resetSecurity', { method: 'POST' })
+  return request<string>(apiUrl('user', '/resetSecurity'), { method: 'POST' })
 }
 
 export async function unbindTelegram(): Promise<boolean> {
-  return request<boolean>('/api/v1/user/unbindTelegram', { method: 'POST' })
+  return request<boolean>(apiUrl('user', '/unbindTelegram'), { method: 'POST' })
 }
 
 export async function redeemGiftcard(giftcard: string): Promise<{ type: number, value: number }> {
-  const body = new URLSearchParams()
-  body.set('giftcard', giftcard)
-  return request<{ type: number, value: number }>('/api/v1/user/redeemGiftcard', {
+  const params = new URLSearchParams({ giftcard })
+  return request<{ type: number, value: number }>(`${apiUrl('user', '/redeemGiftcard')}?${params}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}'
   })
 }
 
 export async function getTrafficLog(): Promise<TrafficLog[]> {
-  return request<TrafficLog[]>('/api/v1/user/trafficLog')
+  return request<TrafficLog[]>(apiUrl('user', '/trafficLog'))
 }
 
 

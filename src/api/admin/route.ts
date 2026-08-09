@@ -1,4 +1,5 @@
 import { request } from '../http'
+import { apiUrl } from '../paths'
 
 export interface ServerRoute {
   id: number
@@ -99,7 +100,7 @@ export function routeActionOption(action: string) {
 }
 
 export function fetchRoutes(): Promise<ServerRoute[]> {
-  return request<ServerRoute[]>('/api/v1/admin/server/route/fetch')
+  return request<ServerRoute[]>(apiUrl('admin', '/server/route/fetch'))
 }
 
 export function saveRoute(body: {
@@ -109,7 +110,7 @@ export function saveRoute(body: {
   action: string
   action_value?: string | null
 }): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/server/route/save', {
+  return request<boolean>(apiUrl('admin', '/server/route/save'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -117,7 +118,7 @@ export function saveRoute(body: {
 }
 
 export function dropRoute(id: number): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/server/route/drop?id=${id}`, {
+  return request<boolean>(`${apiUrl('admin', '/server/route/drop')}?id=${id}`, {
     method: 'POST'
   })
 }

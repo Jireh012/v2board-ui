@@ -1,4 +1,5 @@
 import { request } from './http'
+import { apiUrl } from './paths'
 
 export interface LoginResult {
   token: string
@@ -11,21 +12,23 @@ export async function login(
   password: string,
   recaptchaData?: string
 ): Promise<LoginResult> {
-  const body = new URLSearchParams()
-  body.set('email', email)
-  body.set('password', password)
+  const body: Record<string, string> = {
+    email: email.trim(),
+    password
+  }
   const token = (recaptchaData || '').trim()
   if (token) {
-    body.set('recaptcha_data', token)
+    body.recaptcha_data = token
   }
-  const data = await request<LoginResult>('/api/v1/passport/auth/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+  return request<LoginResult>(
+    apiUrl('passport', '/auth/login'),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     },
-    body
-  }, { auth: false })
-  return data
+    { auth: false }
+  )
 }
 
 export async function register(payload: {
@@ -52,7 +55,7 @@ export async function register(payload: {
     body.recaptcha_data = captcha
   }
   return request<LoginResult>(
-    '/api/v1/passport/auth/register',
+    apiUrl('passport', '/auth/register'),
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,7 +68,7 @@ export async function register(payload: {
 /** isforget: 0 = register, 1 = reset password */
 export async function sendEmailVerify(email: string, isforget: 0 | 1): Promise<boolean> {
   return request<boolean>(
-    '/api/v1/passport/comm/sendEmailVerify',
+    apiUrl('passport', '/comm/sendEmailVerify'),
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -81,7 +84,7 @@ export async function forgetPassword(payload: {
   password: string
 }): Promise<boolean> {
   return request<boolean>(
-    '/api/v1/passport/auth/forget',
+    apiUrl('passport', '/auth/forget'),
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

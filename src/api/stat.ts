@@ -1,4 +1,5 @@
 import { request } from './http'
+import { apiUrl } from './paths'
 
 export interface TrafficLog {
     id: number
@@ -10,5 +11,5 @@ export interface TrafficLog {
 }
 
 export async function getTrafficLog(): Promise<TrafficLog[]> {
-    return request<TrafficLog[]>('/api/v1/user/trafficLog')
+    return request<TrafficLog[]>(apiUrl('user', '/trafficLog'))
 }

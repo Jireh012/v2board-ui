@@ -1,4 +1,5 @@
 import { request } from '../http'
+import { apiUrl } from '../paths'
 
 export interface AdminPayment {
   id: number
@@ -24,21 +25,21 @@ export interface FormField {
 export type PaymentFormDef = Record<string, FormField>
 
 export function fetchPayments(): Promise<AdminPayment[]> {
-  return request<AdminPayment[]>('/api/v1/admin/payment/fetch')
+  return request<AdminPayment[]>(apiUrl('admin', '/payment/fetch'))
 }
 
 export function fetchPaymentMethods(): Promise<string[]> {
-  return request<string[]>('/api/v1/admin/payment/methods')
+  return request<string[]>(apiUrl('admin', '/payment/methods'))
 }
 
 export function fetchPaymentForm(payment: string, id: number): Promise<PaymentFormDef[]> {
   return request<PaymentFormDef[]>(
-    `/api/v1/admin/payment/form?payment=${encodeURIComponent(payment)}&id=${id}`
+    `${apiUrl('admin', '/payment/form')}?payment=${encodeURIComponent(payment)}&id=${id}`
   )
 }
 
 export function savePayment(body: Record<string, unknown>): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/payment/save', {
+  return request<boolean>(apiUrl('admin', '/payment/save'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -46,19 +47,19 @@ export function savePayment(body: Record<string, unknown>): Promise<boolean> {
 }
 
 export function togglePayment(id: number): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/payment/show?id=${id}`, {
+  return request<boolean>(`${apiUrl('admin', '/payment/show')}?id=${id}`, {
     method: 'POST'
   })
 }
 
 export function dropPayment(id: number): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/payment/drop?id=${id}`, {
+  return request<boolean>(`${apiUrl('admin', '/payment/drop')}?id=${id}`, {
     method: 'POST'
   })
 }
 
 export function sortPayments(ids: number[]): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/payment/sort', {
+  return request<boolean>(apiUrl('admin', '/payment/sort'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(ids)

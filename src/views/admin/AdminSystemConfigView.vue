@@ -56,6 +56,62 @@
       >
         <input v-model="config.site.subscribe_path" class="input" placeholder="/s/your-secret-path" />
       </Row>
+      <Row
+        label="Passport API 前缀"
+        desc="替换经典 /api/v1/passport。留空保存时自动生成（如 /p/xxxx）。变更后立即生效，旧前缀与经典路径均 404。"
+      >
+        <div class="token-field">
+          <input
+            v-model="config.site.passport_api_prefix"
+            class="input"
+            autocomplete="off"
+            placeholder="留空自动生成，例如 /p/abcdefghijkl"
+          />
+          <button type="button" class="btn secondary" @click="generatePassportApiPrefix">生成前缀</button>
+        </div>
+      </Row>
+      <Row
+        label="用户 API 前缀"
+        desc="替换经典 /api/v1/user。留空保存时自动生成（如 /u/xxxx）。变更后立即生效。"
+      >
+        <div class="token-field">
+          <input
+            v-model="config.site.user_api_prefix"
+            class="input"
+            autocomplete="off"
+            placeholder="留空自动生成，例如 /u/abcdefghijkl"
+          />
+          <button type="button" class="btn secondary" @click="generateUserApiPrefix">生成前缀</button>
+        </div>
+      </Row>
+      <Row
+        label="管理 API 前缀"
+        desc="替换经典 /api/v1/admin。留空保存时自动生成（如 /a/xxxx）。变更后立即生效，旧前缀与经典路径均 404。与后台 UI 入口 secure_path 无关。"
+      >
+        <div class="token-field">
+          <input
+            v-model="config.site.admin_api_prefix"
+            class="input"
+            autocomplete="off"
+            placeholder="留空自动生成，例如 /a/abcdefghijkl"
+          />
+          <button type="button" class="btn secondary" @click="generateAdminApiPrefix">生成前缀</button>
+        </div>
+      </Row>
+      <Row
+        label="公开配置路径"
+        desc="未登录引导配置（站点名、注册开关、API 前缀等）的路径。须与前端构建环境变量 VITE_PUBLIC_CONFIG_PATH 完全一致；留空保存时自动生成（如 /c/xxxxxxxx）。"
+      >
+        <div class="token-field">
+          <input
+            v-model="config.site.public_config_path"
+            class="input"
+            autocomplete="off"
+            placeholder="须与 VITE_PUBLIC_CONFIG_PATH 一致，例如 /c/abcdefgh"
+          />
+          <button type="button" class="btn secondary" @click="generatePublicConfigPath">生成路径</button>
+        </div>
+      </Row>
       <Row label="用户条款 URL" desc="用于跳转到用户条款 (TOS)。">
         <input v-model="config.site.tos_url" class="input" placeholder="https://example.com/tos" />
       </Row>
@@ -280,7 +336,24 @@
       <Row label="节点 API URL" desc="节点与面板通讯的 API 地址，留空则使用站点 URL。">
         <input v-model="config.server.server_api_url" class="input" placeholder="留空则使用站点 URL" />
       </Row>
-      <Row label="通讯密钥" desc="面板和节点间的通讯密钥，最少 16 位。可一键生成随机密钥。">
+      <Row
+        label="节点 API 前缀"
+        desc="节点通讯路径前缀（如 /n/xxxx）。留空保存时自动生成；变更后立即生效，旧前缀失效。"
+      >
+        <div class="token-field">
+          <input
+            v-model="config.server.server_api_prefix"
+            class="input"
+            autocomplete="off"
+            placeholder="留空自动生成，例如 /n/abcdefghijkl"
+          />
+          <button type="button" class="btn secondary" @click="generateServerApiPrefix">生成前缀</button>
+        </div>
+      </Row>
+      <Row
+        label="通讯密钥"
+        desc="面板和节点间的通讯密钥，最少 16 位；同时用于节点 API SM4 派生（与公开站点 SM4_KEY 无关）。可一键生成随机密钥。"
+      >
         <div class="token-field">
           <input
             v-model="config.server.server_token"
@@ -403,6 +476,7 @@ import {
   fetchConfig, saveConfig, testSendMail, setTelegramWebhook,
   type ConfigData
 } from '../../api/admin/config'
+import { getPublicConfigPath, setApiBases } from '../../api/paths'
 import { adminBasePath, adminUrl, loadSiteBrand } from '../../siteBrand'
 
 /* ---- 子组件：表单行 ---- */
@@ -535,6 +609,42 @@ function generateServerToken() {
   showServerToken.value = true
 }
 
+function generateServerApiPrefix() {
+  if (!config.value?.server) return
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = new Uint8Array(12)
+  crypto.getRandomValues(bytes)
+  config.value.server.server_api_prefix =
+    '/n/' + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
+}
+
+function randomAlnum(len: number): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const bytes = new Uint8Array(len)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
+}
+
+function generatePassportApiPrefix() {
+  if (!config.value?.site) return
+  config.value.site.passport_api_prefix = '/p/' + randomAlnum(12)
+}
+
+function generateUserApiPrefix() {
+  if (!config.value?.site) return
+  config.value.site.user_api_prefix = '/u/' + randomAlnum(12)
+}
+
+function generateAdminApiPrefix() {
+  if (!config.value?.site) return
+  config.value.site.admin_api_prefix = '/a/' + randomAlnum(12)
+}
+
+function generatePublicConfigPath() {
+  if (!config.value?.site) return
+  config.value.site.public_config_path = '/c/' + randomAlnum(8)
+}
+
 /* ---- 保存当前分组 ---- */
 async function saveGroup(group: string) {
   if (!config.value) return
@@ -548,6 +658,14 @@ async function saveGroup(group: string) {
     }
     server.server_token = token
   }
+  // Ensure blank client API paths are filled client-side so we can hot-swap bases after save
+  // (backend also auto-gens, but old prefix 404s immediately — memory must match wire values).
+  if (group === 'site' && config.value.site) {
+    if (!String(config.value.site.passport_api_prefix ?? '').trim()) generatePassportApiPrefix()
+    if (!String(config.value.site.user_api_prefix ?? '').trim()) generateUserApiPrefix()
+    if (!String(config.value.site.admin_api_prefix ?? '').trim()) generateAdminApiPrefix()
+    if (!String(config.value.site.public_config_path ?? '').trim()) generatePublicConfigPath()
+  }
   saving.value = true
   saveMessage.value = ''
   const prevAdminPath = adminBasePath.value
@@ -555,6 +673,15 @@ async function saveGroup(group: string) {
     const payload: Record<string, unknown> = {}
     payload[group] = (config.value as Record<string, unknown>)[group]
     await saveConfig(payload as ConfigData)
+    if (group === 'site' && config.value.site) {
+      const site = config.value.site
+      setApiBases(
+        site.passport_api_prefix || '',
+        site.user_api_prefix || '',
+        site.public_config_path || getPublicConfigPath(),
+        site.admin_api_prefix || ''
+      )
+    }
     if (group === 'safe') {
       // Routes are registered once at boot; path change needs a full reload.
       await loadSiteBrand()

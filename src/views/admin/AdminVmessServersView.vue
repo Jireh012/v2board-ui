@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <h1>VMess 节点</h1>
-    <p class="hint">数据来自 /api/v1/admin/server/vmess/fetch。</p>
+    <p class="hint">数据来自管理端 server/vmess/fetch API。</p>
     <table v-if="rows.length" class="table">
       <thead>
         <tr>
@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { request } from '../../api/http'
+import { apiUrl } from '../../api/paths'
 
 interface AdminVmess {
   id: number
@@ -41,7 +42,7 @@ interface AdminVmess {
 const rows = ref<AdminVmess[]>([])
 
 async function load() {
-  rows.value = await request<AdminVmess[]>('/api/v1/admin/server/vmess/fetch')
+  rows.value = await request<AdminVmess[]>(apiUrl('admin', '/server/vmess/fetch'))
 }
 
 onMounted(load)

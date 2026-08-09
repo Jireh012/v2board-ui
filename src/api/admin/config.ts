@@ -1,4 +1,5 @@
 import { request } from '../http'
+import { apiUrl } from '../paths'
 
 export interface SiteConfig {
   app_name?: string
@@ -8,6 +9,14 @@ export interface SiteConfig {
   logo?: string
   subscribe_url?: string
   subscribe_path?: string
+  /** Replaces /api/v1/passport; empty → auto-gen /p/+12 */
+  passport_api_prefix?: string
+  /** Replaces /api/v1/user; empty → auto-gen /u/+12 */
+  user_api_prefix?: string
+  /** Replaces /api/v1/admin; empty → auto-gen /a/+12 */
+  admin_api_prefix?: string
+  /** Bootstrap public config path; must match VITE_PUBLIC_CONFIG_PATH */
+  public_config_path?: string
   tos_url?: string
   stop_register?: number
   try_out_plan_id?: number
@@ -81,6 +90,7 @@ export interface FrontendConfig {
 
 export interface ServerConfig {
   server_api_url?: string
+  server_api_prefix?: string
   server_token?: string
   server_pull_interval?: number
   server_push_interval?: number
@@ -130,13 +140,13 @@ export interface ConfigData {
 
 export function fetchConfig(key?: string): Promise<ConfigData> {
   const url = key
-    ? `/api/v1/admin/config/fetch?key=${encodeURIComponent(key)}`
-    : '/api/v1/admin/config/fetch'
+    ? `${apiUrl('admin', '/config/fetch')}?key=${encodeURIComponent(key)}`
+    : apiUrl('admin', '/config/fetch')
   return request<ConfigData>(url)
 }
 
 export function saveConfig(body: ConfigData): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/config/save', {
+  return request<boolean>(apiUrl('admin', '/config/save'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -144,13 +154,13 @@ export function saveConfig(body: ConfigData): Promise<boolean> {
 }
 
 export function testSendMail(): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/config/testSendMail', {
+  return request<boolean>(apiUrl('admin', '/config/testSendMail'), {
     method: 'POST'
   })
 }
 
 export function setTelegramWebhook(): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/config/setTelegramWebhook', {
+  return request<boolean>(apiUrl('admin', '/config/setTelegramWebhook'), {
     method: 'POST'
   })
 }

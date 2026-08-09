@@ -1,4 +1,5 @@
 import { request } from './http'
+import { apiUrl } from './paths'
 
 export interface Notice {
   id: number
@@ -20,12 +21,12 @@ export async function fetchNotices(
   pageSize = 5
 ): Promise<NoticeListResult> {
   return request<NoticeListResult>(
-    `/api/v1/user/notice/fetch?current=${current}&pageSize=${pageSize}`
+    `${apiUrl('user', '/notice/fetch')}?current=${current}&pageSize=${pageSize}`
   )
 }
 
 export async function getNoticeDetail(id: number): Promise<Notice> {
-  return request<Notice>(`/api/v1/user/notice/fetch?id=${id}`)
+  return request<Notice>(`${apiUrl('user', '/notice/fetch')}?id=${id}`)
 }
 
 

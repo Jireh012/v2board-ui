@@ -1,4 +1,5 @@
 import { request } from './http'
+import { apiUrl } from './paths'
 import type { LoginResult } from './auth'
 
 // ==================== 通用 ====================
@@ -257,13 +258,10 @@ export interface AdminKnowledge {
 
 // ==================== Auth ====================
 export async function adminLogin(email: string, password: string): Promise<LoginResult> {
-  const body = new URLSearchParams()
-  body.set('email', email)
-  body.set('password', password)
-  return request<LoginResult>('/api/v1/admin/login', {
+  return request<LoginResult>(apiUrl('admin', '/login'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
   }, { auth: false })
 }
 
@@ -284,15 +282,15 @@ export async function fetchAdminUsers(
     params.set(`filter[${i}][condition]`, f.condition)
     params.set(`filter[${i}][value]`, f.value)
   })
-  return request<PageResult<AdminUser>>(`/api/v1/admin/user/fetch?${params.toString()}`)
+  return request<PageResult<AdminUser>>(`${apiUrl('admin', '/user/fetch')}?${params.toString()}`)
 }
 
 export async function getAdminUserInfo(id: number): Promise<AdminUser> {
-  return request<AdminUser>(`/api/v1/admin/user/getUserInfoById?id=${id}`)
+  return request<AdminUser>(`${apiUrl('admin', '/user/getUserInfoById')}?id=${id}`)
 }
 
 export async function updateAdminUser(data: Record<string, unknown>): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/user/update', {
+  return request<boolean>(apiUrl('admin', '/user/update'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -300,7 +298,7 @@ export async function updateAdminUser(data: Record<string, unknown>): Promise<bo
 }
 
 export async function generateAdminUser(data: Record<string, unknown>): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/user/generate', {
+  return request<boolean>(apiUrl('admin', '/user/generate'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -314,13 +312,13 @@ export async function banAdminUsers(filters: OrderFilter[]): Promise<boolean> {
     params.set(`filter[${i}][condition]`, f.condition)
     params.set(`filter[${i}][value]`, f.value)
   })
-  return request<boolean>(`/api/v1/admin/user/ban?${params.toString()}`, { method: 'POST' })
+  return request<boolean>(`${apiUrl('admin', '/user/ban')}?${params.toString()}`, { method: 'POST' })
 }
 
 export async function deleteAdminUser(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/user/delUser', {
+  return request<boolean>(apiUrl('admin', '/user/delUser'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -330,7 +328,7 @@ export async function deleteAdminUser(id: number): Promise<boolean> {
 export async function resetAdminUserSecret(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/user/resetSecret', {
+  return request<boolean>(apiUrl('admin', '/user/resetSecret'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -356,17 +354,17 @@ export async function fetchAdminUserLoginLog(
   pageSize = 10
 ): Promise<AdminUserLoginLogResult> {
   return request<AdminUserLoginLogResult>(
-    `/api/v1/admin/user/getLoginLog?user_id=${userId}&current=${current}&pageSize=${pageSize}`
+    `${apiUrl('admin', '/user/getLoginLog')}?user_id=${userId}&current=${current}&pageSize=${pageSize}`
   )
 }
 
 // ==================== Plan API ====================
 export async function fetchAdminPlans(): Promise<AdminPlan[]> {
-  return request<AdminPlan[]>('/api/v1/admin/plan/fetch')
+  return request<AdminPlan[]>(apiUrl('admin', '/plan/fetch'))
 }
 
 export async function saveAdminPlan(plan: AdminPlan, forceUpdate = false): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/plan/save?force_update=${forceUpdate ? 'true' : 'false'}`, {
+  return request<boolean>(`${apiUrl('admin', '/plan/save')}?force_update=${forceUpdate ? 'true' : 'false'}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(plan)
@@ -376,7 +374,7 @@ export async function saveAdminPlan(plan: AdminPlan, forceUpdate = false): Promi
 export async function dropAdminPlan(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/plan/drop', {
+  return request<boolean>(apiUrl('admin', '/plan/drop'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -384,7 +382,7 @@ export async function dropAdminPlan(id: number): Promise<boolean> {
 }
 
 export async function sortAdminPlans(ids: number[]): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/plan/sort', {
+  return request<boolean>(apiUrl('admin', '/plan/sort'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(ids)
@@ -400,7 +398,7 @@ export async function updateAdminPlanFlags(
   params.set('id', String(id))
   if (flags.show !== undefined) params.set('show', String(flags.show))
   if (flags.renew !== undefined) params.set('renew', String(flags.renew))
-  return request<boolean>(`/api/v1/admin/plan/update?${params.toString()}`, {
+  return request<boolean>(`${apiUrl('admin', '/plan/update')}?${params.toString()}`, {
     method: 'POST'
   })
 }
@@ -418,13 +416,13 @@ export async function fetchAdminOrders(
     params.set(`filter[${i}][condition]`, f.condition)
     params.set(`filter[${i}][value]`, f.value)
   })
-  return request<PageResult<AdminOrderRow>>(`/api/v1/admin/order/fetch?${params.toString()}`)
+  return request<PageResult<AdminOrderRow>>(`${apiUrl('admin', '/order/fetch')}?${params.toString()}`)
 }
 
 export async function fetchAdminOrderDetail(id: number): Promise<AdminOrderDetail> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<AdminOrderDetail>('/api/v1/admin/order/detail', {
+  return request<AdminOrderDetail>(apiUrl('admin', '/order/detail'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -434,7 +432,7 @@ export async function fetchAdminOrderDetail(id: number): Promise<AdminOrderDetai
 export async function paidAdminOrder(tradeNo: string): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('trade_no', tradeNo)
-  return request<boolean>('/api/v1/admin/order/paid', {
+  return request<boolean>(apiUrl('admin', '/order/paid'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -444,7 +442,7 @@ export async function paidAdminOrder(tradeNo: string): Promise<boolean> {
 export async function cancelAdminOrder(tradeNo: string): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('trade_no', tradeNo)
-  return request<boolean>('/api/v1/admin/order/cancel', {
+  return request<boolean>(apiUrl('admin', '/order/cancel'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -455,7 +453,7 @@ export async function updateAdminOrder(tradeNo: string, commissionStatus: number
   const body = new URLSearchParams()
   body.set('trade_no', tradeNo)
   body.set('commission_status', String(commissionStatus))
-  return request<boolean>('/api/v1/admin/order/update', {
+  return request<boolean>(apiUrl('admin', '/order/update'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -470,7 +468,7 @@ export async function assignAdminOrder(
   body.set('email', email)
   body.set('period', period)
   body.set('total_amount', String(totalAmount))
-  return request<string>('/api/v1/admin/order/assign', {
+  return request<string>(apiUrl('admin', '/order/assign'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -491,18 +489,18 @@ export async function fetchAdminTickets(
     opts.reply_status.forEach((s) => params.append('reply_status', String(s)))
   }
   if (opts.email) params.set('email', opts.email)
-  return request<PageResult<AdminTicket>>(`/api/v1/admin/ticket/fetch?${params.toString()}`)
+  return request<PageResult<AdminTicket>>(`${apiUrl('admin', '/ticket/fetch')}?${params.toString()}`)
 }
 
 export async function fetchAdminTicketDetail(id: number): Promise<AdminTicket> {
-  return request<AdminTicket>(`/api/v1/admin/ticket/fetch?id=${id}`)
+  return request<AdminTicket>(`${apiUrl('admin', '/ticket/fetch')}?id=${id}`)
 }
 
 export async function replyAdminTicket(id: number, message: string): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
   body.set('message', message)
-  return request<boolean>('/api/v1/admin/ticket/reply', {
+  return request<boolean>(apiUrl('admin', '/ticket/reply'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -512,7 +510,7 @@ export async function replyAdminTicket(id: number, message: string): Promise<boo
 export async function closeAdminTicket(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/ticket/close', {
+  return request<boolean>(apiUrl('admin', '/ticket/close'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -521,44 +519,44 @@ export async function closeAdminTicket(id: number): Promise<boolean> {
 
 // ==================== Stat API ====================
 export async function fetchStatOverride(): Promise<StatOverride> {
-  return request<StatOverride>('/api/v1/admin/stat/getOverride')
+  return request<StatOverride>(apiUrl('admin', '/stat/getOverride'))
 }
 
 export async function fetchStatOrder(): Promise<StatOrderTrend[]> {
-  return request<StatOrderTrend[]>('/api/v1/admin/stat/getOrder')
+  return request<StatOrderTrend[]>(apiUrl('admin', '/stat/getOrder'))
 }
 
 export async function fetchStatServerLastRank(): Promise<StatServerRank[]> {
-  return request<StatServerRank[]>('/api/v1/admin/stat/getServerLastRank')
+  return request<StatServerRank[]>(apiUrl('admin', '/stat/getServerLastRank'))
 }
 
 export async function fetchStatServerTodayRank(): Promise<StatServerRank[]> {
-  return request<StatServerRank[]>('/api/v1/admin/stat/getServerTodayRank')
+  return request<StatServerRank[]>(apiUrl('admin', '/stat/getServerTodayRank'))
 }
 
 export async function fetchStatUserTodayRank(): Promise<StatUserRank[]> {
-  return request<StatUserRank[]>('/api/v1/admin/stat/getUserTodayRank')
+  return request<StatUserRank[]>(apiUrl('admin', '/stat/getUserTodayRank'))
 }
 
 export async function fetchStatUserLastRank(): Promise<StatUserRank[]> {
-  return request<StatUserRank[]>('/api/v1/admin/stat/getUserLastRank')
+  return request<StatUserRank[]>(apiUrl('admin', '/stat/getUserLastRank'))
 }
 
 export async function fetchStatUser(
   userId: number, current = 1, pageSize = 10
 ): Promise<PageResult<StatUserRecord>> {
   return request<PageResult<StatUserRecord>>(
-    `/api/v1/admin/stat/getStatUser?user_id=${userId}&current=${current}&pageSize=${pageSize}`
+    `${apiUrl('admin', '/stat/getStatUser')}?user_id=${userId}&current=${current}&pageSize=${pageSize}`
   )
 }
 
 // ==================== Notice API ====================
 export async function fetchAdminNotices(): Promise<AdminNotice[]> {
-  return request<AdminNotice[]>('/api/v1/admin/notice/fetch')
+  return request<AdminNotice[]>(apiUrl('admin', '/notice/fetch'))
 }
 
 export async function saveAdminNotice(notice: AdminNotice): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/notice/save', {
+  return request<boolean>(apiUrl('admin', '/notice/save'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(notice)
@@ -568,7 +566,7 @@ export async function saveAdminNotice(notice: AdminNotice): Promise<boolean> {
 export async function showAdminNotice(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/notice/show', {
+  return request<boolean>(apiUrl('admin', '/notice/show'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -578,7 +576,7 @@ export async function showAdminNotice(id: number): Promise<boolean> {
 export async function dropAdminNotice(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/notice/drop', {
+  return request<boolean>(apiUrl('admin', '/notice/drop'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -590,12 +588,12 @@ export async function fetchAdminCoupons(
   current = 1, pageSize = 10
 ): Promise<PageResult<AdminCoupon>> {
   return request<PageResult<AdminCoupon>>(
-    `/api/v1/admin/coupon/fetch?current=${current}&pageSize=${pageSize}`
+    `${apiUrl('admin', '/coupon/fetch')}?current=${current}&pageSize=${pageSize}`
   )
 }
 
 export async function generateAdminCoupon(coupon: AdminCoupon): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/coupon/generate', {
+  return request<boolean>(apiUrl('admin', '/coupon/generate'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(coupon)
@@ -605,7 +603,7 @@ export async function generateAdminCoupon(coupon: AdminCoupon): Promise<boolean>
 export async function showAdminCoupon(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/coupon/show', {
+  return request<boolean>(apiUrl('admin', '/coupon/show'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -615,7 +613,7 @@ export async function showAdminCoupon(id: number): Promise<boolean> {
 export async function dropAdminCoupon(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/coupon/drop', {
+  return request<boolean>(apiUrl('admin', '/coupon/drop'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -627,12 +625,12 @@ export async function fetchAdminGiftcards(
   current = 1, pageSize = 10
 ): Promise<PageResult<AdminGiftcard>> {
   return request<PageResult<AdminGiftcard>>(
-    `/api/v1/admin/giftcard/fetch?current=${current}&pageSize=${pageSize}`
+    `${apiUrl('admin', '/giftcard/fetch')}?current=${current}&pageSize=${pageSize}`
   )
 }
 
 export async function generateAdminGiftcard(giftcard: AdminGiftcard): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/giftcard/generate', {
+  return request<boolean>(apiUrl('admin', '/giftcard/generate'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(giftcard)
@@ -642,7 +640,7 @@ export async function generateAdminGiftcard(giftcard: AdminGiftcard): Promise<bo
 export async function dropAdminGiftcard(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/giftcard/drop', {
+  return request<boolean>(apiUrl('admin', '/giftcard/drop'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -651,19 +649,19 @@ export async function dropAdminGiftcard(id: number): Promise<boolean> {
 
 // ==================== Knowledge API ====================
 export async function fetchAdminKnowledge(): Promise<AdminKnowledge[]> {
-  return request<AdminKnowledge[]>('/api/v1/admin/knowledge/fetch')
+  return request<AdminKnowledge[]>(apiUrl('admin', '/knowledge/fetch'))
 }
 
 export async function fetchAdminKnowledgeById(id: number): Promise<AdminKnowledge> {
-  return request<AdminKnowledge>(`/api/v1/admin/knowledge/fetch?id=${id}`)
+  return request<AdminKnowledge>(`${apiUrl('admin', '/knowledge/fetch')}?id=${id}`)
 }
 
 export async function fetchAdminKnowledgeCategory(): Promise<string[]> {
-  return request<string[]>('/api/v1/admin/knowledge/category')
+  return request<string[]>(apiUrl('admin', '/knowledge/category'))
 }
 
 export async function saveAdminKnowledge(knowledge: AdminKnowledge): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/knowledge/save', {
+  return request<boolean>(apiUrl('admin', '/knowledge/save'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(knowledge)
@@ -673,7 +671,7 @@ export async function saveAdminKnowledge(knowledge: AdminKnowledge): Promise<boo
 export async function showAdminKnowledge(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/knowledge/show', {
+  return request<boolean>(apiUrl('admin', '/knowledge/show'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body
@@ -681,7 +679,7 @@ export async function showAdminKnowledge(id: number): Promise<boolean> {
 }
 
 export async function sortAdminKnowledge(ids: number[]): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/knowledge/sort', {
+  return request<boolean>(apiUrl('admin', '/knowledge/sort'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     // Wire format must be snake_case (global Jackson SNAKE_CASE → SortRequest.knowledgeIds)
@@ -692,7 +690,7 @@ export async function sortAdminKnowledge(ids: number[]): Promise<boolean> {
 export async function dropAdminKnowledge(id: number): Promise<boolean> {
   const body = new URLSearchParams()
   body.set('id', String(id))
-  return request<boolean>('/api/v1/admin/knowledge/drop', {
+  return request<boolean>(apiUrl('admin', '/knowledge/drop'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body

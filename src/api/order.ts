@@ -1,4 +1,5 @@
 import { request } from './http'
+import { apiUrl } from './paths'
 
 export interface PaymentMethod {
   id: number
@@ -45,7 +46,7 @@ export interface OrderPageResult {
 /** Full list (PHP-compatible). Prefer {@link fetchOrdersPage} for the order list UI. */
 export async function fetchOrders(status?: number): Promise<OrderListItem[]> {
   const qs = status != null ? `?status=${status}` : ''
-  return request<OrderListItem[]>(`/api/v1/user/order/fetch${qs}`)
+  return request<OrderListItem[]>(apiUrl('user', '/order/fetch') + qs)
 }
 
 /** Paginated fetch for infinite scroll on「我的订单」. */
@@ -58,11 +59,11 @@ export async function fetchOrdersPage(opts: {
   if (opts.status != null) params.set('status', String(opts.status))
   params.set('current', String(opts.current ?? 1))
   params.set('pageSize', String(opts.pageSize ?? 10))
-  return request<OrderPageResult>(`/api/v1/user/order/fetch?${params.toString()}`)
+  return request<OrderPageResult>(`${apiUrl('user', '/order/fetch')}?${params.toString()}`)
 }
 
 export async function fetchOrderDetail(tradeNo: string): Promise<OrderDetail> {
-  const url = `/api/v1/user/order/detail?trade_no=${encodeURIComponent(tradeNo)}`
+  const url = `${apiUrl('user', '/order/detail')}?trade_no=${encodeURIComponent(tradeNo)}`
   return request<OrderDetail>(url)
 }
 
@@ -73,64 +74,57 @@ export async function createOrder(
   /** 充值金额（分）；planId===0 时必填 */
   depositAmountCents?: number
 ): Promise<string> {
-  const body = new URLSearchParams()
-  body.set('plan_id', String(planId))
+  const params = new URLSearchParams()
+  params.set('plan_id', String(planId))
   if (planId === 0) {
     if (depositAmountCents == null || depositAmountCents <= 0) {
       throw new Error('充值金额必须大于 0')
     }
-    body.set('deposit_amount', String(depositAmountCents))
+    params.set('deposit_amount', String(depositAmountCents))
     if (period) {
-      body.set('period', period)
+      params.set('period', period)
     }
   } else {
-    body.set('period', period)
+    params.set('period', period)
     const code = (couponCode || '').trim()
     if (code) {
-      body.set('coupon_code', code)
+      params.set('coupon_code', code)
     }
   }
-  const tradeNo = await request<string>('/api/v1/user/order/save', {
+  return request<string>(`${apiUrl('user', '/order/save')}?${params}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}'
   })
-  return tradeNo
 }
 
 export async function getPaymentMethods(): Promise<PaymentMethod[]> {
-  return request<PaymentMethod[]>('/api/v1/user/order/getPaymentMethod')
+  return request<PaymentMethod[]>(apiUrl('user', '/order/getPaymentMethod'))
 }
 
 export async function checkout(tradeNo: string, methodId: number): Promise<unknown> {
-  const body = new URLSearchParams()
-  body.set('trade_no', tradeNo)
-  body.set('method', String(methodId))
-  return request<unknown>('/api/v1/user/order/checkout', {
+  const params = new URLSearchParams({
+    trade_no: tradeNo,
+    method: String(methodId)
+  })
+  return request<unknown>(`${apiUrl('user', '/order/checkout')}?${params}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}'
   })
 }
 
 export async function checkOrderStatus(tradeNo: string): Promise<number> {
-  const url = `/api/v1/user/order/check?trade_no=${encodeURIComponent(tradeNo)}`
+  const url = `${apiUrl('user', '/order/check')}?trade_no=${encodeURIComponent(tradeNo)}`
   return request<number>(url)
 }
 
 export async function cancelOrder(tradeNo: string): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('trade_no', tradeNo)
-  return request<boolean>('/api/v1/user/order/cancel', {
+  const params = new URLSearchParams({ trade_no: tradeNo })
+  return request<boolean>(`${apiUrl('user', '/order/cancel')}?${params}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}'
   })
 }
 

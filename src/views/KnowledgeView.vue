@@ -100,6 +100,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { request } from '../api/http'
+import { apiUrl } from '../api/paths'
 
 interface KnowledgeItem { id: number; title: string; category: string | null; updated_at: number; body?: string }
 interface CategoryGroup { name: string; items: KnowledgeItem[] }
@@ -111,7 +112,7 @@ const loadingDetail = ref(false), keyword = ref('')
 
 async function loadList() {
   try {
-    const data = await request<Record<string, KnowledgeItem[]>>('/api/v1/user/knowledge/fetch' + (keyword.value ? `?keyword=${encodeURIComponent(keyword.value)}` : ''))
+    const data = await request<Record<string, KnowledgeItem[]>>(apiUrl('user', '/knowledge/fetch') + (keyword.value ? `?keyword=${encodeURIComponent(keyword.value)}` : ''))
     // Preserve backend order (sort ASC); do not re-sort by updated_at
     categories.value = Object.entries(data).map(([name, items]) => ({ name, items }))
     currentId.value = null; currentArticle.value = null
@@ -120,7 +121,7 @@ async function loadList() {
 
 async function openArticle(id: number) {
   currentId.value = id; loadingDetail.value = true; currentArticle.value = null
-  try { currentArticle.value = await request<KnowledgeItem>(`/api/v1/user/knowledge/fetch?id=${id}`) }
+  try { currentArticle.value = await request<KnowledgeItem>(`${apiUrl('user', '/knowledge/fetch')}?id=${id}`) }
   finally { loadingDetail.value = false }
 }
 

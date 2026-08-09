@@ -1,4 +1,5 @@
 import { request } from './http'
+import { apiUrl } from './paths'
 
 export interface InviteCode {
     id: number
@@ -29,11 +30,11 @@ export interface InviteDetailsResponse {
 }
 
 export async function fetchInvite(): Promise<InviteFetchResponse> {
-    return request<InviteFetchResponse>('/api/v1/user/invite/fetch')
+    return request<InviteFetchResponse>(apiUrl('user', '/invite/fetch'))
 }
 
 export async function saveInvite(): Promise<boolean> {
-    return request<boolean>('/api/v1/user/invite/save', { method: 'POST' })
+    return request<boolean>(apiUrl('user', '/invite/save'), { method: 'POST' })
 }
 
 export async function fetchInviteDetails(
@@ -41,16 +42,15 @@ export async function fetchInviteDetails(
     pageSize: number = 10
 ): Promise<InviteDetailsResponse> {
     return request<InviteDetailsResponse>(
-        `/api/v1/user/invite/details?current=${current}&page_size=${pageSize}`
+        `${apiUrl('user', '/invite/details')}?current=${current}&page_size=${pageSize}`
     )
 }
 
 export async function transferCommission(transfer_amount: number): Promise<boolean> {
-    const body = new URLSearchParams()
-    body.set('transfer_amount', String(transfer_amount))
-    return request<boolean>('/api/v1/user/transferCommission', {
+    const params = new URLSearchParams({ transfer_amount: String(transfer_amount) })
+    return request<boolean>(`${apiUrl('user', '/transferCommission')}?${params}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
     })
 }

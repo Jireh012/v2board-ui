@@ -1,5 +1,7 @@
 import { clearSession } from '../auth'
 import { adminUrl, isAdminUiPath } from '../siteBrand'
+import { encryptToCompact, encryptToEnvelope, decryptFromEnvelope, isSm4Envelope } from './sm4'
+import { isPanelEncryptedUrl } from './paths'
 
 export interface ApiResponse<T> {
   code: number
@@ -9,6 +11,8 @@ export interface ApiResponse<T> {
 
 interface RequestOptions {
   auth?: boolean
+  /** Skip panel SM4 (plaintext guest callbacks). Default: auto by URL. */
+  panelSm4?: boolean
 }
 
 export async function request<T>(
@@ -17,16 +21,41 @@ export async function request<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   const headers = new Headers(init.headers || {})
+  const usePanelSm4 = options.panelSm4 ?? isPanelEncryptedUrl(url)
+
   if (options.auth !== false) {
     const authData = localStorage.getItem('auth_data')
-    if (authData && !headers.has('Authorization')) {
-      headers.set('Authorization', `Bearer ${authData}`)
+    if (authData) {
+      if (usePanelSm4) {
+        if (!headers.has('X-A')) {
+          headers.set('X-A', encryptToCompact(authData))
+        }
+        headers.delete('Authorization')
+      } else if (!headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${authData}`)
+      }
     }
   }
+
+  let body = init.body
+  if (usePanelSm4 && body != null && typeof body === 'string') {
+    const ct = (headers.get('Content-Type') || '').toLowerCase()
+    if (ct.includes('application/json') || ct === '') {
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+      }
+      const envelope = encryptToEnvelope(body)
+      body = JSON.stringify(envelope)
+    } else if (ct.includes('application/x-www-form-urlencoded')) {
+      throw new Error('加密区请使用 JSON 请求体')
+    }
+  }
+
   if (!headers.has('Accept')) {
     headers.set('Accept', 'application/json')
   }
-  const resp = await fetch(url, { ...init, headers })
+
+  const resp = await fetch(url, { ...init, headers, body })
 
   if (resp.status === 401) {
     clearSession()
@@ -42,10 +71,25 @@ export async function request<T>(
     throw new Error('未登录或登录已过期')
   }
 
-  const json = (await resp.json()) as ApiResponse<T>
+  const raw = await resp.json()
+  let json: ApiResponse<T>
+
+  if (usePanelSm4) {
+    if (!isSm4Envelope(raw)) {
+      // Fail-closed errors (missing SM4 key) may be plaintext
+      if (raw && typeof raw === 'object' && 'code' in raw && 'message' in raw) {
+        throw new Error(String((raw as ApiResponse<unknown>).message || '请求失败'))
+      }
+      throw new Error('响应不是 SM4 信封')
+    }
+    const plain = decryptFromEnvelope(raw)
+    json = JSON.parse(plain) as ApiResponse<T>
+  } else {
+    json = raw as ApiResponse<T>
+  }
+
   if (json.code !== 0) {
     throw new Error(json.message || '请求失败')
   }
   return json.data
 }
-

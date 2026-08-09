@@ -1,4 +1,5 @@
 import { request } from '../http'
+import { apiUrl } from '../paths'
 
 export interface ExternalNameFilterRule {
   pattern: string
@@ -36,7 +37,7 @@ export interface ExternalSubscribeNode {
 }
 
 export function fetchExternalSources(): Promise<ExternalSubscribeSource[]> {
-  return request<ExternalSubscribeSource[]>('/api/v1/admin/external-subscribe/fetch')
+  return request<ExternalSubscribeSource[]>(apiUrl('admin', '/external-subscribe/fetch'))
 }
 
 export function saveExternalSource(body: {
@@ -48,7 +49,7 @@ export function saveExternalSource(body: {
   remark?: string
   name_filters?: ExternalNameFilterRule[]
 }): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/external-subscribe/save', {
+  return request<boolean>(apiUrl('admin', '/external-subscribe/save'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -56,13 +57,13 @@ export function saveExternalSource(body: {
 }
 
 export function dropExternalSource(id: number): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/external-subscribe/drop?id=${id}`, {
+  return request<boolean>(`${apiUrl('admin', '/external-subscribe/drop')}?id=${id}`, {
     method: 'POST'
   })
 }
 
 export function updateExternalSource(body: { id: number; enable?: number }): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/external-subscribe/update', {
+  return request<boolean>(apiUrl('admin', '/external-subscribe/update'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -70,19 +71,19 @@ export function updateExternalSource(body: { id: number; enable?: number }): Pro
 }
 
 export function syncExternalSource(id: number): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/external-subscribe/sync?id=${id}`, {
+  return request<boolean>(`${apiUrl('admin', '/external-subscribe/sync')}?id=${id}`, {
     method: 'POST'
   })
 }
 
 export function syncAllExternalSources(): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/external-subscribe/sync-all', {
+  return request<boolean>(apiUrl('admin', '/external-subscribe/sync-all'), {
     method: 'POST'
   })
 }
 
 export function fetchExternalNodes(sourceId: number): Promise<ExternalSubscribeNode[]> {
   return request<ExternalSubscribeNode[]>(
-    `/api/v1/admin/external-subscribe/nodes?source_id=${sourceId}`
+    `${apiUrl('admin', '/external-subscribe/nodes')}?source_id=${sourceId}`
   )
 }

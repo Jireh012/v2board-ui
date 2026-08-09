@@ -1,4 +1,5 @@
 import { request } from './http'
+import { apiUrl } from './paths'
 
 export interface ServerNode {
   id: number
@@ -16,5 +17,5 @@ export interface ServerNode {
 }
 
 export async function fetchServers(): Promise<ServerNode[]> {
-  return request<ServerNode[]>('/api/v1/user/server/fetch')
+  return request<ServerNode[]>(apiUrl('user', '/server/fetch'))
 }

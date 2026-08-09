@@ -1,4 +1,5 @@
 import { request } from '../http'
+import { apiUrl } from '../paths'
 
 export interface ServerNode {
   id: number
@@ -22,11 +23,11 @@ export interface ServerNode {
 export type ServerType = 'vmess' | 'vless' | 'trojan' | 'shadowsocks' | 'hysteria' | 'tuic' | 'anytls' | 'v2node'
 
 export function fetchNodes(): Promise<ServerNode[]> {
-  return request<ServerNode[]>('/api/v1/admin/server/manage/getNodes')
+  return request<ServerNode[]>(apiUrl('admin', '/server/manage/getNodes'))
 }
 
 export function sortNodes(body: Record<string, Record<string, number>>): Promise<boolean> {
-  return request<boolean>('/api/v1/admin/server/manage/sort', {
+  return request<boolean>(apiUrl('admin', '/server/manage/sort'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -34,7 +35,7 @@ export function sortNodes(body: Record<string, Record<string, number>>): Promise
 }
 
 export function saveNode(type: ServerType, body: Record<string, unknown>): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/server/${type}/save`, {
+  return request<boolean>(apiUrl('admin', `/server/${type}/save`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -42,13 +43,13 @@ export function saveNode(type: ServerType, body: Record<string, unknown>): Promi
 }
 
 export function dropNode(type: ServerType, id: number): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/server/${type}/drop?id=${id}`, {
+  return request<boolean>(`${apiUrl('admin', `/server/${type}/drop`)}?id=${id}`, {
     method: 'POST'
   })
 }
 
 export function updateNode(type: ServerType, body: { id: number; show?: number }): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/server/${type}/update`, {
+  return request<boolean>(apiUrl('admin', `/server/${type}/update`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
@@ -56,7 +57,7 @@ export function updateNode(type: ServerType, body: { id: number; show?: number }
 }
 
 export function copyNode(type: ServerType, id: number): Promise<boolean> {
-  return request<boolean>(`/api/v1/admin/server/${type}/copy?id=${id}`, {
+  return request<boolean>(`${apiUrl('admin', `/server/${type}/copy`)}?id=${id}`, {
     method: 'POST'
   })
 }
