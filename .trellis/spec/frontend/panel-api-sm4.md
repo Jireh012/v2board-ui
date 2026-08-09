@@ -39,7 +39,8 @@ isPanelEncryptedUrl(url)
 | Response | Expect envelope (plaintext error `code`/`message` allowed on fail-closed) |
 | Payment notify | **Not** a browser `apiUrl` call — admin copies server-built `notify_url` (plaintext `/g/...`) |
 
-Vite proxy: `/config`, `/p/`, `/u/`, `/a/`, `/n/`, `/g/` → API.
+Vite + Docker `nginx.conf`: `/config`, `/api/`, `/p/`, `/u/`, `/a/`, `/n/`, `/g/` → API.
+If only `/api/` is proxied, `GET /config` returns SPA `index.html` (`text/html`) and bootstrap fails.
 
 ### 4. Validation & Error Matrix
 
@@ -163,7 +164,7 @@ See backend payment-notify scenario. Wrong: invent notify URL in Vue. Correct: c
 
 ## Design Decision: Fixed `/config` in source
 
-**Decision**: Hardcode `PUBLIC_CONFIG_PATH = '/config'`. Reverse proxy must forward `/config`.
+**Decision**: Hardcode `PUBLIC_CONFIG_PATH = '/config'`. Reverse proxy / container nginx **must** forward `/config` (and panel prefixes) to the API — see `nginx.conf`.
 
 ---
 
