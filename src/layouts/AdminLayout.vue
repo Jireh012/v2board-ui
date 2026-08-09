@@ -142,6 +142,7 @@ const menuGroups = computed(() => [
     title: '设置',
     items: [
       { to: adminUrl('/config/system'), label: '系统配置', icon: icons.settings, match: adminUrl('/config') },
+      { to: adminUrl('/queue'), label: '队列监控', icon: icons.server, exact: true },
       { to: adminUrl('/payments'), label: '支付配置', icon: icons.payment, match: adminUrl('/payments') }
     ]
   },
@@ -184,6 +185,7 @@ const pageTitle = computed(() => {
   if (path === adminUrl()) return '仪表盘'
   const titleBySuffix: [string, string][] = [
     ['/config', '系统配置'],
+    ['/queue', '队列监控'],
     ['/users', '用户管理'],
     ['/plans', '订阅管理'],
     ['/orders', '订单管理'],

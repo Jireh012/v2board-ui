@@ -26,6 +26,7 @@ import AdminGroupsView from './views/admin/AdminGroupsView.vue'
 import AdminRoutesView from './views/admin/AdminRoutesView.vue'
 import AdminExternalSubscribeView from './views/admin/AdminExternalSubscribeView.vue'
 import AdminSystemConfigView from './views/admin/AdminSystemConfigView.vue'
+import AdminQueueView from './views/admin/AdminQueueView.vue'
 import AdminNoticesView from './views/admin/AdminNoticesView.vue'
 import AdminCouponsView from './views/admin/AdminCouponsView.vue'
 import AdminGiftcardsView from './views/admin/AdminGiftcardsView.vue'
@@ -124,6 +125,10 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'config/system',
         component: AdminSystemConfigView
+      },
+      {
+        path: 'queue',
+        component: AdminQueueView
       },
       {
         path: 'payments',
