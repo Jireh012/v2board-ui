@@ -76,7 +76,7 @@ const data = await fetchPublicSiteConfig() // GET /config, decrypt, setApiBases
 - `appName`, `stopRegister`, `inviteForce`, `emailVerify`, `safeMode`, `recaptchaEnable`, `recaptchaSiteKey`, `telegramDiscussLink`, `recaptchaRequired`, `adminBasePath`, `adminUrl()`, `isAdminUiPath()`, `registerEnabled`, `loadSiteBrand()`, `applyFrontendTheme()` — `src/siteBrand.ts`
 - Bootstrap: `main.ts` → `await loadSiteBrand()` then dynamic `import('./router')` so admin routes use the resolved path
 - Forget: `/forget` (`ForgetView.vue`); login link always shown
-- Safe mode: `router.beforeEach` awaits `loadSiteBrand()`; anonymous users only `/login` `/register` `/forget`
+- User auth guard: `router.beforeEach` — anonymous users only `/login` `/register` `/forget` (always; not gated by `safe_mode_enable`)
 
 ### 3. Contracts
 
@@ -92,7 +92,7 @@ const data = await fetchPublicSiteConfig() // GET /config, decrypt, setApiBases
 | Invite field | required in UI when `inviteForce` |
 | Email code on register | show + require when `emailVerify` (`email_verify=1`) |
 | Forget password | always available; send code with `isforget=1` |
-| Safe mode | when `safeMode`, unauthenticated business routes → `/login?redirect=` |
+| User auth | unauthenticated business routes → `/login?redirect=` (always) |
 | Admin UI entry | `/{secure_path}` and `/{secure_path}/login`; admin **REST** uses `admin_api_prefix` from public config (not classic `/api/v1/admin`) |
 | reCAPTCHA | when `recaptchaRequired`, Login/Register show v2 widget; submit `recaptcha_data` |
 | Frontend theme | `loadSiteBrand` → `applyFrontendTheme(data)` sets `html` `data-theme-sidebar` / `data-theme-header` / `data-theme-color`, CSS `--primary-color` (+ hover/soft), and `--app-bg-image` / `data-app-bg` when URL set |
@@ -108,7 +108,7 @@ const data = await fetchPublicSiteConfig() // GET /config, decrypt, setApiBases
 | Fetch/decrypt fails | Keep cached name; register flags stay previous/false |
 | Empty `app_name` | Fallback `V2Board` |
 | `stop_register=1` | Hide login→register link; `/register` closed state |
-| `safe_mode_enable=1` + no auth | Block `/dashboard` etc.; allow login/register/forget |
+| No `auth_data` | Block `/dashboard` etc.; allow login/register/forget |
 
 ### 5. Good/Base/Bad Cases
 
@@ -203,16 +203,16 @@ const isLoginRoute =
 
 ---
 
-## Scenario: Safe mode router guard
+## Scenario: User auth router guard
 
 ### 1. Scope / Trigger
 
-- Trigger: Admin `safe.safe_mode_enable`; unauthenticated users must not browse user chrome pages.
+- Trigger: Unauthenticated users must not see user chrome (`/dashboard`, plans, orders, …).
 - Note: SPA has no marketing home; public pages = login/register/forget only.
+- `safe_mode_enable` is **not** the gate for this (was a bug: flag off leaked the shell).
 
 ### 2. Signatures
 
-- `safeMode` from `loadSiteBrand()` ← public `safe_mode_enable`
 - `router.beforeEach` in `src/router.ts`
 - Login consumes `?redirect=` via `resolvePostLoginPath`
 
@@ -222,42 +222,40 @@ const isLoginRoute =
 |------------|------|
 | Admin UI (`isAdminUiPath`) | Existing admin auth; path from `secure_path` |
 | `/login` `/register` `/forget` | Always public |
-| Other user routes | If `safeMode && !auth_data` → `/login?redirect=<fullPath>` |
+| Other user routes | If `!auth_data` → `/login?redirect=<fullPath>` |
 | Post-login redirect | Internal path only; reject `//`, admin UI prefix, auth pages → `/dashboard` |
-
-`beforeEach` **awaits** `loadSiteBrand()` before evaluating `safeMode` (avoid race with default `false`).
 
 ### 4. Validation & Error Matrix
 
 | Condition | Behavior |
 |-----------|----------|
-| `safe_mode_enable=0` | No user-route redirect from this guard |
-| Config fetch fails | `safeMode` stays false → no lockout from stale unknown |
+| No `auth_data` | Redirect login with redirect query |
 | Logged in | Business routes OK |
 
 ### 5. Good/Base/Bad Cases
 
-- Good: Enable safe mode → private window `/dashboard` → login → back to dashboard.
-- Base: Flag off → anonymous can open dashboard shell (API still JWT-protected).
-- Bad: Gate without awaiting config; put `/forget` behind login.
+- Good: Private window `/dashboard` → login → back to dashboard.
+- Base: `/login` `/register` `/forget` stay public.
+- Bad: Only redirect when `safeMode` (leaks chrome when flag is 0).
 
 ### 6. Tests Required
 
-- Manual: toggle safe mode; AC2–AC5 of task `08-08-user-safe-mode-guard`.
+- Manual: logged-out visit `/dashboard` → `/login?redirect=/dashboard`.
 
 ### 7. Wrong vs Correct
 
 #### Wrong
 
 ```ts
-if (safeMode.value && !auth) next('/login') // before loadSiteBrand
+if (safeMode.value && !localStorage.getItem('auth_data')) {
+  next({ path: '/login', query: { redirect: to.fullPath } })
+}
 ```
 
 #### Correct
 
 ```ts
-await loadSiteBrand()
-if (safeMode.value && !localStorage.getItem('auth_data')) {
+if (!PUBLIC_USER_PATHS.has(to.path) && !localStorage.getItem('auth_data')) {
   next({ path: '/login', query: { redirect: to.fullPath } })
 }
 ```

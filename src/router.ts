@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { adminBasePath, adminUrl, isAdminUiPath, loadSiteBrand, safeMode } from './siteBrand'
+import { adminBasePath, adminUrl, isAdminUiPath } from './siteBrand'
 import LoginView from './views/LoginView.vue'
 import RegisterView from './views/RegisterView.vue'
 import DashboardHome from './views/DashboardHome.vue'
@@ -177,7 +177,7 @@ const router = createRouter({
 
 const PUBLIC_USER_PATHS = new Set(['/login', '/register', '/forget'])
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach((to, _from, next) => {
   if (isAdminUiPath(to.path)) {
     if (to.path !== adminUrl('/login') && !localStorage.getItem('auth_data')) {
       return next(adminUrl('/login'))
@@ -185,14 +185,12 @@ router.beforeEach(async (to, _from, next) => {
     return next()
   }
 
-  if (!PUBLIC_USER_PATHS.has(to.path)) {
-    await loadSiteBrand()
-    if (safeMode.value && !localStorage.getItem('auth_data')) {
-      return next({
-        path: '/login',
-        query: { redirect: to.fullPath }
-      })
-    }
+  // User shell routes always require login (not only when safe_mode_enable=1).
+  if (!PUBLIC_USER_PATHS.has(to.path) && !localStorage.getItem('auth_data')) {
+    return next({
+      path: '/login',
+      query: { redirect: to.fullPath }
+    })
   }
   return next()
 })
