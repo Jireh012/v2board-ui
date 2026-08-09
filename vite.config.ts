@@ -6,10 +6,13 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true
-      }
+      // 须带尾部 /，避免 /n 误匹配 /node_modules、/a 误匹配 /assets
+      '/api': { target: 'http://localhost:8080', changeOrigin: true },
+      '/config': { target: 'http://localhost:8080', changeOrigin: true },
+      '/p/': { target: 'http://localhost:8080', changeOrigin: true },
+      '/u/': { target: 'http://localhost:8080', changeOrigin: true },
+      '/a/': { target: 'http://localhost:8080', changeOrigin: true },
+      '/n/': { target: 'http://localhost:8080', changeOrigin: true },
     }
   }
 })

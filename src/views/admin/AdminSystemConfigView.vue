@@ -98,20 +98,6 @@
           <button type="button" class="btn secondary" @click="generateAdminApiPrefix">生成前缀</button>
         </div>
       </Row>
-      <Row
-        label="公开配置路径"
-        desc="未登录引导配置（站点名、注册开关、API 前缀等）的路径。须与前端构建环境变量 VITE_PUBLIC_CONFIG_PATH 完全一致；留空保存时自动生成（如 /c/xxxxxxxx）。"
-      >
-        <div class="token-field">
-          <input
-            v-model="config.site.public_config_path"
-            class="input"
-            autocomplete="off"
-            placeholder="须与 VITE_PUBLIC_CONFIG_PATH 一致，例如 /c/abcdefgh"
-          />
-          <button type="button" class="btn secondary" @click="generatePublicConfigPath">生成路径</button>
-        </div>
-      </Row>
       <Row label="用户条款 URL" desc="用于跳转到用户条款 (TOS)。">
         <input v-model="config.site.tos_url" class="input" placeholder="https://example.com/tos" />
       </Row>
@@ -640,11 +626,6 @@ function generateAdminApiPrefix() {
   config.value.site.admin_api_prefix = '/a/' + randomAlnum(12)
 }
 
-function generatePublicConfigPath() {
-  if (!config.value?.site) return
-  config.value.site.public_config_path = '/c/' + randomAlnum(8)
-}
-
 /* ---- 保存当前分组 ---- */
 async function saveGroup(group: string) {
   if (!config.value) return
@@ -664,7 +645,7 @@ async function saveGroup(group: string) {
     if (!String(config.value.site.passport_api_prefix ?? '').trim()) generatePassportApiPrefix()
     if (!String(config.value.site.user_api_prefix ?? '').trim()) generateUserApiPrefix()
     if (!String(config.value.site.admin_api_prefix ?? '').trim()) generateAdminApiPrefix()
-    if (!String(config.value.site.public_config_path ?? '').trim()) generatePublicConfigPath()
+    delete (config.value.site as { public_config_path?: string }).public_config_path
   }
   saving.value = true
   saveMessage.value = ''
@@ -678,7 +659,7 @@ async function saveGroup(group: string) {
       setApiBases(
         site.passport_api_prefix || '',
         site.user_api_prefix || '',
-        site.public_config_path || getPublicConfigPath(),
+        getPublicConfigPath(),
         site.admin_api_prefix || ''
       )
     }

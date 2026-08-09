@@ -6,22 +6,21 @@ function normalizePrefix(raw: string): string {
   return t
 }
 
+/** Fixed bootstrap path; must match backend ConfigService.FIXED_PUBLIC_CONFIG_PATH */
+export const PUBLIC_CONFIG_PATH = '/config'
+
 let passportBase = ''
 let userBase = ''
 let adminBase = ''
-let publicConfigPath = normalizePrefix(import.meta.env.VITE_PUBLIC_CONFIG_PATH || '')
 
 export function setApiBases(
   passport: string,
   user: string,
-  publicPath?: string,
+  _publicPath?: string,
   admin?: string
 ) {
   passportBase = normalizePrefix(passport)
   userBase = normalizePrefix(user)
-  if (publicPath !== undefined) {
-    publicConfigPath = normalizePrefix(publicPath)
-  }
   if (admin !== undefined) {
     adminBase = normalizePrefix(admin)
   }
@@ -40,7 +39,7 @@ export function getAdminBase(): string {
 }
 
 export function getPublicConfigPath(): string {
-  return publicConfigPath
+  return PUBLIC_CONFIG_PATH
 }
 
 /** Build panel API URL: apiUrl('user', '/order/fetch') */
@@ -55,7 +54,7 @@ export function apiUrl(zone: 'passport' | 'user' | 'admin', path: string): strin
 
 export function isPanelEncryptedUrl(url: string): boolean {
   if (!url) return false
-  if (publicConfigPath && (url === publicConfigPath || url.startsWith(publicConfigPath + '?'))) {
+  if (url === PUBLIC_CONFIG_PATH || url.startsWith(PUBLIC_CONFIG_PATH + '?')) {
     return true
   }
   if (passportBase && (url === passportBase || url.startsWith(passportBase + '/'))) {

@@ -15,8 +15,6 @@ export interface SiteConfig {
   user_api_prefix?: string
   /** Replaces /api/v1/admin; empty → auto-gen /a/+12 */
   admin_api_prefix?: string
-  /** Bootstrap public config path; must match VITE_PUBLIC_CONFIG_PATH */
-  public_config_path?: string
   tos_url?: string
   stop_register?: number
   try_out_plan_id?: number

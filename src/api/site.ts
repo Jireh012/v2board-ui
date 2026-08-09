@@ -25,18 +25,14 @@ export interface PublicSiteConfig {
   passport_api_prefix?: string
   user_api_prefix?: string
   admin_api_prefix?: string
-  public_config_path?: string
 }
 
 /**
- * Bootstrap: GET VITE_PUBLIC_CONFIG_PATH → outer SM4 envelope of whole ApiResponse;
+ * Bootstrap: GET fixed `/config` → outer SM4 envelope of whole ApiResponse;
  * data includes brand flags + passport/user/admin prefixes.
  */
 export async function fetchPublicSiteConfig(): Promise<PublicSiteConfig> {
   const path = getPublicConfigPath()
-  if (!path) {
-    throw new Error('VITE_PUBLIC_CONFIG_PATH 未配置')
-  }
   // Raw fetch: response body is envelope of entire ApiResponse (not only data).
   const resp = await fetch(path, { headers: { Accept: 'application/json' } })
   if (!resp.ok) {
@@ -58,7 +54,7 @@ export async function fetchPublicSiteConfig(): Promise<PublicSiteConfig> {
   setApiBases(
     data.passport_api_prefix || '',
     data.user_api_prefix || '',
-    data.public_config_path || path,
+    path,
     data.admin_api_prefix || ''
   )
   return data
