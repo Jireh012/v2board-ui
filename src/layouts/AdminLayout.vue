@@ -75,6 +75,8 @@
               :key="item.to"
               :to="item.to"
               class="menu-item"
+              active-class=""
+              exact-active-class=""
               :class="{ 'router-link-active': isActive(item) }"
             >
               <div class="menu-icon" aria-hidden="true">
