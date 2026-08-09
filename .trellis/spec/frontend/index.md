@@ -29,6 +29,7 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 ## Pre-Development Checklist
 
 - [ ] Aligning admin/user UX with PHP labels or flows → [wyx2685/v2board](https://github.com/wyx2685/v2board) (+ API `php-upstream.md`)
+- [ ] Admin dashboard KPIs/charts → [component-guidelines.md](./component-guidelines.md)「Admin dashboard stats」+ API `admin-stat.md`
 - [ ] Read [component-guidelines.md](./component-guidelines.md) for admin modals, toggles, and subscribe copy UX
 - [ ] Read [site-brand.md](./site-brand.md) if changing site name, login/register/forget, email verify, safe mode, or public-config SM4 decrypt
 - [ ] Login→register link only when public `stop_register != 1`; `/register` `/forget` in auth shell like `/login`

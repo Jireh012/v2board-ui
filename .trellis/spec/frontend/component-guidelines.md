@@ -237,6 +237,16 @@ filters.push({
 
 ---
 
+## Convention: Admin dashboard stats
+
+**What**: `AdminDashboardView.vue` loads KPIs/ranks via `fetchStat*` (`api/admin.ts`). Trend + bar ranks use **ECharts** (tree-shaken `echarts/core`). Money from `getOverride` is **cents** → display `/100` with two decimals + `CNY`. Rank `total` is already **GB**; tooltips use two decimals. Dispose charts on unmount; section failures use `Promise.allSettled` / per-block retry.
+
+**Why**: Matches PHP admin dashboard + Java `AdminStatController` without inventing unpaid/refund series the API does not return.
+
+**Related**: API Trellis `.trellis/spec/backend/admin-stat.md`.
+
+---
+
 ## Pattern: Sticky ops menu via Teleport
 
 **Problem**: Table「操作」dropdown clipped by `overflow` on table wrappers.
