@@ -25,6 +25,7 @@ import AdminServersView from './views/admin/AdminServersView.vue'
 import AdminGroupsView from './views/admin/AdminGroupsView.vue'
 import AdminRoutesView from './views/admin/AdminRoutesView.vue'
 import AdminExternalSubscribeView from './views/admin/AdminExternalSubscribeView.vue'
+import AdminSubscribeRuleView from './views/admin/AdminSubscribeRuleView.vue'
 import AdminSystemConfigView from './views/admin/AdminSystemConfigView.vue'
 import AdminQueueView from './views/admin/AdminQueueView.vue'
 import AdminNoticesView from './views/admin/AdminNoticesView.vue'
@@ -49,6 +50,7 @@ const adminChildren: RouteRecordRaw[] = [
   { path: 'servers/groups', component: AdminGroupsView },
   { path: 'servers/routes', component: AdminRoutesView },
   { path: 'servers/external-subscribe', component: AdminExternalSubscribeView },
+  { path: 'servers/subscribe-rules', component: AdminSubscribeRuleView },
   { path: 'notices', component: AdminNoticesView },
   { path: 'coupons', component: AdminCouponsView },
   { path: 'giftcards', component: AdminGiftcardsView },

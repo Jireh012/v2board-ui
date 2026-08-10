@@ -130,6 +130,7 @@ const icons = {
   group: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10H7z"/><path d="M3 3h4v4H3z"/><path d="M17 3h4v4h-4z"/><path d="M3 17h4v4H3z"/><path d="M17 17h4v4h-4z"/></svg>',
   route: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>',
   link: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  rules: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M8 9h2"/></svg>',
   plan: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>',
   order: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>',
   coupon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" x2="7.01" y1="7" y2="7"/></svg>',
@@ -159,7 +160,8 @@ const menuGroups = computed(() => [
       { to: adminUrl('/servers'), label: '节点管理', icon: icons.server, exact: true },
       { to: adminUrl('/servers/groups'), label: '权限组管理', icon: icons.group, exact: true },
       { to: adminUrl('/servers/routes'), label: '路由管理', icon: icons.route, exact: true },
-      { to: adminUrl('/servers/external-subscribe'), label: '第三方订阅源', icon: icons.link, exact: true }
+      { to: adminUrl('/servers/external-subscribe'), label: '第三方订阅源', icon: icons.link, exact: true },
+      { to: adminUrl('/servers/subscribe-rules'), label: '订阅规则', icon: icons.rules, exact: true }
     ]
   },
   {
@@ -198,6 +200,10 @@ const pageTitle = computed(() => {
     ['/orders', '订单管理'],
     ['/tickets', '工单管理'],
     ['/payments', '支付配置'],
+    ['/servers/subscribe-rules', '订阅规则'],
+    ['/servers/external-subscribe', '第三方订阅源'],
+    ['/servers/groups', '权限组管理'],
+    ['/servers/routes', '路由管理'],
     ['/servers', '节点管理'],
     ['/notices', '公告管理'],
     ['/coupons', '优惠券管理'],
