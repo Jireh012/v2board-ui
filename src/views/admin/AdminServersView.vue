@@ -600,6 +600,9 @@
             <div class="form-row">
               <label>Server Name (SNI)</label>
               <input v-model="tlsForm.server_name" class="input" placeholder="证书域名 / SNI" />
+              <p v-if="tlsUiKind === 'v2node' && (tlsForm.cert_mode === 'dns' || tlsForm.cert_mode === 'http' || tlsForm.cert_mode === 'self')" class="hint">
+                须与节点实际证书域名一致。Host 可为 CDN 地址；SNI 不要填成 CDN 域名，否则校验证书会失败。修改 SNI 后节点会按新域名重签（需 DNS/HTTP 校验可用）。
+              </p>
             </div>
 
             <template v-if="tlsUiKind === 'v2node' && Number(form.tls) === 1">
