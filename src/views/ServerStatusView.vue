@@ -41,7 +41,7 @@
         <div class="node-details">
            <div class="detail-item">
               <span class="label">连接地址</span>
-              <span class="value code-font">{{ nodeAddr(s) }}</span>
+              <span class="value code-font" :title="nodeAddr(s)">{{ nodeAddr(s) }}</span>
            </div>
            <div class="detail-item">
               <span class="label">最近检测</span>
@@ -134,6 +134,7 @@ onMounted(load)
 .node-card {
   background: white; border-radius: 20px; border: 1px solid var(--border-color);
   padding: 24px; box-shadow: var(--shadow-sm); transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 0; overflow: hidden;
 }
 .node-card:hover { transform: translateY(-4px); border-color: #cbd5e1; box-shadow: var(--shadow-md); }
 
@@ -161,10 +162,31 @@ onMounted(load)
 }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
 
-.node-details { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-.detail-item { display: flex; justify-content: space-between; align-items: center; }
-.detail-item .label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
-.detail-item .value { font-size: 13px; font-weight: 700; color: var(--text-main); }
+.node-details { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; min-width: 0; }
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.detail-item .label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.detail-item .value {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .code-font { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 
 .node-footer { padding-top: 4px; }
