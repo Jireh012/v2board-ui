@@ -4,7 +4,8 @@
       <div>
         <h1 class="page-title">订阅规则</h1>
         <p class="page-subtitle">
-          管理各客户端分流模板；保存/同步会剥离远程规则依赖，恢复默认回退到内置种子。
+          管理各客户端<strong>本地化</strong>分流模板。订阅正文禁止依赖 GitHub
+          rule-providers / 远程 RULE-SET；保存与同步会自动消毒，必要时回落内置种子。
         </p>
       </div>
     </div>
@@ -48,18 +49,32 @@
         </div>
       </div>
 
+      <div class="info-banner" role="note">
+        <strong>同步说明：</strong>请提供<strong>已内联规则</strong>的完整客户端模板（与本页编辑器格式一致）。
+        勿同步 Subconverter「Online Full」或含 <code>rule-providers</code> /
+        <code>RULE-SET,https://…</code> 的配置——此类上游会被剥离，分流段可能回落为内置默认。
+        本页编辑仅覆盖档位 <code>full</code>；用户可用订阅参数
+        <code>?rule=full|simple|nodes</code>（或系统配置 <code>subscribe.rule_profile</code>）切换精简/仅节点模板。
+      </div>
+
       <div v-if="warning" class="warn-banner" role="alert">
         {{ warning }}
+      </div>
+      <div v-if="sanitizeMeta" class="meta-sanitize" role="status">
+        {{ sanitizeMeta }}
       </div>
 
       <div class="form-row">
         <label>同步 URL</label>
-        <p class="hint">从上游拉取后会自动消毒（去除远程 rule-providers / rule_set）。留空同步时沿用已保存地址。</p>
+        <p class="hint">
+          拉取后自动消毒。留空则沿用已保存地址。推荐托管在自有 CDN 的本地化模板，而非
+          ACL4SSR Online / GitHub raw rule-providers。
+        </p>
         <input
           v-model="sourceUrl"
           class="input"
           type="url"
-          placeholder="https://raw.githubusercontent.com/.../ACL4SSR_Online_Full_NoAuto.ini"
+          placeholder="https://your-cdn.example.com/rules/clash-local.yaml"
         />
       </div>
 
@@ -122,6 +137,9 @@ const updatedAt = ref<number | null>(null)
 const updateSource = ref<string | null>(null)
 const fallbackFormat = ref<string | null>(null)
 const warning = ref<string | null>(null)
+const strippedRemote = ref(false)
+const usedSeedFallback = ref(false)
+const syncHint = ref<string | null>(null)
 
 const saving = ref(false)
 const syncing = ref(false)
@@ -139,7 +157,19 @@ const updateSourceLabel = computed(() => {
   return s || '-'
 })
 
-function applyData(data: Awaited<ReturnType<typeof fetchSubscribeRule>>) {
+const sanitizeMeta = computed(() => {
+  const parts: string[] = []
+  if (strippedRemote.value) parts.push('已剥离远程规则依赖')
+  if (usedSeedFallback.value) parts.push('已回落本地默认种子')
+  if (syncHint.value) parts.push(syncHint.value)
+  return parts.length ? parts.join(' · ') : null
+})
+
+function applyData(data: Awaited<ReturnType<typeof fetchSubscribeRule>> & {
+  stripped_remote?: boolean
+  used_seed_fallback?: boolean
+  sync_hint?: string | null
+}) {
   content.value = data.content ?? ''
   sourceUrl.value = data.source_url ?? ''
   isDefault.value = !!data.is_default
@@ -147,6 +177,9 @@ function applyData(data: Awaited<ReturnType<typeof fetchSubscribeRule>>) {
   updateSource.value = data.update_source ?? null
   fallbackFormat.value = data.fallback_format ?? null
   warning.value = data.warning ?? null
+  strippedRemote.value = !!data.stripped_remote
+  usedSeedFallback.value = !!data.used_seed_fallback
+  syncHint.value = data.sync_hint ?? null
 }
 
 function fmtTime(ts?: number | null) {
@@ -386,6 +419,28 @@ load()
   color: #059669;
 }
 
+.info-banner {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.info-banner strong {
+  font-weight: 750;
+}
+
+.info-banner code {
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
 .warn-banner {
   padding: 10px 12px;
   border-radius: 12px;
@@ -394,6 +449,13 @@ load()
   color: #92400e;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.45;
+}
+
+.meta-sanitize {
+  font-size: 12px;
+  font-weight: 650;
+  color: #64748b;
   line-height: 1.45;
 }
 

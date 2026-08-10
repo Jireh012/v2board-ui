@@ -20,6 +20,9 @@ export interface SubscribeRuleTemplate {
   is_default?: boolean
   fallback_format?: string | null
   warning?: string | null
+  stripped_remote?: boolean
+  used_seed_fallback?: boolean
+  sync_hint?: string | null
 }
 
 export function fetchSubscribeRule(format: string): Promise<SubscribeRuleTemplate> {
