@@ -1246,7 +1246,6 @@ async function doSave() {
         alert('传输层 JSON 格式无效')
         return
       }
-      delete body.install_command
     } else if (currentType.value === 'vless' || currentType.value === 'vmess') {
       body.tls = form.value.tls
       body.tls_settings = buildTlsSettings()
@@ -1257,7 +1256,14 @@ async function doSave() {
       body.server_name = form.value.server_name || ''
       body.insecure = Number(form.value.insecure) === 1 ? 1 : 0
     }
+    // getNodes runtime fields — not entity columns (openEdit spreads the whole row)
     delete body.type
+    delete body.online
+    delete body.is_online
+    delete body.last_check_at
+    delete body.last_push_at
+    delete body.available_status
+    delete body.install_command
     if (editId.value) body.id = editId.value
     await saveNode(currentType.value, body)
     showModal.value = false
