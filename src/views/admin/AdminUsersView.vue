@@ -251,7 +251,8 @@
     <Teleport to="body">
       <div v-if="menuUser" class="user-action-menu" :style="menuStyle" @click.stop>
         <button type="button" @click="openEdit(menuUser); closeMenu()">编辑</button>
-        <button type="button" @click="goSendOrder(menuUser); closeMenu()">发送订单</button>
+                <button type="button" @click="goSendOrder(menuUser); closeMenu()">分配订单</button>
+        <button type="button" @click="doCopySubscribe(menuUser); closeMenu()">复制订阅链接</button>
         <button type="button" @click="doResetSecret(menuUser); closeMenu()">重置订阅链接</button>
         <div class="menu-sep" />
         <button type="button" @click="goUserOrders(menuUser); closeMenu()">TA 的订单</button>
@@ -600,6 +601,7 @@ import {
   fetchStatUser,
   generateAdminUser,
   getAdminUserInfo,
+  getAdminUserSubscribeUrl,
   resetAdminUserSecret,
   updateAdminUser,
   type AdminPlan,
@@ -983,6 +985,27 @@ async function toggleBan(u: AdminUser) {
     await load()
   } catch (e) {
     showToast(e instanceof Error ? e.message : '操作失败', true)
+  }
+}
+
+async function doCopySubscribe(u: AdminUser) {
+  try {
+    const url = await getAdminUserSubscribeUrl(u.id)
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = url
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    showToast('订阅链接已复制')
+  } catch (e) {
+    showToast(e instanceof Error ? e.message : '复制失败', true)
   }
 }
 

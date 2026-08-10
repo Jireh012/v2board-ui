@@ -335,6 +335,10 @@ export async function resetAdminUserSecret(id: number): Promise<boolean> {
   })
 }
 
+export async function getAdminUserSubscribeUrl(id: number): Promise<string> {
+  return request<string>(`${apiUrl('admin', '/user/getSubscribeUrl')}?id=${id}`)
+}
+
 export interface AdminUserLoginLog {
   id: number
   user_id: number
