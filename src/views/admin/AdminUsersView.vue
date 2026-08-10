@@ -23,16 +23,16 @@
         <strong class="stat-value">{{ total }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页封禁</span>
-        <strong class="stat-value warn">{{ pageBanned }}</strong>
+        <span class="stat-label">封禁</span>
+        <strong class="stat-value warn">{{ statsBanned }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页有套餐</span>
-        <strong class="stat-value accent">{{ pageWithPlan }}</strong>
+        <span class="stat-label">有套餐</span>
+        <strong class="stat-value accent">{{ statsWithPlan }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页已过期</span>
-        <strong class="stat-value muted">{{ pageExpired }}</strong>
+        <span class="stat-label">已过期</span>
+        <strong class="stat-value muted">{{ statsExpired }}</strong>
       </div>
     </div>
 
@@ -723,9 +723,9 @@ const toastError = ref(false)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-const pageBanned = computed(() => rows.value.filter((u) => u.banned === 1).length)
-const pageWithPlan = computed(() => rows.value.filter((u) => u.plan_id != null).length)
-const pageExpired = computed(() => rows.value.filter((u) => isExpired(u)).length)
+const statsBanned = ref(0)
+const statsWithPlan = ref(0)
+const statsExpired = ref(0)
 
 const bannedTabs = [
   { value: 'all' as const, label: '全部' },
@@ -829,6 +829,9 @@ async function load() {
     ])
     rows.value = res.data || []
     total.value = Number(res.total) || 0
+    statsBanned.value = Number(res.stats?.banned) || 0
+    statsWithPlan.value = Number(res.stats?.with_plan) || 0
+    statsExpired.value = Number(res.stats?.expired) || 0
     plans.value = planList
   } catch (e) {
     showToast(e instanceof Error ? e.message : '加载失败', true)

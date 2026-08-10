@@ -6,6 +6,12 @@ import type { LoginResult } from './auth'
 export interface PageResult<T> {
   data: T[]
   total: number
+  /** 用户列表：与筛选同范围、跨分页的聚合（见 AdminUsersView） */
+  stats?: {
+    banned: number
+    with_plan: number
+    expired: number
+  }
 }
 
 export interface OrderFilter {
