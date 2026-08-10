@@ -54,8 +54,8 @@
         <code>ACL4SSR_Online_Full_NoAuto.ini</code>；服务端解析
         <code>ruleset=</code> / <code>custom_proxy_group=</code>，拉取全部
         <code>.list</code> 并<strong>内联写入</strong>当前 format 的种子壳（保留 DNS /
-        <code>[General]</code> 等），再入库。亦支持已含 HTTP
-        <code>rule-providers</code> 的 Clash/Stash YAML（同样内联）。
+        <code>[General]</code> 等），再入库。直连 GitHub 失败时，自动经可用第三方订阅节点前置代理重试（无需手工选节点）。
+        亦支持已含 HTTP <code>rule-providers</code> 的 Clash/Stash YAML（同样内联）。
         本页编辑仅覆盖档位 <code>full</code>；用户可用
         <code>?rule=full|simple|nodes</code>（或 <code>subscribe.rule_profile</code>）切换精简/仅节点模板。
       </div>
@@ -70,7 +70,7 @@
       <div class="form-row">
         <label>同步 URL</label>
         <p class="hint">
-          留空：优先已保存地址，否则使用默认 Online INI。同步由服务端内联本地化，客户端不会访问 GitHub。
+          留空：优先已保存地址，否则使用默认 Online INI。同步由服务端内联；拉取失败时自动前置代理。客户端不会访问 GitHub。
         </p>
         <input
           v-model="sourceUrl"
