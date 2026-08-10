@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router'
-import { adminBasePath, adminUrl, ensureSiteBrand } from './siteBrand'
+import { adminBasePath, adminUrl, ensureSiteBrand, safeMode } from './siteBrand'
 import LoginView from './views/LoginView.vue'
 import RegisterView from './views/RegisterView.vue'
 import DashboardHome from './views/DashboardHome.vue'
@@ -119,7 +119,7 @@ const routes: RouteRecordRaw[] = [
     component: ProfileView
   },
   {
-    // Alphanumeric only — paths with hyphens/etc. fall through to catch-all decoy (no /config).
+    // Alphanumeric only — paths with hyphens/etc. fall through to catch-all.
     path: '/:adminSeg([A-Za-z0-9]+)/login',
     name: 'admin-login',
     component: AdminLoginView,
@@ -158,15 +158,30 @@ function decoyLocation(to: RouteLocationNormalized) {
   }
 }
 
+/** Safe mode on → fake landing; off → user login (logged-out only). */
+function decoyOrLogin(to: RouteLocationNormalized) {
+  if (safeMode.value) {
+    return decoyLocation(to)
+  }
+  return { path: '/login', replace: true as const }
+}
+
 router.beforeEach(async (to, _from, next) => {
-  // Logged-in home → user dashboard (may load brand).
+  // Logged-in home → user dashboard.
   if (to.path === '/' && hasAuth()) {
     await ensureSiteBrand()
     return next({ path: '/dashboard', replace: true })
   }
 
-  // Decoy shell: no public config fetch.
+  // Decoy routes: need /config to read safe_mode_enable.
   if (to.meta.decoy) {
+    await ensureSiteBrand()
+    if (hasAuth() && to.path === '/') {
+      return next({ path: '/dashboard', replace: true })
+    }
+    if (!safeMode.value) {
+      return next({ path: '/login', replace: true })
+    }
     return next()
   }
 
@@ -175,7 +190,7 @@ router.beforeEach(async (to, _from, next) => {
     const seg = String(to.params.adminSeg || '')
     await ensureSiteBrand()
     if (seg !== adminBasePath.value) {
-      return next(decoyLocation(to))
+      return next(decoyOrLogin(to))
     }
     const loginPath = adminUrl('/login')
     if (to.path !== loginPath && !hasAuth()) {
@@ -187,7 +202,7 @@ router.beforeEach(async (to, _from, next) => {
   // Real user/public routes: load brand/config first.
   await ensureSiteBrand()
 
-  // User shell routes always require login (not only when safe_mode_enable=1).
+  // User shell routes always require login.
   if (!PUBLIC_USER_PATHS.has(to.path) && !hasAuth()) {
     return next({
       path: '/login',

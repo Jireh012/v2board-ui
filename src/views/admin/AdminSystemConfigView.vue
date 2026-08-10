@@ -138,7 +138,7 @@
       <Row label="邮箱验证" desc="开启后注册及重置密码需要进行邮箱验证。">
         <Toggle v-model="config.safe.email_verify" />
       </Row>
-      <Row label="安全模式" desc="开启后除主页外的用户端只能登入后访问。">
+      <Row label="安全模式" desc="开启后：未登录访问站点根路径/未知路径显示假官网；关闭后根路径直接进入登录页。用户业务页仍须登录后访问。">
         <Toggle v-model="config.safe.safe_mode_enable" />
       </Row>
       <Row label="后台路径" desc="管理后台路径，最小 8 位，只能为字母或数字。">

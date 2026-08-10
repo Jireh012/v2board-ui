@@ -74,8 +74,8 @@ const data = await fetchPublicSiteConfig() // GET /api/config, decrypt, setApiBa
 
 - `fetchPublicSiteConfig()` — `src/api/site.ts` (decrypts envelope → `PublicSiteConfig`)
 - `appName`, `hasSiteBrand`, `stopRegister`, `inviteForce`, `emailVerify`, `safeMode`, `recaptchaEnable`, `recaptchaSiteKey`, `telegramDiscussLink`, `recaptchaRequired`, `adminBasePath`, `adminUrl()`, `isAdminUiPath()`, `registerEnabled`, `loadSiteBrand()`, `ensureSiteBrand()`, `applyFrontendTheme()` — `src/siteBrand.ts`
-- Bootstrap: `main.ts` mounts router **without** awaiting brand; `ensureSiteBrand()` runs in `router.beforeEach` for non-decoy routes (login/register/forget/admin/user shell)
-- Decoy: `/` (logged out) + unmatched paths → `DecoyView.vue`; **must not** call `loadSiteBrand` / `fetchPublicSiteConfig`
+- Bootstrap: `main.ts` mounts router **without** awaiting brand; `ensureSiteBrand()` runs in `router.beforeEach` (including decoy, to read `safe_mode_enable`)
+- Decoy: only when `safe_mode_enable=1` — logged-out `/` + unmatched paths → `DecoyView.vue`; view itself must not import `siteBrand` / `fetchPublicSiteConfig`. When safe mode off → `/login`
 - Forget: `/forget` (`ForgetView.vue`); login link always shown
 - User auth guard: `router.beforeEach` — anonymous users only `/login` `/register` `/forget` (always; not gated by `safe_mode_enable`)
 
@@ -87,7 +87,7 @@ const data = await fetchPublicSiteConfig() // GET /api/config, decrypt, setApiBa
 | Cache | `localStorage` `v2board_app_name`, `v2board_admin_path` |
 | Name fallback | cache only (ignore legacy cached `"V2Board"`); else empty — **never** invent product name |
 | Brand UI | login/register/forget/admin-login **hide** `app_name` (no `.login-brand`); decoy uses fixed「苍穹云」only |
-| Brand load timing | Deferred: decoy paths skip `/config`; real entry/admin/user routes call `ensureSiteBrand()` (single-flight; idempotent) |
+| Brand load timing | All guarded routes call `ensureSiteBrand()` (single-flight); decoy needs it for `safe_mode_enable` |
 | Admin path fallback | cache → `"admin"`; empty/invalid public `secure_path` → `"admin"` |
 | Title | `document.title = appName` or neutral `Panel` when empty |
 | Static shell | `index.html` initial `<title>` is neutral (`Panel`); favicon `/favicon.svg` — never `V2Board` / Vite default before JS |
@@ -211,21 +211,22 @@ const isLoginRoute =
 ### 1. Scope / Trigger
 
 - Trigger: Unauthenticated users must not see user chrome (`/dashboard`, plans, orders, …).
-- Public auth pages = `/login` `/register` `/forget`; logged-out `/` and unmatched paths = decoy fake cloud landing（可含「成员登录」→ `/login`）.
-- `safe_mode_enable` is **not** the gate for this (was a bug: flag off leaked the shell).
+- Public auth pages = `/login` `/register` `/forget`.
+- Logged-out `/` / unmatched: `safe_mode_enable=1` → decoy; `=0` → `/login`.
+- User business shell always requires login (independent of safe mode for chrome leak).
 
 ### 2. Signatures
 
-- `router.beforeEach` in `src/router.ts` — decoy skips brand; else `await ensureSiteBrand()`
+- `router.beforeEach` in `src/router.ts` — `await ensureSiteBrand()`; decoy routes branch on `safeMode`
 - Login consumes `?redirect=` via `resolvePostLoginPath`
 
 ### 3. Contracts
 
 | Path class | Rule |
 |------------|------|
-| Decoy (`meta.decoy`) | `/` logged out + catch-all; no `/config`; bare layout |
-| `/` + `auth_data` | Redirect `/dashboard` (after `ensureSiteBrand`) |
-| Admin UI (`/:adminSeg` after brand) | `adminSeg === adminBasePath`; else decoy |
+| Decoy (`meta.decoy`) | After brand: safe mode on → `DecoyView`; off → `/login` |
+| `/` + `auth_data` | Redirect `/dashboard` |
+| Admin UI (`/:adminSeg` after brand) | `adminSeg === adminBasePath`; else decoy if safe mode else `/login` |
 | `/login` `/register` `/forget` | Always public |
 | Other user routes | If `!auth_data` → `/login?redirect=<fullPath>` |
 | Post-login redirect | Internal path only; reject `//`, admin UI prefix, auth pages → `/dashboard` |
@@ -235,38 +236,36 @@ const isLoginRoute =
 | Condition | Behavior |
 |-----------|----------|
 | No `auth_data` on business route | Redirect login with redirect query |
-| No `auth_data` on `/` or unknown | Decoy; no `/config` |
+| No `auth_data` on `/` or unknown, safe mode on | Decoy |
+| No `auth_data` on `/` or unknown, safe mode off | `/login` |
 | Logged in | Business routes OK; `/` → dashboard |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: Private window `/dashboard` → login → back to dashboard.
-- Base: `/login` `/register` `/forget` stay public; `/` logged out is decoy.
-- Bad: Only redirect when `safeMode` (leaks chrome when flag is 0); boot `await loadSiteBrand` on every visit.
+- Base: safe mode off → `/` to login; safe mode on → `/` decoy.
+- Bad: Always decoy regardless of `safe_mode_enable`.
 
 ### 6. Tests Required
 
 - Manual: logged-out visit `/dashboard` → `/login?redirect=/dashboard`.
-- Manual: logged-out `/` → decoy, Network has no `/config`.
+- Manual: safe mode off → `/` → `/login`; on → decoy.
 
 ### 7. Wrong vs Correct
 
 #### Wrong
 
 ```ts
-if (safeMode.value && !localStorage.getItem('auth_data')) {
-  next({ path: '/login', query: { redirect: to.fullPath } })
-}
-// or: await loadSiteBrand() in main.ts before mount
+if (to.meta.decoy) return next() // ignores safe_mode_enable
 ```
 
 #### Correct
 
 ```ts
-if (to.meta.decoy) return next() // no ensureSiteBrand
-await ensureSiteBrand()
-if (!PUBLIC_USER_PATHS.has(to.path) && !localStorage.getItem('auth_data')) {
-  next({ path: '/login', query: { redirect: to.fullPath } })
+if (to.meta.decoy) {
+  await ensureSiteBrand()
+  if (!safeMode.value) return next({ path: '/login', replace: true })
+  return next()
 }
 ```
 
@@ -276,31 +275,33 @@ if (!PUBLIC_USER_PATHS.has(to.path) && !localStorage.getItem('auth_data')) {
 
 ### 1. Scope / Trigger
 
-- Trigger: Shallow scanners hit `/` or unknown paths; must not fetch public config on decoy; login entry may link to `/login`.
-- Decoy UI: neutral cloud/tech fake landing (same component for `/` and catch-all).
+- Trigger: `safe_mode_enable=1` and logged-out hit `/` or unknown paths → fake cloud landing.
+- When safe mode off → redirect `/login` (no decoy).
+- Router loads `/config` to read the flag; `DecoyView` itself must not import `siteBrand`.
 - Out of scope: CMS, hiding `/login` itself, changing `/config` path, VPN/机场话术.
 
 ### 2. Signatures
 
-- `DecoyView.vue` — cloud landing (hero + capabilities + footer); no login/register links; no `siteBrand` / `fetchPublicSiteConfig` imports
+- `DecoyView.vue` — cloud landing;「成员登录」→ `/login`; no `siteBrand` / `fetchPublicSiteConfig` imports
 - Routes: `path: '/'` + `/:pathMatch(.*)*` with `meta.decoy: true`
 - `App.vue` `isBareRoute` includes `route.meta.decoy`
+- Guard: `ensureSiteBrand()` then `safeMode` branch
 
 ### 3. Contracts
 
 | Item | Rule |
 |------|------|
-| Logged-out `/` | Same DecoyView landing; no `/config` |
-| Unmatched path | Same DecoyView; no `/config` (non-alphanumeric first segments never hit adminSeg) |
+| Logged-out `/`, safe mode on | DecoyView |
+| Logged-out `/`, safe mode off | `/login` |
+| Unmatched path | Same gate as `/` |
 | Logged-in `/` | `/dashboard` |
-| Title / brand | Fixed `苍穹云` / Aether Cloud only — never `app_name` / localStorage cache; never literal `V2Board` |
-| CTA | `RouterLink` to `/login`（文案「成员登录」）allowed on decoy; no register CTA required; in-page `#capabilities` scroll OK |
+| Title / brand | Fixed `苍穹云` / Aether Cloud only — never `app_name`; never literal `V2Board` |
+| CTA | `RouterLink` to `/login`（「成员登录」）; no register CTA required |
 | Copy | No VPN / proxy / 机场 / 订阅 / 翻墙 wording |
-| Config | Decoy still must not call `/config`; navigating to `/login` loads brand |
 
 ### 4–7
 
-AC: privacy window `/` and `/random-scan` → same landing, no `/config`; `/login` may fetch `/config`.
+AC: safe mode on → `/` and `/random-scan` show decoy; safe mode off → `/` → `/login`.
 ---
 
 ## Scenario: Forget password page
@@ -373,7 +374,7 @@ route.path === '/login' || route.path === '/register' || route.path === '/forget
 | Item | Rule |
 |------|------|
 | Entry | `/{path}/login`, `/{path}`, `/{path}/users`, … |
-| Param match | Alphanumeric `adminSeg` only; mismatch after brand load → decoy |
+| Param match | Alphanumeric `adminSeg` only; mismatch after brand load → decoy if safe mode else `/login` |
 | Links | Always via `adminUrl(...)` — no hard-coded `'/admin...'` UI routes |
 | 401 on admin page | Redirect `adminUrl('/login')` |
 | Cache | Persist last good path in `v2board_admin_path` for faster first paint; not required for first admin login |

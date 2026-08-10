@@ -37,7 +37,7 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 - [ ] Panel calls must use `apiUrl(zone, classicRel)` — Network must not show classic action path segments
 - [ ] Payment gateway URLs: copy admin `notify_url` (plaintext `/g/...`); never wrap with `apiUrl`/SM4
 - [ ] Login→register link only when public `stop_register != 1`; `/register` `/forget` in auth shell like `/login`
-- [ ] Brand/config: decoy paths skip `/config`; real routes `await ensureSiteBrand()` in `beforeEach`; public auth paths only login/register/forget; logged-out `/` is decoy
+- [ ] Brand/config: `ensureSiteBrand()` in `beforeEach`; `safe_mode_enable=1` → decoy on `/`/unknown, else `/login`; public auth paths login/register/forget
 - [ ] Public config: `GET /api/config` → decrypt outer envelope with `VITE_SM4_KEY` (= API `SM4_KEY`); then `setApiBases`; never hard-code `/api/v1/passport|user|admin`
 - [ ] If changing subscribe copy/import: absolute-ize relative `subscribe_url`
 - [ ] If changing node editor: permission groups / routes / parent must select by **name**, not raw IDs

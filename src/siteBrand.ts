@@ -193,7 +193,7 @@ export async function loadSiteBrand(): Promise<string> {
 }
 
 /**
- * Lazy brand/config load for router guards. Skipped on decoy paths.
+ * Lazy brand/config load for router guards (including decoy: needs safe_mode_enable).
  * Single-flight; subsequent calls reuse the first resolved result until
  * an explicit `loadSiteBrand()` refresh (e.g. after admin config save).
  */
