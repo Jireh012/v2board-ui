@@ -4,8 +4,8 @@
       <div>
         <h1 class="page-title">订阅规则</h1>
         <p class="page-subtitle">
-          管理各客户端<strong>本地化</strong>分流模板。订阅正文禁止依赖 GitHub
-          rule-providers / 远程 RULE-SET；保存与同步会自动消毒，必要时回落内置种子。
+          管理各客户端<strong>本地化</strong>分流模板。推荐同步 ACL4SSR Online Full
+          NoAuto：服务端拉取并<strong>全量内联</strong>规则列表，订阅正文无远程规则依赖。
         </p>
       </div>
     </div>
@@ -50,11 +50,14 @@
       </div>
 
       <div class="info-banner" role="note">
-        <strong>同步说明：</strong>请提供<strong>已内联规则</strong>的完整客户端模板（与本页编辑器格式一致）。
-        勿同步 Subconverter「Online Full」或含 <code>rule-providers</code> /
-        <code>RULE-SET,https://…</code> 的配置——此类上游会被剥离，分流段可能回落为内置默认。
-        本页编辑仅覆盖档位 <code>full</code>；用户可用订阅参数
-        <code>?rule=full|simple|nodes</code>（或系统配置 <code>subscribe.rule_profile</code>）切换精简/仅节点模板。
+        <strong>同步说明：</strong>默认同步
+        <code>ACL4SSR_Online_Full_NoAuto.ini</code>；服务端解析
+        <code>ruleset=</code> / <code>custom_proxy_group=</code>，拉取全部
+        <code>.list</code> 并<strong>内联写入</strong>当前 format 的种子壳（保留 DNS /
+        <code>[General]</code> 等），再入库。亦支持已含 HTTP
+        <code>rule-providers</code> 的 Clash/Stash YAML（同样内联）。
+        本页编辑仅覆盖档位 <code>full</code>；用户可用
+        <code>?rule=full|simple|nodes</code>（或 <code>subscribe.rule_profile</code>）切换精简/仅节点模板。
       </div>
 
       <div v-if="warning" class="warn-banner" role="alert">
@@ -67,14 +70,13 @@
       <div class="form-row">
         <label>同步 URL</label>
         <p class="hint">
-          拉取后自动消毒。留空则沿用已保存地址。推荐托管在自有 CDN 的本地化模板，而非
-          ACL4SSR Online / GitHub raw rule-providers。
+          留空：优先已保存地址，否则使用默认 Online INI。同步由服务端内联本地化，客户端不会访问 GitHub。
         </p>
         <input
           v-model="sourceUrl"
           class="input"
           type="url"
-          placeholder="https://your-cdn.example.com/rules/clash-local.yaml"
+          placeholder="https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini"
         />
       </div>
 
