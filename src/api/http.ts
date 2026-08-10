@@ -78,17 +78,26 @@ export async function request<T>(
     if (!isSm4Envelope(raw)) {
       // Fail-closed errors (missing SM4 key) may be plaintext
       if (raw && typeof raw === 'object' && 'code' in raw && 'message' in raw) {
-        throw new Error(String((raw as ApiResponse<unknown>).message || '请求失败'))
+        const plaintextErr = raw as ApiResponse<unknown>
+        console.error('[panel-sm4] plaintext error', plaintextErr)
+        throw new Error(String(plaintextErr.message || '请求失败'))
       }
       throw new Error('响应不是 SM4 信封')
     }
     const plain = decryptFromEnvelope(raw)
-    json = JSON.parse(plain) as ApiResponse<T>
+    try {
+      json = JSON.parse(plain) as ApiResponse<T>
+    } catch (e) {
+      console.error('[panel-sm4] decrypted body is not JSON', plain, e)
+      throw new Error('解密响应解析失败')
+    }
   } else {
     json = raw as ApiResponse<T>
   }
 
   if (json.code !== 0) {
+    // Decrypted (or plaintext) business error — keep in DevTools for debugging alerts
+    console.error(usePanelSm4 ? '[panel-sm4] api error' : '[api] error', json)
     throw new Error(json.message || '请求失败')
   }
   return json.data
