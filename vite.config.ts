@@ -9,6 +9,15 @@ export default defineConfig({
       // Panel bootstrap + prefixes all live under /api/ (see backend FIXED_PUBLIC_CONFIG_PATH)
       '/api': { target: 'http://localhost:8080', changeOrigin: true },
     }
+  },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[hash].js',
+        chunkFileNames: 'assets/[hash].js',
+        assetFileNames: 'assets/[hash][extname]'
+      }
+    }
   }
 })
-

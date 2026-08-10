@@ -148,6 +148,8 @@ export function isAdminUiPath(path: string): boolean {
 applyDocumentTitle(appName.value)
 
 let loadPromise: Promise<string> | null = null
+/** True after the first ensureSiteBrand/loadSiteBrand attempt finishes (success or fallback). */
+let brandResolved = false
 
 export async function loadSiteBrand(): Promise<string> {
   if (loadPromise) {
@@ -173,6 +175,7 @@ export async function loadSiteBrand(): Promise<string> {
       }
       applyDocumentTitle(name)
       applyFrontendTheme(data)
+      brandResolved = true
       return name
     } catch {
       // Config/decrypt failure: keep prior cache only — never invent "V2Board".
@@ -180,10 +183,23 @@ export async function loadSiteBrand(): Promise<string> {
       appName.value = fallback
       adminBasePath.value = readCachedAdminPath()
       applyDocumentTitle(fallback)
+      brandResolved = true
       return fallback
     } finally {
       loadPromise = null
     }
   })()
   return loadPromise
+}
+
+/**
+ * Lazy brand/config load for router guards. Skipped on decoy paths.
+ * Single-flight; subsequent calls reuse the first resolved result until
+ * an explicit `loadSiteBrand()` refresh (e.g. after admin config save).
+ */
+export async function ensureSiteBrand(): Promise<string> {
+  if (brandResolved && !loadPromise) {
+    return appName.value
+  }
+  return loadSiteBrand()
 }

@@ -4,18 +4,6 @@
     <div class="login-orb login-orb-b" aria-hidden="true" />
 
     <div class="login-shell">
-      <div v-if="hasSiteBrand" class="login-brand">
-        <div class="login-logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h1 class="login-brand-name">{{ appName }}</h1>
-        <span class="login-brand-tag">用户中心</span>
-      </div>
-
       <div class="login-card">
         <h2 class="login-card-title">找回密码</h2>
         <p class="login-card-sub">验证邮箱后设置新密码</p>
@@ -94,7 +82,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { forgetPassword, sendEmailVerify } from '../api/auth'
-import { appName, hasSiteBrand, loadSiteBrand } from '../siteBrand'
+import { loadSiteBrand } from '../siteBrand'
 import '../styles/login.css'
 
 const router = useRouter()
@@ -110,7 +98,9 @@ const cooldown = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
-  void loadSiteBrand()
+  void loadSiteBrand().finally(() => {
+    if (typeof document !== 'undefined') document.title = '找回密码'
+  })
 })
 
 onUnmounted(() => {

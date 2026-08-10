@@ -4,18 +4,6 @@
     <div class="login-orb login-orb-b" aria-hidden="true" />
 
     <div class="login-shell">
-      <div v-if="hasSiteBrand" class="login-brand">
-        <div class="login-logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h1 class="login-brand-name">{{ appName }}</h1>
-        <span class="login-brand-tag">用户中心</span>
-      </div>
-
       <div class="login-card">
         <h2 class="login-card-title">欢迎回来</h2>
         <p class="login-card-sub">使用邮箱与密码登录账户</p>
@@ -73,8 +61,6 @@ import RecaptchaV2 from '../components/RecaptchaV2.vue'
 import { login } from '../api/auth'
 import { setSession } from '../auth'
 import {
-  appName,
-  hasSiteBrand,
   isAdminUiPath,
   loadSiteBrand,
   recaptchaRequired,
@@ -94,7 +80,9 @@ const captchaToken = ref('')
 const captchaRef = ref<{ reset: () => void } | null>(null)
 
 onMounted(() => {
-  void loadSiteBrand()
+  void loadSiteBrand().finally(() => {
+    if (typeof document !== 'undefined') document.title = '成员登录'
+  })
   if (route.query.reset === '1') {
     hint.value = '密码已重置，请使用新密码登录'
   }

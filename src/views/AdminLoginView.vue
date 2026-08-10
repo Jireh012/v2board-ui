@@ -4,18 +4,6 @@
     <div class="login-orb login-orb-b" aria-hidden="true" />
 
     <div class="login-shell">
-      <div v-if="hasSiteBrand" class="login-brand">
-        <div class="login-logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h1 class="login-brand-name">{{ appName }}</h1>
-        <span class="login-brand-tag">管理控制台</span>
-      </div>
-
       <div class="login-card">
         <h2 class="login-card-title">管理员登录</h2>
         <p class="login-card-sub">使用管理账号进入控制台</p>
@@ -51,11 +39,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminLogin } from '../api/admin'
 import { setSession } from '../auth'
-import { adminUrl, appName, hasSiteBrand } from '../siteBrand'
+import { adminUrl, loadSiteBrand } from '../siteBrand'
 import '../styles/login.css'
 
 const router = useRouter()
@@ -63,6 +51,13 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+
+// Retry/refresh API bases (parity with LoginView; covers ensureSiteBrand failure).
+onMounted(() => {
+  void loadSiteBrand().finally(() => {
+    if (typeof document !== 'undefined') document.title = '管理登录'
+  })
+})
 
 async function onSubmit() {
   error.value = ''

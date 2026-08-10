@@ -73,8 +73,9 @@ const data = await fetchPublicSiteConfig() // GET /api/config, decrypt, setApiBa
 ### 2. Signatures
 
 - `fetchPublicSiteConfig()` — `src/api/site.ts` (decrypts envelope → `PublicSiteConfig`)
-- `appName`, `hasSiteBrand`, `stopRegister`, `inviteForce`, `emailVerify`, `safeMode`, `recaptchaEnable`, `recaptchaSiteKey`, `telegramDiscussLink`, `recaptchaRequired`, `adminBasePath`, `adminUrl()`, `isAdminUiPath()`, `registerEnabled`, `loadSiteBrand()`, `applyFrontendTheme()` — `src/siteBrand.ts`
-- Bootstrap: `main.ts` → `await loadSiteBrand()` then dynamic `import('./router')` so admin routes use the resolved path
+- `appName`, `hasSiteBrand`, `stopRegister`, `inviteForce`, `emailVerify`, `safeMode`, `recaptchaEnable`, `recaptchaSiteKey`, `telegramDiscussLink`, `recaptchaRequired`, `adminBasePath`, `adminUrl()`, `isAdminUiPath()`, `registerEnabled`, `loadSiteBrand()`, `ensureSiteBrand()`, `applyFrontendTheme()` — `src/siteBrand.ts`
+- Bootstrap: `main.ts` mounts router **without** awaiting brand; `ensureSiteBrand()` runs in `router.beforeEach` for non-decoy routes (login/register/forget/admin/user shell)
+- Decoy: `/` (logged out) + unmatched paths → `DecoyView.vue`; **must not** call `loadSiteBrand` / `fetchPublicSiteConfig`
 - Forget: `/forget` (`ForgetView.vue`); login link always shown
 - User auth guard: `router.beforeEach` — anonymous users only `/login` `/register` `/forget` (always; not gated by `safe_mode_enable`)
 
@@ -85,7 +86,8 @@ const data = await fetchPublicSiteConfig() // GET /api/config, decrypt, setApiBa
 | Request auth | `{ auth: false }` |
 | Cache | `localStorage` `v2board_app_name`, `v2board_admin_path` |
 | Name fallback | cache only (ignore legacy cached `"V2Board"`); else empty — **never** invent product name |
-| Brand UI | login/register/forget/admin-login show `.login-brand` only when `hasSiteBrand` |
+| Brand UI | login/register/forget/admin-login **hide** `app_name` (no `.login-brand`); decoy uses fixed「苍穹云」only |
+| Brand load timing | Deferred: decoy paths skip `/config`; real entry/admin/user routes call `ensureSiteBrand()` (single-flight; idempotent) |
 | Admin path fallback | cache → `"admin"`; empty/invalid public `secure_path` → `"admin"` |
 | Title | `document.title = appName` or neutral `Panel` when empty |
 | Static shell | `index.html` initial `<title>` is neutral (`Panel`); favicon `/favicon.svg` — never `V2Board` / Vite default before JS |
@@ -94,7 +96,7 @@ const data = await fetchPublicSiteConfig() // GET /api/config, decrypt, setApiBa
 | Email code on register | show + require when `emailVerify` (`email_verify=1`) |
 | Forget password | always available; send code with `isforget=1` |
 | User auth | unauthenticated business routes → `/login?redirect=` (always) |
-| Admin UI entry | `/{secure_path}` and `/{secure_path}/login`; admin **REST** uses `admin_api_prefix` from public config (not classic `/api/v1/admin`) |
+| Admin UI entry | `/{secure_path}` and `/{secure_path}/login` via `/:adminSeg` param routes validated after brand load; admin **REST** uses `admin_api_prefix` from public config (not classic `/api/v1/admin`) |
 | reCAPTCHA | when `recaptchaRequired`, Login/Register show v2 widget; submit `recaptcha_data` |
 | Frontend theme | `loadSiteBrand` → `applyFrontendTheme(data)` sets `html` `data-theme-sidebar` / `data-theme-header` / `data-theme-color`, CSS `--primary-color` (+ hover/soft), and `--app-bg-image` / `data-app-bg` when URL set |
 | Telegram discuss | `telegramDiscussLink` from public `telegram_discuss_link`; Profile shows open-link + unbind when `user.telegram_id` set |
@@ -209,19 +211,21 @@ const isLoginRoute =
 ### 1. Scope / Trigger
 
 - Trigger: Unauthenticated users must not see user chrome (`/dashboard`, plans, orders, …).
-- Note: SPA has no marketing home; public pages = login/register/forget only.
+- Public auth pages = `/login` `/register` `/forget`; logged-out `/` and unmatched paths = decoy fake cloud landing（可含「成员登录」→ `/login`）.
 - `safe_mode_enable` is **not** the gate for this (was a bug: flag off leaked the shell).
 
 ### 2. Signatures
 
-- `router.beforeEach` in `src/router.ts`
+- `router.beforeEach` in `src/router.ts` — decoy skips brand; else `await ensureSiteBrand()`
 - Login consumes `?redirect=` via `resolvePostLoginPath`
 
 ### 3. Contracts
 
 | Path class | Rule |
 |------------|------|
-| Admin UI (`isAdminUiPath`) | Existing admin auth; path from `secure_path` |
+| Decoy (`meta.decoy`) | `/` logged out + catch-all; no `/config`; bare layout |
+| `/` + `auth_data` | Redirect `/dashboard` (after `ensureSiteBrand`) |
+| Admin UI (`/:adminSeg` after brand) | `adminSeg === adminBasePath`; else decoy |
 | `/login` `/register` `/forget` | Always public |
 | Other user routes | If `!auth_data` → `/login?redirect=<fullPath>` |
 | Post-login redirect | Internal path only; reject `//`, admin UI prefix, auth pages → `/dashboard` |
@@ -230,18 +234,20 @@ const isLoginRoute =
 
 | Condition | Behavior |
 |-----------|----------|
-| No `auth_data` | Redirect login with redirect query |
-| Logged in | Business routes OK |
+| No `auth_data` on business route | Redirect login with redirect query |
+| No `auth_data` on `/` or unknown | Decoy; no `/config` |
+| Logged in | Business routes OK; `/` → dashboard |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: Private window `/dashboard` → login → back to dashboard.
-- Base: `/login` `/register` `/forget` stay public.
-- Bad: Only redirect when `safeMode` (leaks chrome when flag is 0).
+- Base: `/login` `/register` `/forget` stay public; `/` logged out is decoy.
+- Bad: Only redirect when `safeMode` (leaks chrome when flag is 0); boot `await loadSiteBrand` on every visit.
 
 ### 6. Tests Required
 
 - Manual: logged-out visit `/dashboard` → `/login?redirect=/dashboard`.
+- Manual: logged-out `/` → decoy, Network has no `/config`.
 
 ### 7. Wrong vs Correct
 
@@ -251,16 +257,50 @@ const isLoginRoute =
 if (safeMode.value && !localStorage.getItem('auth_data')) {
   next({ path: '/login', query: { redirect: to.fullPath } })
 }
+// or: await loadSiteBrand() in main.ts before mount
 ```
 
 #### Correct
 
 ```ts
+if (to.meta.decoy) return next() // no ensureSiteBrand
+await ensureSiteBrand()
 if (!PUBLIC_USER_PATHS.has(to.path) && !localStorage.getItem('auth_data')) {
   next({ path: '/login', query: { redirect: to.fullPath } })
 }
 ```
 
+---
+
+## Scenario: Anti-detect decoy shell
+
+### 1. Scope / Trigger
+
+- Trigger: Shallow scanners hit `/` or unknown paths; must not fetch public config on decoy; login entry may link to `/login`.
+- Decoy UI: neutral cloud/tech fake landing (same component for `/` and catch-all).
+- Out of scope: CMS, hiding `/login` itself, changing `/config` path, VPN/机场话术.
+
+### 2. Signatures
+
+- `DecoyView.vue` — cloud landing (hero + capabilities + footer); no login/register links; no `siteBrand` / `fetchPublicSiteConfig` imports
+- Routes: `path: '/'` + `/:pathMatch(.*)*` with `meta.decoy: true`
+- `App.vue` `isBareRoute` includes `route.meta.decoy`
+
+### 3. Contracts
+
+| Item | Rule |
+|------|------|
+| Logged-out `/` | Same DecoyView landing; no `/config` |
+| Unmatched path | Same DecoyView; no `/config` (non-alphanumeric first segments never hit adminSeg) |
+| Logged-in `/` | `/dashboard` |
+| Title / brand | Fixed `苍穹云` / Aether Cloud only — never `app_name` / localStorage cache; never literal `V2Board` |
+| CTA | `RouterLink` to `/login`（文案「成员登录」）allowed on decoy; no register CTA required; in-page `#capabilities` scroll OK |
+| Copy | No VPN / proxy / 机场 / 订阅 / 翻墙 wording |
+| Config | Decoy still must not call `/config`; navigating to `/login` loads brand |
+
+### 4–7
+
+AC: privacy window `/` and `/random-scan` → same landing, no `/config`; `/login` may fetch `/config`.
 ---
 
 ## Scenario: Forget password page
@@ -320,11 +360,12 @@ route.path === '/login' || route.path === '/register' || route.path === '/forget
 
 - Trigger: Admin `safe.secure_path` changes the SPA admin entry only; REST admin prefix is `admin_api_prefix` (separate).
 - Empty config → UI path `admin`; non-empty must satisfy backend (≥8 alphanumeric, not reserved).
+- First visit with empty localStorage must still open `/{secure_path}/login` (routes are not permanently bound to cached `admin`).
 
 ### 2. Signatures
 
 - Public `secure_path` → `adminBasePath` / `adminUrl(sub)` / `isAdminUiPath(path)` in `siteBrand.ts`
-- Routes registered after `await loadSiteBrand()` in `main.ts`
+- Router: `/:adminSeg([A-Za-z0-9]+)/login` and `/:adminSeg([A-Za-z0-9]+)` + children; `beforeEach` → `ensureSiteBrand()` then `adminSeg === adminBasePath`
 - Nav / redirects: `AdminLayout`, `App.vue`, `AdminLoginView`, `http.ts` 401, `LoginView` redirect deny list
 
 ### 3. Contracts
@@ -332,40 +373,43 @@ route.path === '/login' || route.path === '/register' || route.path === '/forget
 | Item | Rule |
 |------|------|
 | Entry | `/{path}/login`, `/{path}`, `/{path}/users`, … |
+| Param match | Alphanumeric `adminSeg` only; mismatch after brand load → decoy |
 | Links | Always via `adminUrl(...)` — no hard-coded `'/admin...'` UI routes |
 | 401 on admin page | Redirect `adminUrl('/login')` |
-| Cache | Persist last good path in `v2board_admin_path` for faster first paint |
+| Cache | Persist last good path in `v2board_admin_path` for faster first paint; not required for first admin login |
 
 ### 4. Validation & Error Matrix
 
 | Condition | Behavior |
 |-----------|----------|
 | Invalid public path | Fall back to `admin` |
-| Old bookmark `/admin` after change | Not admin routes (expected) |
+| Old bookmark `/admin` after change | Decoy / not admin (expected) |
+| Cleared storage + real `secure_path` | `/config` loads; segment check passes; admin login works |
 
 ### 5. Good/Base/Bad Cases
 
 - Good: Set `admin888` → open `/admin888/login` works; `/admin` is not admin.
-- Bad: Hard-code `/admin` in sidebar or `router.push`.
+- Bad: Hard-code `/admin` in sidebar or `router.push`; static `` `/${adminBasePath}/...` `` at module eval time.
 
 ### 6. Tests Required
 
-- Manual AC of task `08-08-admin-secure-path`.
+- Manual AC of task `08-08-admin-secure-path` + anti-detect AC5 (cleared storage).
 
 ### 7. Wrong vs Correct
 
 #### Wrong
 
 ```ts
+path: `/${adminBasePath.value}/login` // frozen at import time
 router.push('/admin')
 ```
 
 #### Correct
 
 ```ts
+path: '/:adminSeg([A-Za-z0-9]+)/login' // validate after ensureSiteBrand()
 router.push(adminUrl())
 ```
-
 ---
 
 ## Convention: Admin subscribe URL textarea

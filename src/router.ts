@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
-import { adminBasePath, adminUrl, isAdminUiPath } from './siteBrand'
+import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router'
+import { adminBasePath, adminUrl, ensureSiteBrand } from './siteBrand'
 import LoginView from './views/LoginView.vue'
 import RegisterView from './views/RegisterView.vue'
 import DashboardHome from './views/DashboardHome.vue'
@@ -32,11 +32,35 @@ import AdminCouponsView from './views/admin/AdminCouponsView.vue'
 import AdminGiftcardsView from './views/admin/AdminGiftcardsView.vue'
 import AdminKnowledgeView from './views/admin/AdminKnowledgeView.vue'
 import ForgetView from './views/ForgetView.vue'
+import DecoyView from './views/DecoyView.vue'
+
+const PUBLIC_USER_PATHS = new Set(['/login', '/register', '/forget'])
+
+const adminChildren: RouteRecordRaw[] = [
+  { path: '', component: AdminDashboardView },
+  { path: 'users', component: AdminUsersView },
+  { path: 'plans', component: AdminPlansView },
+  { path: 'orders', component: AdminOrdersView },
+  { path: 'tickets', component: AdminTicketsView },
+  { path: 'config/system', component: AdminSystemConfigView },
+  { path: 'queue', component: AdminQueueView },
+  { path: 'payments', component: AdminPaymentsView },
+  { path: 'servers', component: AdminServersView },
+  { path: 'servers/groups', component: AdminGroupsView },
+  { path: 'servers/routes', component: AdminRoutesView },
+  { path: 'servers/external-subscribe', component: AdminExternalSubscribeView },
+  { path: 'notices', component: AdminNoticesView },
+  { path: 'coupons', component: AdminCouponsView },
+  { path: 'giftcards', component: AdminGiftcardsView },
+  { path: 'knowledge', component: AdminKnowledgeView }
+]
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/dashboard'
+    name: 'root',
+    component: DecoyView,
+    meta: { decoy: true }
   },
   {
     path: '/login',
@@ -95,78 +119,24 @@ const routes: RouteRecordRaw[] = [
     component: ProfileView
   },
   {
-    path: `/${adminBasePath.value}/login`,
-    component: AdminLoginView
+    // Alphanumeric only — paths with hyphens/etc. fall through to catch-all decoy (no /config).
+    path: '/:adminSeg([A-Za-z0-9]+)/login',
+    name: 'admin-login',
+    component: AdminLoginView,
+    meta: { adminSeg: true }
   },
   {
-    path: `/${adminBasePath.value}`,
+    path: '/:adminSeg([A-Za-z0-9]+)',
+    name: 'admin',
     component: AdminLayout,
-    children: [
-      {
-        path: '',
-        component: AdminDashboardView
-      },
-      {
-        path: 'users',
-        component: AdminUsersView
-      },
-      {
-        path: 'plans',
-        component: AdminPlansView
-      },
-      {
-        path: 'orders',
-        component: AdminOrdersView
-      },
-      {
-        path: 'tickets',
-        component: AdminTicketsView
-      },
-      {
-        path: 'config/system',
-        component: AdminSystemConfigView
-      },
-      {
-        path: 'queue',
-        component: AdminQueueView
-      },
-      {
-        path: 'payments',
-        component: AdminPaymentsView
-      },
-      {
-        path: 'servers',
-        component: AdminServersView
-      },
-      {
-        path: 'servers/groups',
-        component: AdminGroupsView
-      },
-      {
-        path: 'servers/routes',
-        component: AdminRoutesView
-      },
-      {
-        path: 'servers/external-subscribe',
-        component: AdminExternalSubscribeView
-      },
-      {
-        path: 'notices',
-        component: AdminNoticesView
-      },
-      {
-        path: 'coupons',
-        component: AdminCouponsView
-      },
-      {
-        path: 'giftcards',
-        component: AdminGiftcardsView
-      },
-      {
-        path: 'knowledge',
-        component: AdminKnowledgeView
-      }
-    ]
+    meta: { adminSeg: true },
+    children: adminChildren
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'decoy-fallback',
+    component: DecoyView,
+    meta: { decoy: true }
   }
 ]
 
@@ -175,18 +145,50 @@ const router = createRouter({
   routes
 })
 
-const PUBLIC_USER_PATHS = new Set(['/login', '/register', '/forget'])
+function hasAuth(): boolean {
+  return !!localStorage.getItem('auth_data')
+}
 
-router.beforeEach((to, _from, next) => {
-  if (isAdminUiPath(to.path)) {
-    if (to.path !== adminUrl('/login') && !localStorage.getItem('auth_data')) {
-      return next(adminUrl('/login'))
+function decoyLocation(to: RouteLocationNormalized) {
+  const parts = to.path.split('/').filter(Boolean)
+  return {
+    name: 'decoy-fallback' as const,
+    params: { pathMatch: parts },
+    replace: true
+  }
+}
+
+router.beforeEach(async (to, _from, next) => {
+  // Logged-in home → user dashboard (may load brand).
+  if (to.path === '/' && hasAuth()) {
+    await ensureSiteBrand()
+    return next({ path: '/dashboard', replace: true })
+  }
+
+  // Decoy shell: no public config fetch.
+  if (to.meta.decoy) {
+    return next()
+  }
+
+  // Potential admin UI (param segment). Validate after brand load.
+  if (to.meta.adminSeg) {
+    const seg = String(to.params.adminSeg || '')
+    await ensureSiteBrand()
+    if (seg !== adminBasePath.value) {
+      return next(decoyLocation(to))
+    }
+    const loginPath = adminUrl('/login')
+    if (to.path !== loginPath && !hasAuth()) {
+      return next(loginPath)
     }
     return next()
   }
 
+  // Real user/public routes: load brand/config first.
+  await ensureSiteBrand()
+
   // User shell routes always require login (not only when safe_mode_enable=1).
-  if (!PUBLIC_USER_PATHS.has(to.path) && !localStorage.getItem('auth_data')) {
+  if (!PUBLIC_USER_PATHS.has(to.path) && !hasAuth()) {
     return next({
       path: '/login',
       query: { redirect: to.fullPath }
@@ -196,4 +198,3 @@ router.beforeEach((to, _from, next) => {
 })
 
 export default router
-

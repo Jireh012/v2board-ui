@@ -4,18 +4,6 @@
     <div class="login-orb login-orb-b" aria-hidden="true" />
 
     <div class="login-shell">
-      <div v-if="hasSiteBrand" class="login-brand">
-        <div class="login-logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h1 class="login-brand-name">{{ appName }}</h1>
-        <span class="login-brand-tag">用户中心</span>
-      </div>
-
       <div class="login-card">
         <template v-if="!ready">
           <h2 class="login-card-title">加载中…</h2>
@@ -127,9 +115,7 @@ import RecaptchaV2 from '../components/RecaptchaV2.vue'
 import { register, sendEmailVerify } from '../api/auth'
 import { setSession } from '../auth'
 import {
-  appName,
   emailVerify,
-  hasSiteBrand,
   inviteForce,
   loadSiteBrand,
   recaptchaRequired,
@@ -171,6 +157,7 @@ onMounted(async () => {
     inviteCode.value = code[0].trim()
   }
   await loadSiteBrand()
+  if (typeof document !== 'undefined') document.title = '注册'
   ready.value = true
 })
 

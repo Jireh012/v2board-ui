@@ -1,5 +1,5 @@
 <template>
-  <RouterView v-if="isAdminRoute || isLoginRoute" />
+  <RouterView v-if="isBareRoute" />
   <div v-else class="app-root">
     <header class="app-header">
       <div class="header-content">
@@ -188,6 +188,9 @@ const adminHome = computed(() => adminUrl())
 const isLoginRoute = computed(
   () => route.path === '/login' || route.path === '/register' || route.path === '/forget'
 )
+const isBareRoute = computed(
+  () => isAdminRoute.value || isLoginRoute.value || route.meta.decoy === true
+)
 
 const userEmail = currentUserEmail
 const showUserMenu = ref(false)
@@ -215,7 +218,7 @@ const pageTitle = computed(() => {
 })
 
 async function refreshUserProfile() {
-  if (!isLogin.value || isLoginRoute.value || isAdminRoute.value) return
+  if (!isLogin.value || isBareRoute.value) return
   try {
     const info = await getUserInfo()
     if (info?.email) {
