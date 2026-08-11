@@ -240,6 +240,7 @@ import {
   savePayment, togglePayment, dropPayment,
   type AdminPayment, type FormField
 } from '../../api/admin/payment'
+import { copyText } from '../../utils/clipboard'
 
 const loading = ref(true)
 const rows = ref<AdminPayment[]>([])
@@ -327,11 +328,15 @@ function shortUrl(url?: string) {
 }
 
 async function copyUrl(url: string) {
+  if (!url) {
+    showToast('暂无通知地址', true)
+    return
+  }
   try {
-    await navigator.clipboard.writeText(url)
+    await copyText(url)
     showToast('通知地址已复制')
   } catch {
-    showToast('复制失败', true)
+    showToast('复制失败，请手动复制', true)
   }
 }
 

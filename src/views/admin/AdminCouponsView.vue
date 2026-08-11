@@ -312,6 +312,7 @@ import {
   type AdminPlan,
   type PageResult
 } from '../../api/admin'
+import { copyText } from '../../utils/clipboard'
 
 const PERIOD_OPTIONS = [
   { value: 'month_price', label: '月付' },
@@ -507,10 +508,10 @@ function randomCode(len = 8) {
 async function copyCode(code: string) {
   if (!code) return
   try {
-    await navigator.clipboard.writeText(code)
+    await copyText(code)
     showToast('优惠码已复制')
   } catch {
-    showToast('复制失败', true)
+    showToast('复制失败，请手动复制', true)
   }
 }
 

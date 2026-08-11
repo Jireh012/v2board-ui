@@ -532,6 +532,7 @@ import {
   type OrderFilter,
   type PageResult
 } from '../../api/admin'
+import { copyText } from '../../utils/clipboard'
 
 const route = useRoute()
 const router = useRouter()
@@ -665,10 +666,10 @@ function shortTrade(no: string) {
 
 async function copyTradeNo(no: string) {
   try {
-    await navigator.clipboard.writeText(no)
+    await copyText(no)
     showToast('订单号已复制')
   } catch {
-    showToast('复制失败', true)
+    showToast('复制失败，请手动复制', true)
   }
 }
 

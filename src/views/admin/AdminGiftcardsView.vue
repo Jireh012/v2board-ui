@@ -274,6 +274,7 @@ import {
   type AdminPlan,
   type PageResult
 } from '../../api/admin'
+import { copyText } from '../../utils/clipboard'
 
 const TYPE_OPTIONS = [
   { value: 1, label: '余额' },
@@ -496,10 +497,10 @@ function randomCode(len = 16) {
 async function copyCode(code: string) {
   if (!code) return
   try {
-    await navigator.clipboard.writeText(code)
+    await copyText(code)
     showToast('卡密已复制')
   } catch {
-    showToast('复制失败', true)
+    showToast('复制失败，请手动复制', true)
   }
 }
 
