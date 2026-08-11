@@ -4,8 +4,8 @@
       <div>
         <h1 class="page-title">订阅规则</h1>
         <p class="page-subtitle">
-          管理各客户端<strong>本地化</strong>分流模板。推荐同步 ACL4SSR Online Full
-          NoAuto：服务端拉取并<strong>全量内联</strong>规则列表，订阅正文无远程规则依赖。
+          管理各客户端<strong>本地化</strong>分流模板。推荐同步 ACL4SSR Online Full（含自动测速）：服务端拉取并<strong>全量内联</strong>规则列表，订阅正文无远程规则依赖。勿用
+          <code>NoAuto</code>，否则没有「♻️ 自动选择」。
         </p>
       </div>
     </div>
@@ -51,8 +51,9 @@
 
       <div class="info-banner" role="note">
         <strong>同步说明：</strong>默认同步
-        <code>ACL4SSR_Online_Full_NoAuto.ini</code>；服务端解析
-        <code>ruleset=</code> / <code>custom_proxy_group=</code>，拉取全部
+        <code>ACL4SSR_Online_Full.ini</code>（含 <code>♻️ 自动选择</code> / <code>url-test</code>）。
+        <code>*_NoAuto.ini</code> 官方注明「自动测速：不支持」，同步后策略组里不会出现自动选择。
+        服务端解析 <code>ruleset=</code> / <code>custom_proxy_group=</code>，拉取全部
         <code>.list</code> 并<strong>内联写入</strong>当前 format 的种子壳（保留 DNS /
         <code>[General]</code> 等），再入库。直连 GitHub 失败时，自动经可用第三方订阅节点前置代理重试（无需手工选节点）。
         亦支持已含 HTTP <code>rule-providers</code> 的 Clash/Stash YAML（同样内联）。
@@ -76,7 +77,7 @@
           v-model="sourceUrl"
           class="input"
           type="url"
-          placeholder="https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full_NoAuto.ini"
+          placeholder="https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online_Full.ini"
         />
       </div>
 
