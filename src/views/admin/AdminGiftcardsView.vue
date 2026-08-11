@@ -23,16 +23,16 @@
         <strong class="stat-value">{{ total }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页可用</span>
-        <strong class="stat-value accent">{{ pageAvailable }}</strong>
+        <span class="stat-label">可用</span>
+        <strong class="stat-value accent">{{ statsAvailable }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页已兑完</span>
-        <strong class="stat-value warn">{{ pageUsedUp }}</strong>
+        <span class="stat-label">已兑完</span>
+        <strong class="stat-value warn">{{ statsUsedUp }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页已过期</span>
-        <strong class="stat-value muted">{{ pageExpired }}</strong>
+        <span class="stat-label">已过期</span>
+        <strong class="stat-value muted">{{ statsExpired }}</strong>
       </div>
     </div>
 
@@ -286,6 +286,9 @@ const TYPE_OPTIONS = [
 const rows = ref<AdminGiftcard[]>([])
 const plans = ref<AdminPlan[]>([])
 const total = ref(0)
+const statsAvailable = ref(0)
+const statsUsedUp = ref(0)
+const statsExpired = ref(0)
 const loading = ref(true)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -370,10 +373,10 @@ const filtered = computed(() => {
 })
 
 const filterTabs = computed(() => [
-  { value: 'all' as const, label: '全部', count: rows.value.length },
-  { value: 'available' as const, label: '可用', count: rows.value.filter((g) => isAvailable(g)).length },
-  { value: 'usedup' as const, label: '已兑完', count: rows.value.filter((g) => isUsedUp(g)).length },
-  { value: 'expired' as const, label: '已过期', count: rows.value.filter((g) => isExpired(g)).length },
+  { value: 'all' as const, label: '全部', count: total.value },
+  { value: 'available' as const, label: '可用', count: statsAvailable.value },
+  { value: 'usedup' as const, label: '已兑完', count: statsUsedUp.value },
+  { value: 'expired' as const, label: '已过期', count: statsExpired.value },
   ...TYPE_OPTIONS.map((t) => ({
     value: t.value,
     label: t.label,
@@ -382,9 +385,6 @@ const filterTabs = computed(() => [
 ])
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-const pageAvailable = computed(() => rows.value.filter((g) => isAvailable(g)).length)
-const pageUsedUp = computed(() => rows.value.filter((g) => isUsedUp(g)).length)
-const pageExpired = computed(() => rows.value.filter((g) => isExpired(g)).length)
 
 const valueLabel = computed(() => {
   if (form.type === 1) return '余额'
@@ -512,6 +512,9 @@ async function load() {
     ])
     rows.value = res.data || []
     total.value = res.total || 0
+    statsAvailable.value = Number(res.stats?.available) || 0
+    statsUsedUp.value = Number(res.stats?.used_up) || 0
+    statsExpired.value = Number(res.stats?.expired) || 0
     plans.value = planList
   } catch (e) {
     showToast(e instanceof Error ? e.message : '加载失败', true)

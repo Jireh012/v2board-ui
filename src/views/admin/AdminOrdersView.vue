@@ -23,16 +23,16 @@
         <strong class="stat-value">{{ total }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页待支付</span>
-        <strong class="stat-value warn">{{ pagePending }}</strong>
+        <span class="stat-label">待支付</span>
+        <strong class="stat-value warn">{{ statsPending }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页已完成</span>
-        <strong class="stat-value ok">{{ pageDone }}</strong>
+        <span class="stat-label">已完成</span>
+        <strong class="stat-value ok">{{ statsCompleted }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页金额</span>
-        <strong class="stat-value accent">¥{{ pageAmountText }}</strong>
+        <span class="stat-label">金额合计</span>
+        <strong class="stat-value accent">¥{{ statsAmountText }}</strong>
       </div>
     </div>
 
@@ -553,6 +553,9 @@ const COMM_STATUS_LABELS: Record<number, string> = { 0: '待确认', 1: '发放�
 
 const rows = ref<AdminOrderRow[]>([])
 const total = ref(0)
+const statsPending = ref(0)
+const statsCompleted = ref(0)
+const statsAmountCents = ref(0)
 const loading = ref(true)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -611,11 +614,7 @@ const toastError = ref(false)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-const pagePending = computed(() => rows.value.filter((o) => o.status === 0).length)
-const pageDone = computed(() => rows.value.filter((o) => o.status === 3).length)
-const pageAmountText = computed(() =>
-  (rows.value.reduce((n, o) => n + (o.total_amount || 0), 0) / 100).toFixed(2)
-)
+const statsAmountText = computed(() => (statsAmountCents.value / 100).toFixed(2))
 
 const statusTabs = [
   { value: 'all' as const, label: '全部' },
@@ -684,6 +683,9 @@ async function load() {
     )
     rows.value = res.data || []
     total.value = Number(res.total) || 0
+    statsPending.value = Number(res.stats?.pending) || 0
+    statsCompleted.value = Number(res.stats?.completed) || 0
+    statsAmountCents.value = Number(res.stats?.amount_cents) || 0
   } catch (e) {
     showToast(e instanceof Error ? e.message : '加载失败', true)
   } finally {

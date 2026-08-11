@@ -23,16 +23,16 @@
         <strong class="stat-value">{{ total }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页启用</span>
-        <strong class="stat-value accent">{{ pageShowing }}</strong>
+        <span class="stat-label">已启用</span>
+        <strong class="stat-value accent">{{ statsShowing }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页有效</span>
-        <strong class="stat-value ok">{{ pageActive }}</strong>
+        <span class="stat-label">有效期内</span>
+        <strong class="stat-value ok">{{ statsActive }}</strong>
       </div>
       <div class="stat-card">
-        <span class="stat-label">本页已过期</span>
-        <strong class="stat-value muted">{{ pageExpired }}</strong>
+        <span class="stat-label">已过期</span>
+        <strong class="stat-value muted">{{ statsExpired }}</strong>
       </div>
     </div>
 
@@ -331,6 +331,9 @@ const PERIOD_LABELS: Record<string, string> = Object.fromEntries(
 const rows = ref<AdminCoupon[]>([])
 const plans = ref<AdminPlan[]>([])
 const total = ref(0)
+const statsShowing = ref(0)
+const statsActive = ref(0)
+const statsExpired = ref(0)
 const loading = ref(true)
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -420,17 +423,14 @@ const filtered = computed(() => {
 })
 
 const filterTabs = computed(() => [
-  { value: 'all' as const, label: '全部', count: rows.value.length },
-  { value: 'show' as const, label: '已启用', count: rows.value.filter((c) => c.show === 1).length },
-  { value: 'active' as const, label: '有效期内', count: rows.value.filter((c) => isActive(c)).length },
-  { value: 'expired' as const, label: '已过期', count: rows.value.filter((c) => isExpired(c)).length },
-  { value: 'hide' as const, label: '已停用', count: rows.value.filter((c) => c.show !== 1).length }
+  { value: 'all' as const, label: '全部', count: total.value },
+  { value: 'show' as const, label: '已启用', count: statsShowing.value },
+  { value: 'active' as const, label: '有效期内', count: statsActive.value },
+  { value: 'expired' as const, label: '已过期', count: statsExpired.value },
+  { value: 'hide' as const, label: '已停用', count: Math.max(0, total.value - statsShowing.value) }
 ])
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-const pageShowing = computed(() => rows.value.filter((c) => c.show === 1).length)
-const pageActive = computed(() => rows.value.filter((c) => isActive(c)).length)
-const pageExpired = computed(() => rows.value.filter((c) => isExpired(c)).length)
 
 function showToast(msg: string, error = false) {
   toastMessage.value = msg
@@ -523,6 +523,9 @@ async function load() {
     ])
     rows.value = res.data || []
     total.value = res.total || 0
+    statsShowing.value = Number(res.stats?.showing) || 0
+    statsActive.value = Number(res.stats?.active) || 0
+    statsExpired.value = Number(res.stats?.expired) || 0
     plans.value = planList
   } catch (e) {
     showToast(e instanceof Error ? e.message : '加载失败', true)

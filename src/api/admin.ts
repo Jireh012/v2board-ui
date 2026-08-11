@@ -6,11 +6,21 @@ import type { LoginResult } from './auth'
 export interface PageResult<T> {
   data: T[]
   total: number
-  /** 用户列表：与筛选同范围、跨分页的聚合（见 AdminUsersView） */
+  /** 与筛选同范围、跨分页的聚合（用户 / 订单 / 优惠券 / 礼品卡等） */
   stats?: {
-    banned: number
-    with_plan: number
-    expired: number
+    banned?: number
+    with_plan?: number
+    expired?: number
+    pending?: number
+    completed?: number
+    /** 订单金额合计（分） */
+    amount_cents?: number
+    /** 优惠券：启用 / 有效期内 */
+    showing?: number
+    active?: number
+    /** 礼品卡：可用 / 已兑完 */
+    available?: number
+    used_up?: number
   }
 }
 
