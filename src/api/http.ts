@@ -15,6 +15,21 @@ interface RequestOptions {
   panelSm4?: boolean
 }
 
+function isWriteMethod(method: string): boolean {
+  const m = method.toUpperCase()
+  return m === 'POST' || m === 'PUT' || m === 'PATCH'
+}
+
+function isFormBody(body: BodyInit): boolean {
+  if (typeof URLSearchParams !== 'undefined' && body instanceof URLSearchParams) {
+    return true
+  }
+  if (typeof FormData !== 'undefined' && body instanceof FormData) {
+    return true
+  }
+  return false
+}
+
 export async function request<T>(
   url: string,
   init: RequestInit = {},
@@ -22,6 +37,7 @@ export async function request<T>(
 ): Promise<T> {
   const headers = new Headers(init.headers || {})
   const usePanelSm4 = options.panelSm4 ?? isPanelEncryptedUrl(url)
+  const method = (init.method || 'GET').toUpperCase()
 
   if (options.auth !== false) {
     const authData = localStorage.getItem('auth_data')
@@ -38,17 +54,26 @@ export async function request<T>(
   }
 
   let body = init.body
-  if (usePanelSm4 && body != null && typeof body === 'string') {
+  if (usePanelSm4 && isWriteMethod(method)) {
+    // URLSearchParams/FormData 会绕过下方 string 加密分支，原样发出 form → 后端 400
+    if (body != null && isFormBody(body)) {
+      throw new Error('加密区请使用 JSON 请求体（参数请放在 query）')
+    }
     const ct = (headers.get('Content-Type') || '').toLowerCase()
-    if (ct.includes('application/json') || ct === '') {
-      if (!headers.has('Content-Type')) {
-        headers.set('Content-Type', 'application/json')
-      }
-      const envelope = encryptToEnvelope(body)
-      body = JSON.stringify(envelope)
-    } else if (ct.includes('application/x-www-form-urlencoded')) {
+    if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
+      throw new Error('加密区请使用 JSON 请求体（参数请放在 query）')
+    }
+    // 无 body 的 POST（如 ?id= 切换显隐）统一发加密 "{}"，避免中间层补 form Content-Type
+    let plain: string
+    if (body == null || body === '') {
+      plain = '{}'
+    } else if (typeof body === 'string') {
+      plain = body
+    } else {
       throw new Error('加密区请使用 JSON 请求体')
     }
+    headers.set('Content-Type', 'application/json')
+    body = JSON.stringify(encryptToEnvelope(plain))
   }
 
   if (!headers.has('Accept')) {

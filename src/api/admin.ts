@@ -332,7 +332,7 @@ export async function banAdminUsers(filters: OrderFilter[]): Promise<boolean> {
 }
 
 export async function deleteAdminUser(id: number): Promise<boolean> {
-  // Panel SM4 区禁止 form-urlencoded；id 走 query，空 POST（与 payment/show 一致）
+  // Panel SM4：参数走 query；无业务 body 时由 http.ts 发加密 "{}"
   return request<boolean>(`${apiUrl('admin', '/user/delUser')}?id=${id}`, {
     method: 'POST'
   })
