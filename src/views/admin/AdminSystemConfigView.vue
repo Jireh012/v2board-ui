@@ -264,13 +264,34 @@
       <Row
         v-if="config.subscribe.external_sync_enable === 1 && config.subscribe.external_sync_mode === 'cron'"
         label="Cron 表达式"
-        desc="示例：0 */30 * * * *（每 30 分钟）。关闭自动同步请使用上方开关，不要填 -。"
+        desc="Spring 六段：秒 分 时 日 月 周。点击预设快速填入；下方根据当前表达式预览下次执行时间。"
       >
-        <input
-          v-model="config.subscribe.external_sync_cron"
-          class="input"
-          placeholder="0 */30 * * * *"
-        />
+        <div class="cron-field">
+          <input
+            v-model="config.subscribe.external_sync_cron"
+            class="input"
+            placeholder="0 */30 * * * *"
+          />
+          <div class="cron-presets" role="group" aria-label="Cron 预设">
+            <button
+              v-for="p in cronPresets"
+              :key="p.expr"
+              type="button"
+              class="btn secondary cron-preset"
+              :class="{ active: config.subscribe.external_sync_cron?.trim() === p.expr }"
+              @click="applyCronPreset(p.expr)"
+            >
+              {{ p.label }}
+            </button>
+          </div>
+          <div class="cron-preview">
+            <div class="cron-preview-title">即将执行</div>
+            <p v-if="!cronPreview.ok" class="cron-preview-error">{{ cronPreview.error }}</p>
+            <ol v-else class="cron-preview-list">
+              <li v-for="(t, i) in cronPreview.times" :key="i">{{ formatCronRunTime(t) }}</li>
+            </ol>
+          </div>
+        </div>
       </Row>
       <Actions :saving="saving" :msg="saveMessage" :msg-type="saveMessageType" />
     </form>
@@ -525,6 +546,11 @@ import {
 } from '../../api/admin/config'
 import { getPublicConfigPath, setApiBases } from '../../api/paths'
 import { adminBasePath, adminUrl, loadSiteBrand } from '../../siteBrand'
+import {
+  SPRING_CRON_PRESETS,
+  formatCronRunTime,
+  previewSpringCron
+} from '../../utils/springCron'
 
 /* ---- 子组件：表单行 ---- */
 const Row = defineComponent({
@@ -659,6 +685,17 @@ function ensureExternalSyncDefaults() {
   }
   if (!sub.external_sync_interval_unit) sub.external_sync_interval_unit = 'minute'
   if (!sub.external_sync_cron) sub.external_sync_cron = '0 */30 * * * *'
+}
+
+const cronPresets = SPRING_CRON_PRESETS
+
+const cronPreview = computed(() =>
+  previewSpringCron(config.value?.subscribe?.external_sync_cron ?? '', 5)
+)
+
+function applyCronPreset(expr: string) {
+  if (!config.value?.subscribe) return
+  config.value.subscribe.external_sync_cron = expr
 }
 
 function generateServerToken() {
@@ -914,6 +951,50 @@ load()
   min-width: 0;
   display: flex;
   align-items: center;
+}
+
+.cron-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+.cron-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cron-preset {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.cron-preset.active {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+.cron-preview {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+}
+.cron-preview-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+.cron-preview-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.cron-preview-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 13px;
 }
 
 .config-page :deep(.token-field) {
