@@ -54,6 +54,15 @@ export interface SubscribeConfig {
   show_info_to_server_enable?: number
   show_subscribe_method?: number
   show_subscribe_expire?: number
+  /** 第三方订阅自动同步：0/1 */
+  external_sync_enable?: number
+  /** interval | cron */
+  external_sync_mode?: string
+  external_sync_interval_value?: number
+  /** minute | hour | day */
+  external_sync_interval_unit?: string
+  /** Spring 6-field cron */
+  external_sync_cron?: string
 }
 
 export interface DepositConfig {

@@ -225,6 +225,53 @@
       <Row label="订阅到期提前天数" desc="展示「即将到期」标签的提前天数。">
         <input v-model.number="config.subscribe.show_subscribe_expire" type="number" class="input" />
       </Row>
+      <Row
+        label="第三方订阅自动同步"
+        desc="关闭后仅停止定时任务；管理端「同步」按钮始终可用。保存后立即按新周期重调度，无需重启。"
+      >
+        <Toggle v-model="config.subscribe.external_sync_enable" />
+      </Row>
+      <Row
+        v-if="config.subscribe.external_sync_enable === 1"
+        label="同步模式"
+        desc="间隔模式按固定周期触发；Cron 使用 Spring 6 段表达式（秒 分 时 日 月 周）。"
+      >
+        <select v-model="config.subscribe.external_sync_mode" class="input">
+          <option value="interval">固定间隔</option>
+          <option value="cron">Cron 表达式</option>
+        </select>
+      </Row>
+      <Row
+        v-if="config.subscribe.external_sync_enable === 1 && config.subscribe.external_sync_mode === 'interval'"
+        label="同步间隔"
+        desc="任务完成后等待该间隔再触发下一次（fixedDelay），避免长同步叠触发。"
+      >
+        <div class="token-field">
+          <input
+            v-model.number="config.subscribe.external_sync_interval_value"
+            type="number"
+            min="1"
+            class="input"
+            style="max-width: 140px"
+          />
+          <select v-model="config.subscribe.external_sync_interval_unit" class="input" style="max-width: 140px">
+            <option value="minute">分钟</option>
+            <option value="hour">小时</option>
+            <option value="day">天</option>
+          </select>
+        </div>
+      </Row>
+      <Row
+        v-if="config.subscribe.external_sync_enable === 1 && config.subscribe.external_sync_mode === 'cron'"
+        label="Cron 表达式"
+        desc="示例：0 */30 * * * *（每 30 分钟）。关闭自动同步请使用上方开关，不要填 -。"
+      >
+        <input
+          v-model="config.subscribe.external_sync_cron"
+          class="input"
+          placeholder="0 */30 * * * *"
+        />
+      </Row>
       <Actions :saving="saving" :msg="saveMessage" :msg-type="saveMessageType" />
     </form>
 
@@ -593,11 +640,25 @@ async function load() {
   loading.value = true
   try {
     config.value = await fetchConfig()
+    ensureExternalSyncDefaults()
   } catch (e) {
     showMsg((e as Error).message, 'err')
   } finally {
     loading.value = false
   }
+}
+
+/** 旧库配置可能缺少 external_sync_*；与后端 defaults 对齐，避免表单 undefined。 */
+function ensureExternalSyncDefaults() {
+  const sub = config.value?.subscribe
+  if (!sub) return
+  if (sub.external_sync_enable == null) sub.external_sync_enable = 0
+  if (!sub.external_sync_mode) sub.external_sync_mode = 'interval'
+  if (sub.external_sync_interval_value == null || Number(sub.external_sync_interval_value) < 1) {
+    sub.external_sync_interval_value = 30
+  }
+  if (!sub.external_sync_interval_unit) sub.external_sync_interval_unit = 'minute'
+  if (!sub.external_sync_cron) sub.external_sync_cron = '0 */30 * * * *'
 }
 
 function generateServerToken() {
@@ -648,6 +709,9 @@ function generatePaymentNotifyPrefix() {
 /* ---- 保存当前分组 ---- */
 async function saveGroup(group: string) {
   if (!config.value) return
+  if (group === 'subscribe') {
+    ensureExternalSyncDefaults()
+  }
   if (group === 'server') {
     const server = config.value.server
     if (!server) return
