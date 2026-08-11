@@ -322,22 +322,15 @@ export async function banAdminUsers(filters: OrderFilter[]): Promise<boolean> {
 }
 
 export async function deleteAdminUser(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/user/delUser'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  // Panel SM4 区禁止 form-urlencoded；id 走 query，空 POST（与 payment/show 一致）
+  return request<boolean>(`${apiUrl('admin', '/user/delUser')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
 export async function resetAdminUserSecret(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/user/resetSecret'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/user/resetSecret')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
@@ -382,12 +375,8 @@ export async function saveAdminPlan(plan: AdminPlan, forceUpdate = false): Promi
 }
 
 export async function dropAdminPlan(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/plan/drop'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/plan/drop')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
@@ -430,58 +419,46 @@ export async function fetchAdminOrders(
 }
 
 export async function fetchAdminOrderDetail(id: number): Promise<AdminOrderDetail> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<AdminOrderDetail>(apiUrl('admin', '/order/detail'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<AdminOrderDetail>(`${apiUrl('admin', '/order/detail')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
 export async function paidAdminOrder(tradeNo: string): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('trade_no', tradeNo)
-  return request<boolean>(apiUrl('admin', '/order/paid'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  const qs = new URLSearchParams({ trade_no: tradeNo })
+  return request<boolean>(`${apiUrl('admin', '/order/paid')}?${qs}`, {
+    method: 'POST'
   })
 }
 
 export async function cancelAdminOrder(tradeNo: string): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('trade_no', tradeNo)
-  return request<boolean>(apiUrl('admin', '/order/cancel'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  const qs = new URLSearchParams({ trade_no: tradeNo })
+  return request<boolean>(`${apiUrl('admin', '/order/cancel')}?${qs}`, {
+    method: 'POST'
   })
 }
 
 export async function updateAdminOrder(tradeNo: string, commissionStatus: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('trade_no', tradeNo)
-  body.set('commission_status', String(commissionStatus))
-  return request<boolean>(apiUrl('admin', '/order/update'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  const qs = new URLSearchParams({
+    trade_no: tradeNo,
+    commission_status: String(commissionStatus)
+  })
+  return request<boolean>(`${apiUrl('admin', '/order/update')}?${qs}`, {
+    method: 'POST'
   })
 }
 
 export async function assignAdminOrder(
   planId: number, email: string, period: string, totalAmount: number
 ): Promise<string> {
-  const body = new URLSearchParams()
-  body.set('plan_id', String(planId))
-  body.set('email', email)
-  body.set('period', period)
-  body.set('total_amount', String(totalAmount))
-  return request<string>(apiUrl('admin', '/order/assign'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  const qs = new URLSearchParams({
+    plan_id: String(planId),
+    email,
+    period,
+    total_amount: String(totalAmount)
+  })
+  return request<string>(`${apiUrl('admin', '/order/assign')}?${qs}`, {
+    method: 'POST'
   })
 }
 
@@ -507,23 +484,15 @@ export async function fetchAdminTicketDetail(id: number): Promise<AdminTicket> {
 }
 
 export async function replyAdminTicket(id: number, message: string): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  body.set('message', message)
-  return request<boolean>(apiUrl('admin', '/ticket/reply'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  const qs = new URLSearchParams({ id: String(id), message })
+  return request<boolean>(`${apiUrl('admin', '/ticket/reply')}?${qs}`, {
+    method: 'POST'
   })
 }
 
 export async function closeAdminTicket(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/ticket/close'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/ticket/close')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
@@ -574,22 +543,14 @@ export async function saveAdminNotice(notice: AdminNotice): Promise<boolean> {
 }
 
 export async function showAdminNotice(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/notice/show'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/notice/show')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
 export async function dropAdminNotice(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/notice/drop'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/notice/drop')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
@@ -611,22 +572,14 @@ export async function generateAdminCoupon(coupon: AdminCoupon): Promise<boolean>
 }
 
 export async function showAdminCoupon(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/coupon/show'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/coupon/show')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
 export async function dropAdminCoupon(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/coupon/drop'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/coupon/drop')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
@@ -648,12 +601,8 @@ export async function generateAdminGiftcard(giftcard: AdminGiftcard): Promise<bo
 }
 
 export async function dropAdminGiftcard(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/giftcard/drop'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/giftcard/drop')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
@@ -679,12 +628,8 @@ export async function saveAdminKnowledge(knowledge: AdminKnowledge): Promise<boo
 }
 
 export async function showAdminKnowledge(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/knowledge/show'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/knowledge/show')}?id=${id}`, {
+    method: 'POST'
   })
 }
 
@@ -698,11 +643,7 @@ export async function sortAdminKnowledge(ids: number[]): Promise<boolean> {
 }
 
 export async function dropAdminKnowledge(id: number): Promise<boolean> {
-  const body = new URLSearchParams()
-  body.set('id', String(id))
-  return request<boolean>(apiUrl('admin', '/knowledge/drop'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
+  return request<boolean>(`${apiUrl('admin', '/knowledge/drop')}?id=${id}`, {
+    method: 'POST'
   })
 }
