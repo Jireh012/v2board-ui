@@ -10,9 +10,11 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@tinymce/tinymce-vue": "^6.3.0",
     "cron-parser": "^4.9.0",
     "echarts": "^5.6.0",
     "sm-crypto": "^0.5.5",
+    "tinymce": "^8.8.2",
     "vue": "^3.5.13",
     "vue-router": "^4.4.5"
   },

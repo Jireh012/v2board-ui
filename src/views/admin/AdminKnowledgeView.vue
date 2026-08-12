@@ -129,7 +129,7 @@
           <div class="modal-header">
             <div>
               <h2>{{ form.id ? '编辑文章' : '新建文章' }}</h2>
-              <p class="modal-sub">正文支持 HTML；分类可从已有项选择，也可输入新分类。</p>
+              <p class="modal-sub">TinyMCE 可视化编辑；可切换预览。分类可从已有项选择，也可输入新分类。占位符如 <code v-pre>{{subscribeUrl}}</code> 会在用户端替换。</p>
             </div>
             <button type="button" class="modal-close" @click="closeModal">&times;</button>
           </div>
@@ -158,13 +158,8 @@
               <input v-model="form.title" class="input" required maxlength="128" placeholder="文章标题" />
             </div>
             <div class="form-row">
-              <label>正文（HTML）</label>
-              <textarea
-                v-model="form.body"
-                class="input textarea"
-                rows="16"
-                placeholder="支持 HTML，如 &lt;p&gt;文章内容&lt;/p&gt;"
-              />
+              <label>正文</label>
+              <KnowledgeBodyEditor v-model="form.body" />
             </div>
             <div class="form-row switches">
               <label class="switch-row">
@@ -224,7 +219,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import {
   fetchAdminKnowledge,
   fetchAdminKnowledgeById,
@@ -235,6 +230,10 @@ import {
   dropAdminKnowledge,
   type AdminKnowledge
 } from '../../api/admin'
+
+const KnowledgeBodyEditor = defineAsyncComponent(
+  () => import('../../components/admin/KnowledgeBodyEditor.vue')
+)
 
 interface KnowledgeForm {
   id?: number
