@@ -306,6 +306,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getSubscribe, type SubscribeInfo } from '../api/user'
 import { fetchNotices, getNoticeDetail, type Notice } from '../api/notice'
+import { copyText } from '../utils/clipboard'
 
 const router = useRouter()
 const subscribe = ref<SubscribeInfo | null>(null)
@@ -426,19 +427,7 @@ const copySubscribeUrl = async () => {
     return
   }
   try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(url)
-    } else {
-      const input = document.createElement('textarea')
-      input.value = url
-      input.setAttribute('readonly', '')
-      input.style.position = 'fixed'
-      input.style.left = '-9999px'
-      document.body.appendChild(input)
-      input.select()
-      document.execCommand('copy')
-      document.body.removeChild(input)
-    }
+    await copyText(url)
     showToast('复制成功')
   } catch {
     showToast('复制失败，请手动复制', true)

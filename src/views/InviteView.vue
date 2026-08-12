@@ -47,7 +47,7 @@
           :disabled="saving"
           @click="handleSaveInvite"
         >
-          {{ saving ? '生成中...' : '管理邀请码' }}
+          {{ saving ? '生成中...' : '生成邀请码' }}
         </button>
       </div>
       <div v-if="loading" class="loading">加载中...</div>
@@ -62,13 +62,21 @@
           <tbody>
             <tr v-for="c in inviteCodes" :key="c.id">
               <td class="code-cell">{{ c.code }}</td>
-              <td style="text-align: right">
+              <td style="text-align: right" class="actions-cell">
                 <button 
                   type="button" 
                   class="link-action" 
                   @click="copyInviteLink(c.code)"
                 >
                   复制链接
+                </button>
+                <button
+                  type="button"
+                  class="link-action danger"
+                  :disabled="deletingId === c.id"
+                  @click="handleDropInvite(c)"
+                >
+                  {{ deletingId === c.id ? '删除中…' : '删除' }}
                 </button>
               </td>
             </tr>
@@ -169,9 +177,11 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { copyText } from '../utils/clipboard'
 import { 
   fetchInvite, 
-  saveInvite, 
+  saveInvite,
+  dropInvite,
   fetchInviteDetails, 
   transferCommission,
   type InviteCode, 
@@ -189,6 +199,7 @@ const pageSize = 10
 const loading = ref(false)
 const detailsLoading = ref(false)
 const saving = ref(false)
+const deletingId = ref<number | null>(null)
 const message = ref('')
 const isError = ref(false)
 
@@ -274,13 +285,29 @@ function formatTime(ts: number | null | undefined): string {
   })
 }
 
-function copyInviteLink(code: string) {
+async function copyInviteLink(code: string) {
   const url = `${window.location.protocol}//${window.location.host}/register?code=${code}`
-  navigator.clipboard.writeText(url).then(() => {
+  try {
+    await copyText(url)
     showToast('邀请链接已复制')
-  }).catch(() => {
+  } catch {
     showToast('复制失败，请手动复制', true)
-  })
+  }
+}
+
+async function handleDropInvite(c: InviteCode) {
+  if (!c?.id) return
+  if (!confirm(`确认删除邀请码 ${c.code}？删除后不可恢复。`)) return
+  deletingId.value = c.id
+  try {
+    await dropInvite(c.id)
+    inviteCodes.value = inviteCodes.value.filter((x) => x.id !== c.id)
+    showToast('已删除')
+  } catch (e) {
+    showToast(e instanceof Error ? e.message : '删除失败', true)
+  } finally {
+    deletingId.value = null
+  }
 }
 
 function showToast(msg: string, error = false) {
@@ -483,6 +510,12 @@ onMounted(() => {
   color: #94a3b8;
 }
 
+.actions-cell {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
 .link-action {
   background: transparent;
   border: none;
@@ -492,8 +525,17 @@ onMounted(() => {
   padding: 0;
 }
 
-.link-action:hover {
+.link-action:hover:not(:disabled) {
   text-decoration: underline;
+}
+
+.link-action.danger {
+  color: #dc2626;
+}
+
+.link-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* Pagination */

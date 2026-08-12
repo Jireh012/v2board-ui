@@ -2,6 +2,9 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import './style.css'
+import { installLegacyCopy } from './utils/legacyCopy'
+
+installLegacyCopy()
 
 const app = createApp(App)
 app.use(router)

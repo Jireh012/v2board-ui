@@ -37,6 +37,15 @@ export async function saveInvite(): Promise<boolean> {
     return request<boolean>(apiUrl('user', '/invite/save'), { method: 'POST' })
 }
 
+export async function dropInvite(id: number): Promise<boolean> {
+    const q = new URLSearchParams({ id: String(id) })
+    return request<boolean>(`${apiUrl('user', '/invite/drop')}?${q}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+    })
+}
+
 export async function fetchInviteDetails(
     current: number = 1,
     pageSize: number = 10

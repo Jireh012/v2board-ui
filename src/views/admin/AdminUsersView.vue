@@ -612,6 +612,7 @@ import {
   type StatUserRecord
 } from '../../api/admin'
 import { adminUrl } from '../../siteBrand'
+import { copyText } from '../../utils/clipboard'
 
 const route = useRoute()
 const router = useRouter()
@@ -994,18 +995,7 @@ async function toggleBan(u: AdminUser) {
 async function doCopySubscribe(u: AdminUser) {
   try {
     const url = await getAdminUserSubscribeUrl(u.id)
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(url)
-    } else {
-      const ta = document.createElement('textarea')
-      ta.value = url
-      ta.style.position = 'fixed'
-      ta.style.left = '-9999px'
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    }
+    await copyText(url)
     showToast('订阅链接已复制')
   } catch (e) {
     showToast(e instanceof Error ? e.message : '复制失败', true)
