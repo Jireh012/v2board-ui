@@ -188,8 +188,30 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 .prose { font-size: 16px; line-height: 1.8; color: #334155; }
 .prose :deep(h2) { font-size: 22px; font-weight: 800; color: var(--text-main); margin: 40px 0 20px; }
 .prose :deep(p) { margin-bottom: 24px; }
+.prose :deep(img) { max-width: 100%; height: auto; }
 .prose :deep(code) { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; font-weight: 700; color: var(--primary-color); font-size: 0.9em; }
 .prose :deep(pre) { background: #1e293b; color: white; padding: 20px; border-radius: 12px; overflow-x: auto; margin: 24px 0; }
+/* Keep in sync with KnowledgeBodyEditor content_style / preview (TinyMCE iframe CSS does not apply here). */
+.prose :deep(a.btn),
+.prose :deep(a.btn-hero-primary),
+.prose :deep(button.btn) {
+  display: inline-block;
+  padding: 10px 16px;
+  background: #0f172a;
+  color: #fff !important;
+  border: none;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.prose :deep(a.btn:hover),
+.prose :deep(a.btn-hero-primary:hover),
+.prose :deep(button.btn:hover) {
+  opacity: 0.9;
+  color: #fff !important;
+}
 
 .loading-full { padding: 100px 0; text-align: center; }
 .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
