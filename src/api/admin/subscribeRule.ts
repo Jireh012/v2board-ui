@@ -9,6 +9,7 @@ export type SubscribeRuleFormat =
   | 'singbox'
   | 'quantumultx'
   | 'loon'
+  | 'shadowrocket'
 
 export interface SubscribeRuleTemplate {
   format: SubscribeRuleFormat | string

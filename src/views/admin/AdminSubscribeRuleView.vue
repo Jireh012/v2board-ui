@@ -57,6 +57,7 @@
         <code>.list</code> 并<strong>内联写入</strong>当前 format 的种子壳（保留 DNS /
         <code>[General]</code> 等），再入库。直连 GitHub 失败时，自动经可用第三方订阅节点前置代理重试（无需手工选节点）。
         亦支持已含 HTTP <code>rule-providers</code> 的 Clash/Stash YAML（同样内联）。
+        各客户端默认含策略组 <code>🏠 回国</code>（回国节点 + DIRECT，可选手动直连）；国内媒体 / GEOIP CN 走该组。同步 ACL4SSR 后服务端会自动补回，避免被改成纯直连。Shadowrocket 使用与 Surge 同结构的 ACL4SSR 全量规则（多一条回国）。
         本页编辑仅覆盖档位 <code>full</code>；用户可用
         <code>?rule=full|simple|nodes</code>（或 <code>subscribe.rule_profile</code>）切换精简/仅节点模板。
       </div>
@@ -128,7 +129,8 @@ const formats: { key: SubscribeRuleFormat; label: string }[] = [
   { key: 'surfboard', label: 'Surfboard' },
   { key: 'singbox', label: 'Sing-box' },
   { key: 'quantumultx', label: 'Quantumult X' },
-  { key: 'loon', label: 'Loon' }
+  { key: 'loon', label: 'Loon' },
+  { key: 'shadowrocket', label: 'Shadowrocket' }
 ]
 
 const currentFormat = ref<SubscribeRuleFormat>('clash')
