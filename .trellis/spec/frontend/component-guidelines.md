@@ -55,6 +55,8 @@ function toAbsoluteSubscribeUrl(raw: string | null | undefined): string {
 
 **Do**: Load `fetchGroups()` / `fetchRoutes()` when opening the modal; bind checkboxes to id arrays.
 
+HY2 / TUIC on V2Node are QUIC: hide 传输层 + 传输层 JSON; persist `network=tcp` and `network_settings=null`. List meta shows protocol only (no `· tcp`).
+
 ---
 
 ## Convention: Scoped CSS and same-file child components

@@ -128,7 +128,7 @@
               <td>
                 <div class="name-cell">
                   <span class="name">{{ s.name }}</span>
-                  <span v-if="s.type === 'v2node' && s.protocol" class="meta">{{ s.protocol }} · {{ s.network || 'tcp' }}</span>
+                  <span v-if="s.type === 'v2node' && s.protocol" class="meta">{{ v2nodeMeta(s) }}</span>
                 </div>
               </td>
               <td>
@@ -303,7 +303,7 @@
               <section class="form-section">
               <div class="section-head">
                 <h3>协议配置</h3>
-                <p>V2Node 协议、传输层与安全性</p>
+                <p>{{ showV2Network ? 'V2Node 协议、传输层与安全性' : 'V2Node 协议与安全性（QUIC 无需传输层）' }}</p>
               </div>
               <div class="form-grid">
                 <div class="form-row">
@@ -312,7 +312,7 @@
                     <option v-for="p in protocols" :key="p" :value="p">{{ p }}</option>
                   </select>
                 </div>
-                <div class="form-row">
+                <div class="form-row" v-if="showV2Network">
                   <label>传输层 <span class="req">*</span></label>
                   <select v-model="form.network" class="input">
                     <option v-for="n in networks" :key="n" :value="n">{{ n }}</option>
@@ -367,7 +367,7 @@
                   <label>信任的 XFF 头部</label>
                   <input v-model="xffText" class="input" placeholder="常见头部: X-Forwarded-For，逗号分隔" />
                 </div>
-                <div class="form-row full-width">
+                <div class="form-row full-width" v-if="showV2Network">
                   <label>传输层设置 (JSON)</label>
                   <textarea v-model="networkSettingsText" class="input textarea" rows="6"
                     :placeholder="networkSettingsPlaceholder" />
@@ -749,6 +749,8 @@ const networks = ['tcp', 'ws', 'grpc', 'http', 'httpupgrade', 'xhttp']
 const ciphers = ['aes-128-gcm', 'aes-256-gcm', 'chacha20-ietf-poly1305', '2022-blake3-aes-128-gcm', '2022-blake3-aes-256-gcm']
 const fingerprints = ['chrome', 'firefox', 'safari', 'ios', 'android', 'edge', '360', 'qq', 'random']
 const TLS_FORCE_PROTOCOLS = new Set(['hysteria2', 'trojan', 'tuic'])
+/** HY2 / TUIC 走 QUIC，不使用 VMess 系 tcp/ws/grpc 传输层 */
+const V2_QUIC_PROTOCOLS = new Set(['hysteria2', 'tuic'])
 
 type TlsForm = {
   server_name: string
@@ -863,7 +865,8 @@ const networkSettingsPlaceholder = computed(() => {
 const tlsForced = computed(() => TLS_FORCE_PROTOCOLS.has(String(form.value.protocol || '')))
 const showV2Flow = computed(() => ['vless', 'vmess'].includes(String(form.value.protocol || '')))
 const showV2Obfs = computed(() => ['hysteria2', 'shadowsocks'].includes(String(form.value.protocol || '')))
-const showV2Bandwidth = computed(() => ['hysteria2', 'tuic'].includes(String(form.value.protocol || '')))
+const showV2Bandwidth = computed(() => V2_QUIC_PROTOCOLS.has(String(form.value.protocol || '')))
+const showV2Network = computed(() => !V2_QUIC_PROTOCOLS.has(String(form.value.protocol || '')))
 
 /** TLS UI 形态：对齐各协议存储差异 */
 const tlsUiKind = computed(() => {
@@ -1138,6 +1141,16 @@ function onProtocolChange() {
   if (p === 'shadowsocks' && !form.value.cipher) {
     form.value.cipher = 'aes-128-gcm'
   }
+  if (V2_QUIC_PROTOCOLS.has(p)) {
+    form.value.network = 'tcp'
+    networkSettingsText.value = ''
+  }
+}
+
+function v2nodeMeta(s: { protocol?: string; network?: string }) {
+  const protocol = String(s.protocol || '')
+  if (V2_QUIC_PROTOCOLS.has(protocol)) return protocol
+  return `${protocol} · ${s.network || 'tcp'}`
 }
 
 function openTlsPanel() {
@@ -1246,12 +1259,17 @@ async function doSave() {
       body.trusted_x_forwarded_for = xffText.value
         ? xffText.value.split(',').map(s => s.trim()).filter(Boolean)
         : []
-      try {
-        if (networkSettingsText.value.trim()) body.network_settings = textToJson(networkSettingsText.value)
-        else body.network_settings = null
-      } catch {
-        alert('传输层 JSON 格式无效')
-        return
+      if (V2_QUIC_PROTOCOLS.has(String(form.value.protocol || ''))) {
+        body.network = 'tcp'
+        body.network_settings = null
+      } else {
+        try {
+          if (networkSettingsText.value.trim()) body.network_settings = textToJson(networkSettingsText.value)
+          else body.network_settings = null
+        } catch {
+          alert('传输层 JSON 格式无效')
+          return
+        }
       }
     } else if (currentType.value === 'vless' || currentType.value === 'vmess') {
       body.tls = form.value.tls
