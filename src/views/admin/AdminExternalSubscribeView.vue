@@ -292,9 +292,10 @@ const nodesSource = ref<ExternalSubscribeSource | null>(null)
 const nodeQuery = ref('')
 const nodeFilter = ref<'all' | 'up' | 'down'>('all')
 
-const enabledCount = computed(() => rows.value.filter((s) => s.enable === 1).length)
-const totalReachable = computed(() => rows.value.reduce((n, s) => n + (s.reachable_count ?? 0), 0))
-const totalNodes = computed(() => rows.value.reduce((n, s) => n + (s.node_count ?? 0), 0))
+const enabledRows = computed(() => rows.value.filter((s) => s.enable === 1))
+const enabledCount = computed(() => enabledRows.value.length)
+const totalReachable = computed(() => enabledRows.value.reduce((n, s) => n + (s.reachable_count ?? 0), 0))
+const totalNodes = computed(() => enabledRows.value.reduce((n, s) => n + (s.node_count ?? 0), 0))
 const nodesReachable = computed(() => nodes.value.filter((n) => n.reachable === 1).length)
 
 const filteredNodes = computed(() => {
