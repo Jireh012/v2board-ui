@@ -163,6 +163,21 @@ Or raise local specificity: `body.admin-theme .modal.modal-edit { width: … !im
 
 ---
 
+## Convention: External subscribe remaining traffic under URL
+
+**What**: If a source has quota (`traffic_total > 0`) or is exhausted, show remaining **under the URL chip**, not in the status column.
+
+```html
+<div class="url-cell">
+  <code class="url-chip">{{ s.url }}</code>
+  <span v-if="trafficRemainLabel(s)" class="traffic-remain">剩余流量：12.34 GB</span>
+</div>
+```
+
+Remaining = `total - upload - download` (may be negative). No quota and not exhausted → hide the line.
+
+---
+
 ## Convention: Compact metric cells (nowrap)
 
 **What**: Inline metrics like `216 / 459 可达` use `white-space: nowrap` + `flex-wrap: nowrap` on `.node-metric`.

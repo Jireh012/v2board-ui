@@ -3,7 +3,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">第三方订阅源</h1>
-        <p class="page-subtitle">定时拉取外部订阅，经 sing-box 连通探测后并入用户订阅列表。</p>
+        <p class="page-subtitle">定时拉取外部订阅，经 sing-box 连通探测后并入用户订阅列表。流量已用尽的源不会下发节点。</p>
       </div>
       <div class="header-actions">
         <button class="btn" :disabled="loading" @click="load" title="刷新列表">
@@ -74,7 +74,14 @@
                 </div>
               </td>
               <td>
-                <code class="url-chip" :title="s.url">{{ s.url }}</code>
+                <div class="url-cell">
+                  <code class="url-chip" :title="s.url">{{ s.url }}</code>
+                  <span
+                    v-if="trafficRemainLabel(s)"
+                    class="traffic-remain"
+                    :class="{ 'is-exhausted': trafficRemainExhausted(s) }"
+                  >{{ trafficRemainLabel(s) }}</span>
+                </div>
               </td>
               <td>
                 <div class="status-stack">
@@ -83,6 +90,7 @@
                     {{ s.enable === 1 ? '启用' : '停用' }}
                   </span>
                   <span v-if="s.pre_proxy_enable === 1" class="pill pill-proxy">前置代理</span>
+                  <span v-if="s.traffic_exhausted === 1" class="pill pill-exhausted">流量已用尽</span>
                 </div>
               </td>
               <td>
@@ -194,6 +202,9 @@
             <div>
               <h2>节点列表</h2>
               <p class="modal-sub">{{ nodesSource?.name }} · 共 {{ nodes.length }} 个 · 可达 {{ nodesReachable }}</p>
+              <p v-if="nodesSource?.traffic_exhausted === 1" class="nodes-exhausted">
+                该订阅源流量已用尽，节点不会下发给用户。
+              </p>
             </div>
             <button class="modal-close" @click="showNodes = false">&times;</button>
           </div>
@@ -294,7 +305,8 @@ const nodeFilter = ref<'all' | 'up' | 'down'>('all')
 
 const enabledRows = computed(() => rows.value.filter((s) => s.enable === 1))
 const enabledCount = computed(() => enabledRows.value.length)
-const totalReachable = computed(() => enabledRows.value.reduce((n, s) => n + (s.reachable_count ?? 0), 0))
+const deliverableRows = computed(() => enabledRows.value.filter((s) => s.traffic_exhausted !== 1))
+const totalReachable = computed(() => deliverableRows.value.reduce((n, s) => n + (s.reachable_count ?? 0), 0))
 const totalNodes = computed(() => enabledRows.value.reduce((n, s) => n + (s.node_count ?? 0), 0))
 const nodesReachable = computed(() => nodes.value.filter((n) => n.reachable === 1).length)
 
@@ -337,6 +349,40 @@ function syncLabel(status?: string | null) {
   if (status === 'failed') return 'FAILED'
   if (status === 'running') return 'RUNNING'
   return status ? status.toUpperCase() : '-'
+}
+
+function formatBytes(bytes: number) {
+  const n = Math.abs(bytes)
+  const gb = 1073741824
+  const mb = 1048576
+  const kb = 1024
+  if (n >= gb) return `${(n / gb).toFixed(2)} GB`
+  if (n >= mb) return `${(n / mb).toFixed(2)} MB`
+  if (n >= kb) return `${(n / kb).toFixed(2)} KB`
+  return `${n} B`
+}
+
+function formatBytesSigned(bytes: number) {
+  return bytes < 0 ? `-${formatBytes(bytes)}` : formatBytes(bytes)
+}
+
+function remainingBytes(s: ExternalSubscribeSource): number | null {
+  const total = s.traffic_total
+  if (total == null || total <= 0) return null
+  return total - (s.traffic_upload ?? 0) - (s.traffic_download ?? 0)
+}
+
+function trafficRemainLabel(s: ExternalSubscribeSource) {
+  const remain = remainingBytes(s)
+  if (remain != null) return `剩余流量：${formatBytesSigned(remain)}`
+  if (s.traffic_exhausted === 1) return '剩余流量：已用尽'
+  return ''
+}
+
+function trafficRemainExhausted(s: ExternalSubscribeSource) {
+  if (s.traffic_exhausted === 1) return true
+  const remain = remainingBytes(s)
+  return remain != null && remain <= 0
 }
 
 function protoClass(protocol?: string | null) {
@@ -659,6 +705,14 @@ load()
   color: #94a3b8;
 }
 
+.url-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
 .url-chip {
   display: inline-block;
   max-width: 260px;
@@ -710,6 +764,34 @@ load()
 .pill-proxy {
   background: #eff6ff;
   color: #2563eb;
+}
+
+.pill-exhausted {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.traffic-remain {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f766e;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+.traffic-remain.is-exhausted {
+  color: #c2410c;
+}
+
+.nodes-exhausted {
+  margin: 0;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .node-metric {

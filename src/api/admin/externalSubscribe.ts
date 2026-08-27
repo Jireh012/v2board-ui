@@ -19,6 +19,16 @@ export interface ExternalSubscribeSource {
   last_sync_at?: number | null
   last_sync_status?: string | null
   last_sync_message?: string | null
+  /** Upstream used upload bytes */
+  traffic_upload?: number | null
+  /** Upstream used download bytes */
+  traffic_download?: number | null
+  /** Upstream plan total bytes; 0/null = unlimited or unknown */
+  traffic_total?: number | null
+  /** Upstream plan expire unix seconds */
+  traffic_expire?: number | null
+  /** 1 = quota used up; nodes excluded from user subscribe */
+  traffic_exhausted?: number
   node_count?: number
   reachable_count?: number
   created_at?: number
