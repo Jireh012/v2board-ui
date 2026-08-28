@@ -471,6 +471,10 @@ function getStaticForm(payment: string): Record<string, FormField> {
       bepusdt_url: { label: 'API 地址', description: '您的 BEPUSDT API 接口地址(例如: https://xxx.com)', type: 'input' },
       bepusdt_apitoken: { label: 'API Token', description: '您的 BEPUSDT API Token', type: 'input' },
       bepusdt_trade_type: { label: '交易类型', description: '您的 BEPUSDT 交易类型', type: 'input' }
+    },
+    Paytaro: {
+      pid: { label: 'App ID', description: 'Paytaro 应用的 App ID；', type: 'input' },
+      key: { label: 'App Secret', description: 'Paytaro 应用的 App Secret；', type: 'input' }
     }
   }
   const def = forms[payment] || {}

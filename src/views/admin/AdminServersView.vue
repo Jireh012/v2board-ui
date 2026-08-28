@@ -607,6 +607,9 @@
               <p v-if="tlsUiKind === 'v2node' && (tlsForm.cert_mode === 'dns' || tlsForm.cert_mode === 'http' || tlsForm.cert_mode === 'self')" class="hint">
                 须与节点实际证书域名一致。Host 可为 CDN 地址；SNI 不要填成 CDN 域名，否则校验证书会失败。修改 SNI 后节点会按新域名重签（需 DNS/HTTP 校验可用）。
               </p>
+              <p v-else-if="tlsUiKind === 'v2node' && tlsForm.cert_mode === 'remote'" class="hint">
+                面板生成自签证书并下发到节点。已有 PIN 后不会因修改 SNI 自动换证。
+              </p>
             </div>
 
             <template v-if="tlsUiKind === 'v2node' && Number(form.tls) === 1">
@@ -617,6 +620,7 @@
                   <option value="self">自签 / 本地证书</option>
                   <option value="http">HTTP 申请</option>
                   <option value="dns">DNS 申请</option>
+                  <option value="remote">自签名(面板下发)</option>
                 </select>
               </div>
               <div class="form-row" v-if="tlsForm.cert_mode === 'dns'">
@@ -629,6 +633,10 @@
               <div class="form-row" v-if="tlsForm.cert_mode === 'dns'">
                 <label>DNS env</label>
                 <input v-model="tlsForm.dns_env" class="input" placeholder="CF_DNS_API_TOKEN=xxxxx" />
+              </div>
+              <div class="form-row" v-if="tlsForm.cert_mode === 'remote'">
+                <label>证书指纹 PIN (pcs)</label>
+                <input :value="tlsForm.pinned_peer_cert_sha256" class="input" readonly placeholder="保存后由面板生成" />
               </div>
               <div class="form-row">
                 <label>证书公钥文件地址 Cert File</label>
@@ -771,6 +779,9 @@ type TlsForm = {
   public_key: string
   private_key: string
   short_id: string
+  pinned_peer_cert_sha256: string
+  tls_cert: string
+  tls_key: string
 }
 
 function emptyTlsForm(): TlsForm {
@@ -792,7 +803,10 @@ function emptyTlsForm(): TlsForm {
     server_port: '443',
     public_key: '',
     private_key: '',
-    short_id: ''
+    short_id: '',
+    pinned_peer_cert_sha256: '',
+    tls_cert: '',
+    tls_key: ''
   }
 }
 
@@ -1066,6 +1080,9 @@ function loadTlsForm(raw: unknown) {
   next.public_key = String(src.public_key ?? '')
   next.private_key = String(src.private_key ?? '')
   next.short_id = String(src.short_id ?? '')
+  next.pinned_peer_cert_sha256 = String(src.pinned_peer_cert_sha256 ?? '')
+  next.tls_cert = String(src.tls_cert ?? '')
+  next.tls_key = String(src.tls_key ?? '')
   tlsForm.value = next
 }
 
@@ -1107,6 +1124,11 @@ function buildTlsSettings(): Record<string, unknown> | null {
     out.dns_env = t.cert_mode === 'dns' ? (t.dns_env || null) : null
     if (t.cert_file) out.cert_file = t.cert_file
     if (t.key_file) out.key_file = t.key_file
+    if (t.cert_mode === 'remote') {
+      if (t.tls_cert) out.tls_cert = t.tls_cert
+      if (t.tls_key) out.tls_key = t.tls_key
+      if (t.pinned_peer_cert_sha256) out.pinned_peer_cert_sha256 = t.pinned_peer_cert_sha256
+    }
   }
   if (supportsRealityPanel.value && Number(form.value.tls) === 2) {
     if (kind === 'v2node') out.dest = t.dest || ''
