@@ -212,6 +212,26 @@ export interface StatUserRecord {
   updated_at?: number
 }
 
+export interface StatServerDay {
+  record_at: number
+  date: string
+  u: number
+  d: number
+  total: number
+}
+
+export interface StatServerTraffic {
+  server_id: number
+  server_type: string
+  server_name: string
+  start_date: string
+  end_date: string
+  u: number
+  d: number
+  total: number
+  days: StatServerDay[]
+}
+
 // ==================== Notice ====================
 export interface AdminNotice {
   id?: number
@@ -537,6 +557,21 @@ export async function fetchStatUser(
   return request<PageResult<StatUserRecord>>(
     `${apiUrl('admin', '/stat/getStatUser')}?user_id=${userId}&current=${current}&pageSize=${pageSize}`
   )
+}
+
+export async function fetchStatServer(params: {
+  server_id: number
+  server_type: string
+  start_date: string
+  end_date: string
+}): Promise<StatServerTraffic> {
+  const q = new URLSearchParams({
+    server_id: String(params.server_id),
+    server_type: params.server_type,
+    start_date: params.start_date,
+    end_date: params.end_date
+  })
+  return request<StatServerTraffic>(`${apiUrl('admin', '/stat/getStatServer')}?${q.toString()}`)
 }
 
 // ==================== Notice API ====================

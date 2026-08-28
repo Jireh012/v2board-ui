@@ -51,6 +51,7 @@ Vue 3 + Vite user/admin UI that talks to the Java V2Board API (`snake_case` JSON
 - [ ] Order detail: show `email` + `remarks` from detail API; hero user chip **one line** (`email · #id · remarks`)
 - [ ] Ticket reply: `application/x-www-form-urlencoded`, not JSON
 - [ ] External sync cell: always show `last_sync_at`, not only message
+- [ ] Admin node traffic: side-nav page + `getStatServer`; bytes not GB; UTC dates
 
 ---
 

@@ -289,6 +289,16 @@ filters.push({
 
 ---
 
+## Convention: Admin node traffic query
+
+**What**: Side-nav **节点流量** (`AdminNodeTrafficView.vue`, route `servers/traffic`) loads all `getNodes` (including hidden) and queries `GET /admin/stat/getStatServer`. Default range is the last **30 UTC days**. Daily `u`/`d`/`total` are **bytes** → same adaptive B/KB/MB/GB as user「TA 的流量」. Empty days are omitted; empty range is not an API error.
+
+**Don't**: Use dashboard rank `total` (already GB). Don't list third-party subscribe sources. Don't put the entry on the node-management row.
+
+**Related**: API `admin-stat.md` `getStatServer`.
+
+---
+
 ## Pattern: Sticky ops menu via Teleport
 
 **Problem**: Table「操作」dropdown clipped by `overflow` on table wrappers.
