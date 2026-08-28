@@ -58,7 +58,7 @@
               <th style="width:56px">#</th>
               <th>名称</th>
               <th>地址</th>
-              <th>状态</th>
+              <th class="status-col">状态</th>
               <th>节点</th>
               <th>上次同步</th>
               <th style="width:260px">操作</th>
@@ -83,7 +83,7 @@
                   >{{ trafficRemainLabel(s) }}</span>
                 </div>
               </td>
-              <td>
+              <td class="status-col">
                 <div class="status-stack">
                   <span class="pill" :class="s.enable === 1 ? 'pill-on' : 'pill-off'">
                     <i class="dot"></i>
@@ -675,7 +675,7 @@ load()
 .table td {
   padding: 14px;
   border-bottom: 1px solid #f1f5f9;
-  vertical-align: middle;
+  vertical-align: top;
   color: var(--text-main);
 }
 
@@ -730,11 +730,13 @@ load()
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 3px 8px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .pill .dot {
@@ -754,10 +756,16 @@ load()
   color: #64748b;
 }
 
+.status-col {
+  width: 168px;
+  min-width: 148px;
+}
+
 .status-stack {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-flow: row wrap;
+  align-items: center;
+  align-content: flex-start;
   gap: 6px;
 }
 

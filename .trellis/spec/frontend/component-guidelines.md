@@ -178,6 +178,21 @@ Remaining = `total - upload - download` (may be negative). No quota and not exha
 
 ---
 
+## Convention: External subscribe status pills wrap
+
+**What**: Status column is a wrapping tag group (`flex-flow: row wrap`), not a vertical stack. Cells use `vertical-align: top` so URL remaining traffic and pills share the same top edge.
+
+**Why**: `启用` + `前置代理` + `流量已用尽` stacked in a narrow column made that row much taller and looked cramped against other columns.
+
+```html
+<th class="status-col">状态</th>
+<td class="status-col"><div class="status-stack">…pills…</div></td>
+```
+
+`.status-col` min-width ~148px so two short pills sit on one line; the longer「流量已用尽」wraps underneath.
+
+---
+
 ## Convention: Compact metric cells (nowrap)
 
 **What**: Inline metrics like `216 / 459 可达` use `white-space: nowrap` + `flex-wrap: nowrap` on `.node-metric`.
